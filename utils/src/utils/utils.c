@@ -38,9 +38,7 @@ int crear_conexion(char *ip, char* puerto)
 
 	getaddrinfo(ip, puerto, &hints, &server_info);
 
-	int socket_cliente = socket(server_info->ai_family, 
-								server_info->ai_socktype, 
-								server_info->ai_protocol);
+	int socket_cliente = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
 
 	connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
 
@@ -117,10 +115,10 @@ void liberar_conexion(int socket_cliente)
 	close(socket_cliente);
 }
 
-t_log* iniciar_logger(void)
+t_log* iniciar_logger(char* file_name, char* process_name, t_log_level level)
 {
 	t_log* nuevo_logger;
-	nuevo_logger = log_create("tp.log", "LOG_TP", true, LOG_LEVEL_INFO);
+	nuevo_logger = log_create(file_name, process_name, true, level);
 	if (nuevo_logger == NULL){
 		perror("Error. No se pudo crear o encontrar el archivo.");
 		abort();
@@ -169,14 +167,14 @@ void paquete(int conexion)
 	t_paquete* paquete = crear_paquete();
 	leido = readline("> ");
 
-	while(strcmp(leido, "") != 0){
+	while(strcmp(leido, "exit") != 0){
 		agregar_a_paquete(paquete, leido, strlen(leido) + 1);
     free(leido);
     leido = readline("> ");
   }
 }
 
-int iniciar_servidor(void)
+int iniciar_servidor(char* puerto)
 {
 	struct addrinfo hints, *servinfo;
 
@@ -185,11 +183,9 @@ int iniciar_servidor(void)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	getaddrinfo(NULL, "8002", &hints, &servinfo);
+	getaddrinfo(NULL, puerto, &hints, &servinfo);
 
-	int socket_servidor = socket(servinfo->ai_family,
-								servinfo->ai_socktype,
-								servinfo->ai_protocol);
+	int socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
 
 	setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int));
 	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
@@ -209,6 +205,8 @@ int esperar_cliente(int socket_servidor)
 
 	return socket_cliente;
 }
+
+
 
 int recibir_operacion(int socket_cliente)
 {
@@ -237,7 +235,7 @@ void recibir_mensaje(int socket_cliente)
 {
 	int size;
 	char* buffer = recibir_buffer(&size, socket_cliente);
-	log_info(logger, "Me llego el mensaje %s", buffer);
+	log_info(logger, "%s", buffer);
 	free(buffer);
 }
 
@@ -262,3 +260,36 @@ t_list* recibir_paquete(int socket_cliente)
 	free(buffer);
 	return valores;
 }
+
+void iterator(char* value) {
+	log_info(logger, "%s", value);
+}
+
+int iniciar_conexion(char* puerto)
+{
+	int server_fd = iniciar_servidor(puerto);
+	log_info(logger, "Kernel listo para recibir al cliente");
+	int cliente_fd = esperar_cliente(server_fd);
+
+  t_list* lista;
+
+	while (1) {
+		int cod_op = recibir_operacion(cliente_fd);
+		switch (cod_op) {
+    case MENSAJE:
+			recibir_mensaje(cliente_fd);
+			break;
+		case PAQUETE:
+			lista = recibir_paquete(cliente_fd);
+			log_info(logger, "Me llegaron los siguientes valores:\n");
+			list_iterate(lista, (void*) iterator);
+			break;
+		case -1:
+			log_error(logger, "El cliente se desconecto. Terminando servidor");
+			return EXIT_FAILURE;
+		default:
+			log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+			break;
+		}
+	}		
+}	

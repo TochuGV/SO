@@ -15,6 +15,7 @@
 #include<netdb.h>
 #include<string.h>
 #include<commons/log.h>
+#include<pthread.h>
 
 
 typedef enum
@@ -37,7 +38,7 @@ typedef struct
 
 //CLIENTE
 
-t_log* iniciar_logger(void);
+t_log* iniciar_logger(char*, char*, t_log_level);
 t_config* iniciar_config(char*);
 void leer_consola(t_log*);
 
@@ -59,10 +60,13 @@ extern t_log* logger;
 
 void* recibir_buffer(int*, int);
 
-int iniciar_servidor(void);
+int iniciar_servidor(char*);
 int esperar_cliente(int);
 t_list* recibir_paquete(int);
 void recibir_mensaje(int);
 int recibir_operacion(int);
+
+int iniciar_conexion(char*);
+void iterator(char*);
 
 #endif /* UTILS_H_ */

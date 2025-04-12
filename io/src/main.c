@@ -1,18 +1,15 @@
 #include "main.h"
 
 int main(int argc, char* argv[]) {
-  //saludar("kernel");
   
   int conexion;
   char* ip_kernel;
   char* puerto_kernel;
-  //char* valor_kernel;
-
   t_log* logger;
   t_config* config;
 
-  logger = iniciar_logger();
-  log_info(logger, "Log iniciado");
+  logger = iniciar_logger("io.log", "IO", LOG_LEVEL_INFO);
+  log_info(logger, "Log de IO iniciado");
 
   config = iniciar_config("io.config");
   ip_kernel = config_get_string_value(config, "IP_KERNEL");
@@ -22,11 +19,11 @@ int main(int argc, char* argv[]) {
   
   conexion = crear_conexion(ip_kernel, puerto_kernel);
 
-  enviar_mensaje("Hola", conexion);
+  enviar_mensaje("Modulo IO conectado.", conexion);
 
   paquete(conexion);
 
-  //terminar_programa(conexion, logger, config);
+  terminar_programa(conexion, logger, config);
 
   return 0;
 
