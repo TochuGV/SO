@@ -1,27 +1,21 @@
 #include "main.h"
 
-int main(int argc, char* argv[]) {
-
-  char* puerto_io;
-	char* puerto_cpu_dispatch;
-  char* ip;
-  
-  t_config* config;
+int main(int argc, char* argv[]) 
+{
   
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
+  log_info(logger, "Log de Kernel iniciado");
 
   config = iniciar_config("kernel.config");
 	
-  ip = config_get_string_value(config, "IP_KERNEL");
-  puerto_io = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
-  puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-	puerto_cpu_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+  t_list* lista_puertos = list_create();
+  agregar_puertos_a_lista(KERNEL, config, lista_puertos);
 
-  iniciar_conexion(puerto_io);
+  conectar_modulos(lista_puertos);
 
-  crear_conexion(ip, puerto_cpu_dispatch)
-  iniciar_conexion(puerto_cpu_dispatch);
+  //terminar_programa(conexion, logger, config);
 
 	return EXIT_SUCCESS;
+  
 }
 
