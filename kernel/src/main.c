@@ -13,7 +13,9 @@ int main(int argc, char* argv[])
 
   conectar_modulos(lista_puertos);
 
-  //terminar_programa(conexion, logger, config);
+  int conexion = conectarse_a(MEMORIA, KERNEL, config);
+
+  terminar_programa(conexion, logger, config);
 
 	return EXIT_SUCCESS;
   
