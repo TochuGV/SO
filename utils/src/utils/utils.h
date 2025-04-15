@@ -23,7 +23,8 @@
 typedef enum
 {
 	MENSAJE,
-	PAQUETE
+	PAQUETE,
+  HANDSHAKE
 }op_code;
 
 typedef enum
@@ -64,14 +65,14 @@ t_config* iniciar_config(char*);
 
 //// PAQUETES - MENSAJES
 t_paquete* crear_paquete(void);
-void crear_buffer(t_paquete* paquete);
+void crear_buffer(t_paquete*);
 void paquete(int);
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
-void* serializar_paquete(t_paquete* paquete, int bytes);
-void enviar_paquete(t_paquete* paquete, int socket_cliente);
-void eliminar_paquete(t_paquete* paquete);
-void* serializar_mensaje(char* mensaje, int bytes);
-void enviar_mensaje(char* mensaje, int socket_cliente);
+void agregar_a_paquete(t_paquete*, void*, int);
+void* serializar_paquete(t_paquete*, int);
+void enviar_paquete(t_paquete*, int);
+void eliminar_paquete(t_paquete*);
+void* serializar_mensaje(char*, int);
+void enviar_mensaje(char*, int);
 t_list* recibir_paquete(int);
 void* recibir_buffer(int*, int);
 void recibir_mensaje(int);
@@ -85,11 +86,13 @@ void agregar_puertos_a_lista(int,t_config*,t_list*);
 int iniciar_servidor(char*);
 int esperar_cliente(int);
 int recibir_operacion(int);
-int crear_conexion(char* ip, char* puerto);
+int crear_conexion(char*, char*, int);
+int32_t enviar_handshake_desde(int, int);
+int recibir_handshake(int);
 void* iniciar_conexion(void*);
-void conectar_modulos(t_list*);
+void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
-void liberar_conexion(int socket_cliente);
+void liberar_conexion(int);
 
 
 //// FINALIZAR

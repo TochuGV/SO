@@ -11,9 +11,14 @@ int main(int argc, char* argv[])
   t_list* lista_puertos = list_create();
   agregar_puertos_a_lista(KERNEL, config, lista_puertos);
 
-  conectar_modulos(lista_puertos);
 
+  pthread_t thread_conexiones;
+  pthread_create(&thread_conexiones, NULL, conectar_puertos_a_servidor, lista_puertos);
+
+  // Intenta conectarse con memoria y si falla continua funcionando como servidor
   int conexion = conectarse_a(MEMORIA, KERNEL, config);
+
+  pthread_join(thread_conexiones,NULL);
 
   terminar_programa(conexion, logger, config);
 
