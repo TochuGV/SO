@@ -203,22 +203,16 @@ void agregar_puertos_a_lista(int header, t_config* config, t_list* lista)
   switch (header)
   {
     case KERNEL:
-      char* puerto_io = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
-	    char* puerto_cpu_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-      //char* puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT"););
+      char* puerto_io = config_get_string_value(config, "PUERTO_ESCUCHA_IO"); 
+      char* puerto_cpu_dispatch = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+      //char* puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
       list_add_in_index(lista, 0, puerto_io);
       list_add_in_index(lista, 1, puerto_cpu_dispatch);
-      //list_add_index(lista, 2, puerto_cpu_interrupt);
-      break;
-    case CPU:
-      char* puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-      list_add_in_index(lista, 0, puerto_cpu_interrupt);
+      //list_add_in_index(lista, 2, puerto_cpu_interrupt);
       break;
     case MEMORIA:
       char* puerto_memoria = config_get_string_value(config, "PUERTO_ESCUCHA");
       list_add_in_index(lista, 0, puerto_memoria);
-      break;
-    case IO:
       break;
     default:
       break;
@@ -255,7 +249,6 @@ int iniciar_servidor(char* puerto)
 int esperar_cliente(int socket_servidor)
 {
 	int socket_cliente = accept(socket_servidor, NULL, NULL);
-	//log_info(logger, "Se conecto un cliente!");
 
 	return socket_cliente;
 }
@@ -301,7 +294,7 @@ int crear_conexion(char *ip, char* puerto, int header_cliente)
   // Como IO y CPU son solo clientes si es correcto que esperen a la presencia de un servidor
   else {
     log_info(logger, "Esperando servidor...");
-	  while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
+    while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
     sleep(1);
   }
   }
@@ -351,20 +344,19 @@ int recibir_handshake(int socket_cliente)
   {
   case 1:
     send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-    log_info(logger, "El modulo Kernel se ah conectado exitosamente!");
+    log_info(logger, "El módulo Kernel se ha conectado exitosamente!");
     break;
   case 2:
     send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-    log_info(logger, "El modulo CPU se ah conectado exitosamente!");
+    log_info(logger, "El módulo CPU se ha conectado exitosamente!");
     break;
   case 3:
     send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-    log_info(logger, "El modulo IO se ah conectado exitosamente!");
+    log_info(logger, "El módulo IO se ha conectado exitosamente!");
     break;
-  
   default:
     send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-    log_error(logger, "Error al conectar: cliente desconocido");
+    log_error(logger, "Error al conectar: Cliente desconocido.");
     return 0;
   }
   return 1;
@@ -395,10 +387,10 @@ void* iniciar_conexion(void* arg)
         list_iterate(lista, (void*) iterator);
         break;
       case -1:
-        log_error(logger, "El cliente se desconecto. Terminando servidor");
+        log_error(logger, "El cliente se desconectó. Terminando servidor...");
         pthread_exit((void*)EXIT_FAILURE);
       default:
-        log_warning(logger,"Operacion desconocida. No quieras meter la pata");
+        log_warning(logger,"Operación desconocida. No quieras meter la pata.");
         break;
       }
     }
@@ -422,7 +414,7 @@ void* conectar_puertos_a_servidor(void* arg)
   i = 0;
   while(i < lista_tamanio)
   {
-    pthread_join(thread_puerto[i],NULL);
+    pthread_join(thread_puerto[i], NULL);
     i+=1;
   }
   return NULL;
@@ -439,7 +431,6 @@ int conectarse_a(int header_servidor, int header_cliente, t_config* config)
   {
 
 
-
     case KERNEL:
       // Para este cliente elegir el servidor
       switch (header_servidor)
@@ -452,15 +443,13 @@ int conectarse_a(int header_servidor, int header_cliente, t_config* config)
           break;
         } else {
           if (enviar_handshake_desde(KERNEL, conexion) == 0) {
-          log_info(logger, "Conexion con modulo Memoria exitosa!");
+          log_info(logger, "Conexión con módulo Memoria exitosa!");
           paquete(conexion);
           break;
           } else {
-          log_error(logger, "Error: la conexion con el servidor fallo");
+          log_error(logger, "Error: La conexión con el servidor falló.");
           }
         }
-        
-        
       default:
         break;
       }
@@ -477,11 +466,11 @@ int conectarse_a(int header_servidor, int header_cliente, t_config* config)
         puerto = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
         conexion = crear_conexion(ip, puerto, header_cliente);
         if (enviar_handshake_desde(CPU, conexion) == 0) {
-          log_info(logger, "Conexion con modulo Kernel exitosa!");
+          log_info(logger, "Conexión con módulo Kernel exitosa!");
           paquete(conexion);
           break;
         } else {
-          log_error(logger, "Error: la conexion con el servidor fallo");
+          log_error(logger, "Error: La conexión con el servidor falló.");
         }
         break;
       case MEMORIA:
@@ -489,11 +478,11 @@ int conectarse_a(int header_servidor, int header_cliente, t_config* config)
         puerto = config_get_string_value(config, "PUERTO_MEMORIA");
         conexion = crear_conexion(ip, puerto, header_cliente);
         if (enviar_handshake_desde(CPU, conexion) == 0) {
-          log_info(logger, "Conexion con modulo Memoria exitosa!");
+          log_info(logger, "Conexión con módulo Memoria exitosa!");
           paquete(conexion);
           break;
         } else {
-          log_error(logger, "Error: la conexion con el servidor fallo");
+          log_error(logger, "Error: La conexión con el servidor falló.");
         }
         break;
       default:
@@ -512,27 +501,23 @@ int conectarse_a(int header_servidor, int header_cliente, t_config* config)
         puerto = config_get_string_value(config, "PUERTO_KERNEL");
         conexion = crear_conexion(ip, puerto, header_cliente);
         if (enviar_handshake_desde(IO, conexion) == 0) {
-          log_info(logger, "Conexion con modulo Kernel exitosa!");
+          log_info(logger, "Conexión con módulo Kernel exitosa!");
           paquete(conexion);
           break;
         } else {
-          log_error(logger, "Error: la conexion con el servidor fallo");
+          log_error(logger, "Error: La conexión con el servidor falló.");
         }
         break;
       default:
         break;
       }
       break;
-
-
-
     default:
       break;
 
   }
   return conexion;
 }
-
 
 void liberar_conexion(int socket_cliente)
 {

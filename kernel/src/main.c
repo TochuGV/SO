@@ -18,11 +18,11 @@ int main(int argc, char* argv[])
   // Intenta conectarse con memoria y si falla continua funcionando como servidor
   int conexion = conectarse_a(MEMORIA, KERNEL, config);
 
-  pthread_join(thread_conexiones,NULL);
+  pthread_join(thread_conexiones, NULL);
 
   terminar_programa(conexion, logger, config);
 
 	return EXIT_SUCCESS;
-  
+
 }
 
