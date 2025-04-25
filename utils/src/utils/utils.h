@@ -18,6 +18,7 @@
 #include<commons/log.h>
 #include<pthread.h>
 
+#include<instruccion/instruccion.h>
 
 //// ESTRUCTURAS - ENUMERADORES
 typedef enum
@@ -25,7 +26,7 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
   HANDSHAKE
-}op_code;
+} op_code;
 
 typedef enum
 {
@@ -33,7 +34,7 @@ typedef enum
   CPU,
   MEMORIA,
   IO
-}header_modulo;
+} header_modulo;
 
 typedef struct
 {

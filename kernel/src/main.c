@@ -2,7 +2,6 @@
 
 int main(int argc, char* argv[]) 
 {
-  
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
   log_info(logger, "Log de Kernel iniciado");
 
@@ -20,9 +19,16 @@ int main(int argc, char* argv[])
 
   pthread_join(thread_conexiones, NULL);
 
+
+  //esto va en memoria
+  char* path = argv[1];
+  t_list* lista_instrucciones = leer_archivo_instrucciones(path);
+
+  int tamanio_proceso = atoi(argv[2]);
+  int* ubicacion_proceso = ubicar_proceso_en_memoria(tamanio_proceso, lista lista_instrucciones);
+
   terminar_programa(conexion, logger, config);
 
 	return EXIT_SUCCESS;
 
 }
-

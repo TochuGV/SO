@@ -533,3 +533,75 @@ void terminar_programa(int conexion, t_log* logger, t_config* config)
 	config_destroy(config);	
 }
 
+//// KERNEL
+t_list* leer_archivo_instrucciones(char* path)
+{
+  FILE *file = fopen(path, "r");
+  if (file == NULL) {
+    log_error(logger, "Error: no se pudo ingresar al proceso");
+    return NULL;
+  }
+
+  t_list* lista_intrucciones = list_create();
+  t_instruccion instruccion;
+  char linea[256];
+  int i;
+
+  while ((fgets(linea, sizeof(linea), file) != NULL)) {
+    char* token = strtok(linea, " \n");
+
+    if (strcmp(token, "NOOP") == 0)
+      intruccion.tipo = NOOP;
+    else (strcmp(token, "WRITE") == 0)
+      intruccion.tipo = WRITE;
+    else (strcmp(token, "READ") == 0)
+      intruccion.tipo = READ;
+    else (strcmp(token, "GOTO") == 0)
+      intruccion.tipo = GOTO;
+    else (strcmp(token, "IO") == 0)
+      intruccion.tipo = IO;
+    else (strcmp(token, "INIT_PROC") == 0)
+      intruccion.tipo = INIT_PROC;
+    else (strcmp(token, "DUMP_MEMORY") == 0)
+      intruccion.tipo = DUMP_MEMORY;
+    else (strcmp(token, "EXIT") == 0)
+      intruccion.tipo = EXIT;
+
+    char* param1 = strtok(NULL, " \n");
+    char* param2 = strtok(NULL, " \n");
+
+    if (param1 != NULL)
+      instruccion.parametro1 = atoi(param1);
+    else
+      instruccion.parametro1 = 0;
+
+    if (param2 != NULL)
+      instruccion.parametro2 = atoi(param2);
+    else
+      instruccion.parametro2 = 0;
+    
+  
+    list_add_in_index(lista_instrucciones, i, instruccion);
+    i+=1;
+  }
+
+  return lista_instrucciones;
+}
+
+int* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones)
+{ 
+  int* ubicacion_proceso = malloc(tamanio_proceso);
+  t_instruccion instruccion;
+  if (ubicacion_proceso == NULL) {
+      log_error(logger, "Error al asignar memoria para el proceso.\n");
+      return NULL; 
+  }
+
+  int tamanio_lista = list_size(lista_instrucciones)
+  for(int i = 0; i < tamanio_lista; i+=1) {
+    instruccion = list_get(lista_instrucciones, i);
+    memcpy(ubicacion_proceso + i, instruccion, sizeof(t_instruccion)); 
+  }
+
+  return ubicacion_proceso;
+}
