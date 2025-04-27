@@ -15,7 +15,7 @@ typedef enum {
   BLOCKED,
   SUSP_BLOCKED,
   SUSP_READY,
-  EXIT
+  FINALIZADO
 } t_estado;
 
 typedef struct {

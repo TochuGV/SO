@@ -53,10 +53,10 @@ t_config* iniciar_config(char* config_name)
 
 
 //// PAQUETES - MENSAJES
-t_paquete* crear_paquete(void)
+t_paquete* crear_paquete(int cod_op) // Aca va el parametro de codop
 {
 	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = PAQUETE;
+	paquete->codigo_operacion = cod_op;
 	crear_buffer(paquete);
 	return paquete;
 }
@@ -68,54 +68,45 @@ void crear_buffer(t_paquete* paquete)
 	paquete->buffer->stream = NULL;
 }
 
-void paquete(int conexion)
-{
-	char* leido = NULL;
-	t_paquete* paquete;
-	leido = readline("> ");
-
-	while(strcmp(leido, "exit") != 0){
-    paquete = crear_paquete();
-		agregar_a_paquete(paquete, leido, strlen(leido) + 1);
-    enviar_paquete(paquete, conexion);
-    free(leido);
-    leido = readline("> ");
-  }
-}
-
+// Esta funcion se podria llamar "llenar el buffer del paquete"
 void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio)
 {
+  // En la direccion de memoria donde esta el stream del buffer haces
+  // un espacio del tamaño que ocupe lo que estes empaquetando
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
 
 	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
 	memcpy(paquete->buffer->stream + paquete->buffer->size + sizeof(int), valor, tamanio);
 
-	paquete->buffer->size += tamanio + sizeof(int);
-}
-
-void* serializar_paquete(t_paquete* paquete, int bytes)
-{
-	void * magic = malloc(bytes);
-	int desplazamiento = 0;
-
-	memcpy(magic + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
-	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, &(paquete->buffer->size), sizeof(int));
-	desplazamiento+= sizeof(int);
-	memcpy(magic + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
-	desplazamiento+= paquete->buffer->size;
-
-	return magic;
+	paquete->buffer->size += tamanio + sizeof(int); // Actualiza el tamaño del buffer
 }
 
 void enviar_paquete(t_paquete* paquete, int socket_cliente)
 {
+  // Tamaño del buffer y luego 2 veces int, 1 por la variable "int size",
+  // y otra por la variable op_code, que es un int
 	int bytes = paquete->buffer->size + 2*sizeof(int);
+
 	void* a_enviar = serializar_paquete(paquete, bytes);
 
 	send(socket_cliente, a_enviar, bytes, 0);
   eliminar_paquete(paquete);
 	free(a_enviar);
+}
+
+void* serializar_paquete(t_paquete* paquete, int bytes)
+{
+	void * a_enviar = malloc(bytes);
+	int desplazamiento = 0;
+
+	memcpy(a_enviar + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
+	desplazamiento+= sizeof(int);
+	memcpy(a_enviar + desplazamiento, &(paquete->buffer->size), sizeof(int));
+	desplazamiento+= sizeof(int);
+	memcpy(a_enviar + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
+	desplazamiento+= paquete->buffer->size;
+
+	return a_enviar;
 }
 
 void eliminar_paquete(t_paquete* paquete)
@@ -126,7 +117,7 @@ void eliminar_paquete(t_paquete* paquete)
 } 
 
 void* serializar_mensaje(char* mensaje, int bytes)
-{
+{ //esta funcion nose porq existe, no la usa nadie
   void * magic = malloc(bytes);
   int desplazamiento = 0;
   
@@ -164,11 +155,11 @@ t_list* recibir_paquete(int socket_cliente)
 	int tamanio;
 
 	buffer = recibir_buffer(&size, socket_cliente);
-	while(desplazamiento < size)
+	while(desplazamiento < size) //ser recorre todo el buffer
 	{
 		memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
 		desplazamiento+=sizeof(int);
-		char* valor = malloc(tamanio);
+		void* valor = malloc(tamanio);
 		memcpy(valor, buffer+desplazamiento, tamanio);
 		desplazamiento+=tamanio;
 		list_add(valores, valor);
@@ -196,6 +187,20 @@ void recibir_mensaje(int socket_cliente)
 	free(buffer);
 }
 
+void paquete(int conexion)
+{
+	char* leido = NULL;
+	t_paquete* paquete;
+	leido = readline("> ");
+
+	while(strcmp(leido, "exit") != 0){
+    paquete = crear_paquete(PAQUETE);
+		agregar_a_paquete(paquete, leido, strlen(leido) + 1);
+    enviar_paquete(paquete, conexion);
+    free(leido);
+    leido = readline("> ");
+  }
+}
 
 //// LISTAS
 void agregar_puertos_a_lista(int header, t_config* config, t_list* lista)
@@ -386,6 +391,9 @@ void* iniciar_conexion(void* arg)
         lista = recibir_paquete(socket_cliente);
         list_iterate(lista, (void*) iterator);
         break;
+      case PATH:
+        void* ubicacion_proceso = recibir_path(socket_cliente);
+        log_debug(logger,"Ubicacion del proceso en memoria: %p", ubicacion_proceso);
       case -1:
         log_error(logger, "El cliente se desconectó. Terminando servidor...");
         pthread_exit((void*)EXIT_FAILURE);
@@ -444,7 +452,7 @@ int conectarse_a(int header_servidor, int header_cliente, t_config* config)
         } else {
           if (enviar_handshake_desde(KERNEL, conexion) == 0) {
           log_info(logger, "Conexión con módulo Memoria exitosa!");
-          paquete(conexion);
+          //paquete(conexion);
           break;
           } else {
           log_error(logger, "Error: La conexión con el servidor falló.");
@@ -533,7 +541,7 @@ void terminar_programa(int conexion, t_log* logger, t_config* config)
 	config_destroy(config);	
 }
 
-//// KERNEL
+//// MEMORIA
 t_list* leer_archivo_instrucciones(char* path)
 {
   FILE *file = fopen(path, "r");
@@ -542,30 +550,29 @@ t_list* leer_archivo_instrucciones(char* path)
     return NULL;
   }
 
-  t_list* lista_intrucciones = list_create();
+  t_list* lista_instrucciones = list_create();
   t_instruccion instruccion;
   char linea[256];
-  int i;
 
   while ((fgets(linea, sizeof(linea), file) != NULL)) {
     char* token = strtok(linea, " \n");
 
     if (strcmp(token, "NOOP") == 0)
-      intruccion.tipo = NOOP;
-    else (strcmp(token, "WRITE") == 0)
-      intruccion.tipo = WRITE;
-    else (strcmp(token, "READ") == 0)
-      intruccion.tipo = READ;
-    else (strcmp(token, "GOTO") == 0)
-      intruccion.tipo = GOTO;
-    else (strcmp(token, "IO") == 0)
-      intruccion.tipo = IO;
-    else (strcmp(token, "INIT_PROC") == 0)
-      intruccion.tipo = INIT_PROC;
-    else (strcmp(token, "DUMP_MEMORY") == 0)
-      intruccion.tipo = DUMP_MEMORY;
-    else (strcmp(token, "EXIT") == 0)
-      intruccion.tipo = EXIT;
+      instruccion.tipo = NOOP;
+    else if(strcmp(token, "WRITE") == 0)
+      instruccion.tipo = WRITE;
+    else if(strcmp(token, "READ") == 0)
+      instruccion.tipo = READ;
+    else if(strcmp(token, "GOTO") == 0)
+      instruccion.tipo = GOTO;
+    else if(strcmp(token, "INSTRUCCION_IO") == 0)
+      instruccion.tipo = INSTRUCCION_IO;
+    else if(strcmp(token, "INIT_PROC") == 0)
+      instruccion.tipo = INIT_PROC;
+    else if(strcmp(token, "DUMP_MEMORY") == 0)
+      instruccion.tipo = DUMP_MEMORY;
+    else if(strcmp(token, "EXIT") == 0)
+      instruccion.tipo = EXIT;
 
     char* param1 = strtok(NULL, " \n");
     char* param2 = strtok(NULL, " \n");
@@ -580,28 +587,65 @@ t_list* leer_archivo_instrucciones(char* path)
     else
       instruccion.parametro2 = 0;
     
-  
-    list_add_in_index(lista_instrucciones, i, instruccion);
-    i+=1;
+    t_instruccion* nueva_instruccion = malloc(sizeof(t_instruccion));
+    *nueva_instruccion = instruccion;
+
+    list_add(lista_instrucciones, nueva_instruccion);
   }
 
   return lista_instrucciones;
 }
 
-int* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones)
+void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones)
 { 
-  int* ubicacion_proceso = malloc(tamanio_proceso);
-  t_instruccion instruccion;
+  void* ubicacion_proceso = malloc(tamanio_proceso);
+  t_instruccion* instruccion;
   if (ubicacion_proceso == NULL) {
       log_error(logger, "Error al asignar memoria para el proceso.\n");
       return NULL; 
   }
 
-  int tamanio_lista = list_size(lista_instrucciones)
+  int tamanio_lista = list_size(lista_instrucciones);
   for(int i = 0; i < tamanio_lista; i+=1) {
     instruccion = list_get(lista_instrucciones, i);
-    memcpy(ubicacion_proceso + i, instruccion, sizeof(t_instruccion)); 
+    log_debug(logger,"Instruccion: %d, Parametro: %d", instruccion->tipo,instruccion->parametro1);
+    memcpy(ubicacion_proceso + i * sizeof(t_instruccion), instruccion, sizeof(t_instruccion)); 
   }
 
   return ubicacion_proceso;
+}
+
+void* recibir_path(int socket_cliente)
+{
+  t_list* valores = recibir_paquete(socket_cliente);
+
+  uint32_t longitud_path = *(int32_t*)list_get(valores, 0); // Primero necesitados la longitud del path para poder alojarlo en memoria
+  char* path = malloc(longitud_path);
+  memcpy(path, list_get(valores, 1), longitud_path); //ahora si guardamos el path en la variable path
+
+  uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2); // y aca se guarda el tamaño del proceso
+
+  log_debug(logger,"Path recibido: %s",path);
+  
+  t_list* lista_instrucciones = leer_archivo_instrucciones(path);
+  void* ubicacion_proceso = ubicar_proceso_en_memoria(tamanio_proceso,lista_instrucciones);
+
+  return ubicacion_proceso;
+}
+
+
+//// KERNEL
+void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente)
+{
+  t_paquete* paquete = crear_paquete(PATH);
+  uint32_t longitud_path = strlen(path) + 1;
+  agregar_a_paquete(paquete, &longitud_path, sizeof(uint32_t));   // Enviar la longitud
+  agregar_a_paquete(paquete, path, longitud_path);            // Enviar el contenido del path
+  agregar_a_paquete(paquete, &tamanio_proceso, sizeof(tamanio_proceso));
+
+  enviar_paquete(paquete, socket_cliente);
+
+  log_info(logger,"Path enviado a memoria!");
+
+  return NULL;
 }

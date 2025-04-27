@@ -1,12 +1,13 @@
 #ifndef INSTRUCCION_H_
 #define INSTRUCCION_H_
 
+#include "./utils/utils.h"
 typedef enum {
 	NOOP,
 	WRITE,
 	READ,
 	GOTO,
-	IO,
+	INSTRUCCION_IO,
 	INIT_PROC,
 	DUMP_MEMORY,
 	EXIT

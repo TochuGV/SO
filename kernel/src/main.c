@@ -17,15 +17,14 @@ int main(int argc, char* argv[])
   // Intenta conectarse con memoria y si falla continua funcionando como servidor
   int conexion = conectarse_a(MEMORIA, KERNEL, config);
 
+  // Le envia el proceso a ejecutar a memoria
+  char* path = argv[1];
+  int32_t tamanio_proceso = atoi(argv[2]);
+  enviar_proceso_a_memoria(path,tamanio_proceso,conexion);
+
   pthread_join(thread_conexiones, NULL);
 
 
-  //esto va en memoria
-  char* path = argv[1];
-  t_list* lista_instrucciones = leer_archivo_instrucciones(path);
-
-  int tamanio_proceso = atoi(argv[2]);
-  int* ubicacion_proceso = ubicar_proceso_en_memoria(tamanio_proceso, lista lista_instrucciones);
 
   terminar_programa(conexion, logger, config);
 

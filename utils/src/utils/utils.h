@@ -25,7 +25,8 @@ typedef enum
 {
 	MENSAJE,
 	PAQUETE,
-  HANDSHAKE
+  HANDSHAKE,
+  PATH
 } op_code;
 
 typedef enum
@@ -65,7 +66,7 @@ t_config* iniciar_config(char*);
 
 
 //// PAQUETES - MENSAJES
-t_paquete* crear_paquete(void);
+t_paquete* crear_paquete(int);
 void crear_buffer(t_paquete*);
 void paquete(int);
 void agregar_a_paquete(t_paquete*, void*, int);
@@ -95,6 +96,15 @@ void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
 void liberar_conexion(int);
 
+//// MEMORIA
+
+t_list* leer_archivo_instrucciones(char* path);
+void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones);
+void* recibir_path(int socket_cliente);
+
+
+//// KERNEL
+void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente);
 
 //// FINALIZAR
 void terminar_programa(int, t_log*, t_config*);
