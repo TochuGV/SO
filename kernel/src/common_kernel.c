@@ -1,8 +1,7 @@
-#include "pcb.h"
-#include <stdlib.h>
-#include <string.h>
+#include "common_kernel.h"
 
 int contadorPid = 0;
+const uint32_t CANTIDAD_ESTADOS = 7;
 
 t_pcb* crear_pcb(){
   t_pcb* pcb = malloc(sizeof(t_pcb));
@@ -74,3 +73,18 @@ void* serializar_mensaje(char* mensaje, int bytes)
   return magic;
 }
 */
+
+void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente)
+{
+  t_paquete* paquete = crear_paquete(PATH);
+  uint32_t longitud_path = strlen(path) + 1;
+  agregar_a_paquete(paquete, &longitud_path, sizeof(uint32_t));   // Enviar la longitud
+  agregar_a_paquete(paquete, path, longitud_path);            // Enviar el contenido del path
+  agregar_a_paquete(paquete, &tamanio_proceso, sizeof(tamanio_proceso));
+
+  enviar_paquete(paquete, socket_cliente);
+
+  log_info(logger,"Path enviado a memoria!");
+
+  return NULL;
+}

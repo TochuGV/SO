@@ -1,2 +1,0 @@
-NOOP 4
-EXIT 

@@ -18,15 +18,14 @@
 #include<commons/log.h>
 #include<pthread.h>
 
-#include<instruccion/instruccion.h>
 
 //// ESTRUCTURAS - ENUMERADORES
 typedef enum
 {
 	MENSAJE,
 	PAQUETE,
-  HANDSHAKE,
-  PATH
+  PATH,
+  SYSCALL
 } op_code;
 
 typedef enum
@@ -48,6 +47,24 @@ typedef struct
 	op_code codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
+
+typedef enum {
+	NOOP,
+	WRITE,
+	READ,
+	GOTO,
+	INSTRUCCION_IO,
+	INIT_PROC,
+	DUMP_MEMORY,
+	EXIT
+} t_tipo_instruccion;
+
+
+typedef struct {
+    t_tipo_instruccion tipo;
+    uint32_t parametro1;
+    uint32_t parametro2;
+} t_instruccion;
 
 
 //// VARIABLES GLOBALES
@@ -96,19 +113,8 @@ void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
 void liberar_conexion(int);
 
-//// MEMORIA
-
-t_list* leer_archivo_instrucciones(char* path);
-void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones);
-void* recibir_path(int socket_cliente);
-
-
-//// KERNEL
-void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente);
-
 //// FINALIZAR
 void terminar_programa(int, t_log*, t_config*);
-
 
 
 #endif /* UTILS_H_ */
