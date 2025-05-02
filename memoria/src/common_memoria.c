@@ -1,5 +1,52 @@
 #include "common_memoria.h"
 
+int conexion_kernel;
+
+void* conectar_kernel(void* arg) 
+{
+  char* puerto = (char*) arg;
+  int socket_kernel = iniciar_conexion(puerto);
+  if (socket_kernel == -1)
+  pthread_exit(NULL);
+
+  pthread_t hilo_atender_kernel;
+  pthread_create(&hilo_atender_kernel, NULL, atender_kernel, &socket_kernel);
+  pthread_join(hilo_atender_kernel,NULL);
+
+  return NULL;
+}
+
+void* atender_kernel(void* arg)
+{
+  int conexion_kernel = *(int*)arg;
+  if (recibir_handshake_de(KERNEL, conexion_kernel) == -1) {
+    pthread_exit((void*)EXIT_FAILURE);
+  } else {
+
+    t_list* lista;
+
+    while (1) {
+      int cod_op = recibir_operacion(conexion_kernel);
+      switch (cod_op) {
+      case PAQUETE:
+        lista = recibir_paquete(conexion_kernel);
+        list_iterate(lista, (void*) iterator);
+        break;
+      case PATH:
+        void* ubicacion_proceso = recibir_path(conexion_kernel);
+        log_debug(logger,"Ubicacion del proceso en memoria: %p", ubicacion_proceso);
+      case -1:
+        log_error(logger, "El cliente se desconectó. Terminando servidor...");
+        pthread_exit((void*)EXIT_FAILURE);
+      default:
+        log_warning(logger,"Operación desconocida. No quieras meter la pata.");
+        break;
+      }
+    }
+    return NULL;
+  }
+}
+
 t_list* leer_archivo_instrucciones(char* path)
 {
   FILE *file = fopen(path, "r");
