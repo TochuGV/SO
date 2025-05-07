@@ -91,26 +91,23 @@ void* atender_io(void* arg)
   }
 }
 
-int contadorPid = 0;
-const uint32_t CANTIDAD_ESTADOS = 7;
+t_pcb* crear_pcb(uint32_t pid){
+  t_pcb* nuevo_pcb = malloc(sizeof(t_pcb));
+  if(!nuevo_pcb) return NULL;
 
-t_pcb* crear_pcb(){
-  t_pcb* pcb = malloc(sizeof(t_pcb));
-  if(!pcb) return NULL;
+  nuevo_pcb->pid = pid;
+  nuevo_pcb->pc = 0;
 
-  pcb->pid = contadorPid++;
-  pcb->pc = 0;
-  pcb->me = calloc(CANTIDAD_ESTADOS, sizeof(uint32_t));
-  pcb->mt = calloc(CANTIDAD_ESTADOS, sizeof(uint32_t));
+  for(int i = 0; i < CANTIDAD_ESTADOS; i++){
+    nuevo_pcb->me[i] = 0;
+    nuevo_pcb->mt[i] = 0;
+  }
 
-  return pcb;
+  return nuevo_pcb;
 };
 
 void destruir_pcb(t_pcb* pcb){
-  if(!pcb) return;
-
-  free(pcb->me);
-  free(pcb->mt);
+  if(!pcb) return; //Revisar validación acá
   free(pcb);
 }
 
@@ -122,6 +119,10 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   Se pueden calcular los bytes antes de llamar a la función, o calcularlos dentro de la función o crear otra.
   Si se calculan antes, el parámetro es 'int bytes', sino tendría que ser 'int* bytes'.
+
+  Ejemplo de uso:
+    int bytes = sizeof(uint32_t) * (2 + CANTIDAD_ESTADOS * 2);
+    void* buffer = serializar_pcb(pcb, bytes);
   */
 
   void* magic = malloc(bytes);
@@ -129,12 +130,15 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   memcpy(magic + desplazamiento, &(pcb->pid), sizeof(uint32_t));
   desplazamiento += sizeof(uint32_t);
+  
   memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
   desplazamiento += sizeof(uint32_t);
-  memcpy(magic + desplazamiento, &(pcb->me), sizeof(uint32_t) * 7);
-  desplazamiento += sizeof(uint32_t) * 7;
-  memcpy(magic + desplazamiento, &(pcb->mt), sizeof(uint32_t) * 7);
-  desplazamiento += sizeof(uint32_t) * 7;
+  
+  memcpy(magic + desplazamiento, pcb->me, sizeof(uint32_t) * CANTIDAD_ESTADOS);
+  desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
+  
+  memcpy(magic + desplazamiento, pcb->mt, sizeof(uint32_t) * CANTIDAD_ESTADOS);
+  desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
 
   return magic;
 }
@@ -142,14 +146,22 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente)
 {
   t_paquete* paquete = crear_paquete(PATH);
-  uint32_t longitud_path = strlen(path) + 1;
-  agregar_a_paquete(paquete, &longitud_path, sizeof(uint32_t));// Enviar la longitud
-  agregar_a_paquete(paquete, path, longitud_path);            // Enviar el contenido del path
-  agregar_a_paquete(paquete, &tamanio_proceso, sizeof(tamanio_proceso));
+  uint32_t longitud_path;
+  if(path != NULL){
+    longitud_path = strlen(path) + 1;
+    agregar_a_paquete(paquete, &longitud_path, sizeof(uint32_t));// Enviar la longitud
+    agregar_a_paquete(paquete, path, longitud_path);            // Enviar el contenido del path
+    agregar_a_paquete(paquete, &tamanio_proceso, sizeof(tamanio_proceso));
 
-  enviar_paquete(paquete, socket_cliente);
+    enviar_paquete(paquete, socket_cliente);
 
-  log_info(logger,"Path enviado a memoria!");
+    log_info(logger,"Path enviado a memoria!");
+  } else {
+    longitud_path = 0;
+    agregar_a_paquete(paquete, &longitud_path, sizeof(uint32_t));
+    log_warning(logger, "Path es NULL, temporalmente. Se envía como longitud '0'");
+    enviar_paquete(paquete, socket_cliente);
+  }
 
   return NULL;
 }

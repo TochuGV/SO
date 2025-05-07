@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
   int conexion_memoria = crear_conexion(ip_memoria, puerto_memoria, KERNEL);
   if (handshake_kernel(conexion_memoria) == 0)
     enviar_proceso_a_memoria(path, tamanio_proceso, conexion_memoria);
-  
+
   pthread_join(hilo_conexion_cpu_dispatch, NULL);
   //pthread_join(hilo_conexion_cpu_interrupt, NULL);
   pthread_join(hilo_conexion_io, NULL);
