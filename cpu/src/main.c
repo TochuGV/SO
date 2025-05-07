@@ -17,9 +17,7 @@ int main(int argc, char* argv[])
   //char* puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
 
   int conexion_kernel_dispatch = crear_conexion(ip_kernel, puerto_kernel_dispatch, CPU);
-
   //int conexion_kernel_interrupt = crear_conexion(ip_kernel, puerto_kernel_interrupt, CPU);
-
   //int conexion_memoria = crear_conexion(ip_memoria, puerto_memoria, CPU);
 
   if (handshake_cpu(identificador_cpu, conexion_kernel_dispatch) == 0) {
