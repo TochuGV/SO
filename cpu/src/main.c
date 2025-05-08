@@ -7,27 +7,26 @@ int main(int argc, char* argv[])
   
   config = iniciar_config("cpu.config");
 
-  char* ip_kernel = config_get_string_value(config, "IP_KERNEL");
-  //char* ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-
   int32_t identificador_cpu = atoi(argv[1]);
 
-  char* puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
-  //char* puerto_kernel_interrupt = config_get_string_value(config, "PUERTO_KERNEL_INTERRUPT");
-  //char* puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
-
-  int conexion_kernel_dispatch = crear_conexion(ip_kernel, puerto_kernel_dispatch, CPU);
+  //int conexion_kernel_dispatch = crear_conexion(ip_kernel, puerto_kernel_dispatch, CPU);
   //int conexion_kernel_interrupt = crear_conexion(ip_kernel, puerto_kernel_interrupt, CPU);
   //int conexion_memoria = crear_conexion(ip_memoria, puerto_memoria, CPU);
 
-  if (handshake_cpu(identificador_cpu, conexion_kernel_dispatch) == 0) {
-    paquete(conexion_kernel_dispatch);
+  t_cpu_args* args = malloc(sizeof(t_cpu_args));
+
+  pthread_t cpu_thread;
+  pthread_create(&cpu_thread, NULL, conexiones_modulos, (void*) args);
+
+
+  if (handshake_cpu(identificador_cpu, args->socket_dispatch) == 0) {
+    paquete(args->socket_dispatch);
   }
 
+  void* dispatch = manejar_dispatch(args);
   
   //terminar_programa(conexion, logger, config);
+  free (dispatch);
 
   return EXIT_SUCCESS;
-
 }
-

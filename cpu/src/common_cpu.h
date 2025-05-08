@@ -3,11 +3,27 @@
 
 #include "./utils/utils.h"
 
-int32_t handshake_cpu(int, int);
+typedef struct {
+    char* ip_kernel;
+    char* ip_memoria;
+    char* puerto_kernel_dispatch;
+    char* puerto_kernel_interrupt;
+    char* puerto_memoria;
+    int socket_dispatch;
+    int socket_interrupt;
+    int socket_memoria;
+} t_cpu_args;
 
-void* manejar_dispatch(void* arg):
-t_pcb* recibir_pcb(int puerto_kernel_dispatch);
-t_pcb* deserializar_pcb(void* buffer);
-void* ciclo_de_instruccion(pcb);
+void* conexiones_modulos(void* arg);
+
+int32_t handshake_cpu(int, int);
+int32_t handshake_memoria(int32_t, int);
+
+void* manejar_dispatch(t_cpu_args*);
+t_pcb* recibir_pcb(int);
+t_pcb* deserializar_pcb(void*);
+void* serializar_pcb(t_pcb*);
+void* enviar_pc_a_memoria(t_pcb*, int);
+//void* ciclo_de_instruccion(pcb);
 
 #endif /* COMMON_CPU_H_ */
