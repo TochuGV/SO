@@ -1,4 +1,4 @@
-#include "common_kernel.h"
+#include "common.h"
 
 int conexion_cpu_dispatch;
 int conexion_cpu_interrupt;
@@ -13,7 +13,7 @@ void* conectar_cpu_dispatch(void* arg)
 
   pthread_t hilo_atender_cpu_dispatch;
   pthread_create(&hilo_atender_cpu_dispatch, NULL, atender_cpu_dispatch, &socket_cpu_dispatch);
-  pthread_join(hilo_atender_cpu_dispatch,NULL);
+  pthread_join(hilo_atender_cpu_dispatch, NULL);
 
   return NULL;
 }
@@ -109,7 +109,7 @@ t_pcb* crear_pcb(uint32_t pid){
 void destruir_pcb(t_pcb* pcb){
   if(!pcb) return; //Revisar validación acá
   free(pcb);
-}
+};
 
 void* serializar_pcb(t_pcb* pcb, int bytes){
   /*
@@ -141,7 +141,7 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
   desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
 
   return magic;
-}
+};
 
 void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente)
 {
@@ -171,8 +171,11 @@ int32_t handshake_kernel(int conexion_memoria)
   int32_t handshake = KERNEL;
   int32_t resultado;
 
+  log_info(logger, "Enviando handshake a Memoria...");
   send(conexion_memoria, &handshake, sizeof(int32_t), 0);
-  recv(conexion_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
+  log_info(logger, "Esperando respuesta de Memoria...");
+  recv(conexion_memoria, &resultado, sizeof(int32_t), 0);
+  log_info(logger, "Respuesta recibida de handshake");
   if (resultado == -1) {
     log_error(logger, "Error: La conexión con Memoria falló. Finalizando conexión...");
     return -1;
