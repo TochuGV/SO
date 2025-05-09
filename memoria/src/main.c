@@ -3,15 +3,13 @@
 int main(int argc, char* argv[]) 
 {
   inicializar_memoria();
-	
-  pthread_t hilo_conexion_kernel;
-  //pthread_t hilo_conexion_cpu;
   
-  pthread_create(&hilo_conexion_kernel, NULL, conectar_kernel, NULL);
-  //pthread_create(&hilo_conexion_cpu, NULL, conectar_cpu, puerto_escucha);
-
-  pthread_join(hilo_conexion_kernel,NULL);
-  //pthread_join(hilo_conexion_cpu,NULL);
+  while (1) {
+    int* cliente_memoria = malloc(sizeof(int));
+    *cliente_memoria = accept(servidor_memoria, NULL, NULL);
+    pthread_t hilo_atender;
+    pthread_create(&hilo_atender, NULL, atender_cliente, cliente_memoria);
+  }
 
   terminar_memoria();
 

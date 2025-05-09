@@ -8,28 +8,34 @@
 
 // CONEXIONES
 extern char* puerto_escucha;
-extern int conexion_kernel;
-//extern int conexion_cpu;
+extern int servidor_memoria;
+
 
 // MEMORIA USUARIO
 extern uint32_t tamanio_memoria;
 extern void* memoria;
 extern uint32_t memoria_usada;
+extern char* path_instrucciones;
 
 
 ////////////////////////////////////////// FUNCIONES //////////////////////////////////////////
 
 // CONEXIONES
-void inicializar_memoria(void);
-void* atender_kernel(void*);
-void* conectar_kernel(void*);
+void* atender_cliente(void* arg);
+int recibir_handshake_memoria(int cliente_memoria);
 
 // KERNEL
+void* atender_kernel(void*);
 bool verificar_espacio_memoria(uint32_t tamanio_proceso);
-void* recibir_y_ubicar_proceso(void);
+void* recibir_y_ubicar_proceso(int);
 t_list* leer_archivo_instrucciones(char* path);
 void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones);
 
+// CPU
+void* atender_cpu(void*);
+
+// UTILS
+void inicializar_memoria(void);
 void terminar_memoria(void);
 
 #endif /* COMMON_MEMORIA_H_ */
