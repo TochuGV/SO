@@ -8,6 +8,8 @@ char* path_instrucciones;
 int servidor_memoria;
 char* puerto_escucha;
 
+t_list* lista_pid_procesos;
+
 void inicializar_memoria(void)
 {
   config = iniciar_config("memoria.config");
@@ -22,6 +24,8 @@ void inicializar_memoria(void)
   memoria_usada = 0;
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
+
+  lista_pid_procesos = list_create();
 }
 
 // Para memoria nomas necesito saber si la conexion es Kernel o de CPU, por eso un handshake tan basico
@@ -102,8 +106,7 @@ void* atender_kernel(void* arg)
         //recv(cliente_kernel,&tamanio_proceso,sizeof(int),MSG_WAITALL);
         
         //if (verificar_espacio_memoria(tamanio_proceso)) {
-          void* ubicacion_proceso = recibir_y_ubicar_proceso(cliente_kernel);
-          log_debug(logger,"Ubicacion del proceso en memoria: %p", ubicacion_proceso);
+          recibir_y_ubicar_proceso(cliente_kernel);
           //send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
         //}
         //else
@@ -111,7 +114,7 @@ void* atender_kernel(void* arg)
         break;
         
       case -1:
-        log_error(logger, "El cliente se desconectó. Terminando servidor...");
+        log_error(logger, "Kernel se desconectó. Terminando servidor...");
         pthread_exit((void*)EXIT_FAILURE);
       default:
         log_warning(logger,"Operación desconocida. No quieras meter la pata.");
@@ -134,16 +137,36 @@ void* atender_cpu(void* arg)
         list_iterate(lista, (void*) iterator);
         break;
       case SOLICITUD_INSTRUCCION:
-        // desarrollar
+        recibir_solicitud_instruccion(cliente_cpu);
         break;
       case -1:
-        log_error(logger, "El cliente se desconectó. Terminando servidor...");
+        log_error(logger, "CPU se desconectó. Terminando servidor...");
         pthread_exit((void*)EXIT_FAILURE);
       default:
         log_warning(logger,"Operación desconocida. No quieras meter la pata.");
         break;
       }
     }
+  return NULL;
+}
+
+void* recibir_solicitud_instruccion(int cliente_cpu)
+{
+  uint32_t pid;
+  t_pid_proceso* ubicacion_pid;
+
+  recv(cliente_cpu,&pid,sizeof(int32_t),MSG_WAITALL);
+
+  for(int i = 0; i<list_size(lista_pid_procesos);i++) {
+    ubicacion_pid = list_get(lista_pid_procesos,i);
+    if (ubicacion_pid->pid == pid) {
+      send(cliente_cpu, &ubicacion_pid->ubicacion, sizeof(ubicacion_pid->ubicacion), 0);
+      log_debug(logger,"Ubicacion del proceso %d enviada a CPU.",pid);
+      return NULL;
+    }
+  }
+
+  log_warning(logger,"Error al encontrar el proceso que CPU solicita.");
   return NULL;
 }
 
@@ -238,7 +261,7 @@ void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones
   return ubicacion_proceso;
 }
 
-void* recibir_y_ubicar_proceso(int cliente_kernel)
+void recibir_y_ubicar_proceso(int cliente_kernel)
 {
   t_list* valores = recibir_paquete(cliente_kernel);
 
@@ -246,16 +269,21 @@ void* recibir_y_ubicar_proceso(int cliente_kernel)
   uint32_t longitud_path = *(int32_t*)list_get(valores, 0); // Primero necesitados la longitud del path para poder alojarlo en memoria
   char* path = malloc(longitud_path);
   memcpy(path, list_get(valores, 1), longitud_path); //ahora si guardamos el path en la variable path
-  
 
   uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2); // y aca se guarda el tamaño del proceso
+
+  uint32_t pid = *(uint32_t*)list_get(valores, 3);
 
   log_debug(logger,"Proceso recibido: %s",path);
   
   t_list* lista_instrucciones = leer_archivo_instrucciones(path);
   void* ubicacion_proceso = ubicar_proceso_en_memoria(tamanio_proceso,lista_instrucciones);
 
-  return ubicacion_proceso;
+  t_pid_proceso* ubicacion_pid = malloc(sizeof(t_pid_proceso));
+  ubicacion_pid->pid = pid;
+  ubicacion_pid->ubicacion = ubicacion_proceso;
+
+  list_add(lista_pid_procesos,ubicacion_pid);
 }
 
 void terminar_memoria(void)
