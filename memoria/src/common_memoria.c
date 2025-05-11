@@ -8,7 +8,7 @@ char* path_instrucciones;
 int servidor_memoria;
 char* puerto_escucha;
 
-t_list* lista_pid_procesos;
+t_list* lista_procesos;
 
 void inicializar_memoria(void)
 {
@@ -25,7 +25,7 @@ void inicializar_memoria(void)
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
-  lista_pid_procesos = list_create();
+  lista_procesos = list_create();
 }
 
 // Para memoria nomas necesito saber si la conexion es Kernel o de CPU, por eso un handshake tan basico
@@ -98,19 +98,14 @@ void* atender_kernel(void* arg)
 
       case SOLICITUD_MEMORIA:
 
-        // ESTO ANDA, esta comentado nomas porque kernel no tiene esto desarrollado
+        int32_t resultado_ok = 0;
+        int32_t resultado_error = -1;
 
-        //uint32_t tamanio_proceso;
-        //int32_t resultado_ok = 0;
-        //int32_t resultado_error = -1;
-        //recv(cliente_kernel,&tamanio_proceso,sizeof(int),MSG_WAITALL);
-        
-        //if (verificar_espacio_memoria(tamanio_proceso)) {
-          recibir_y_ubicar_proceso(cliente_kernel);
-          //send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
-        //}
-        //else
-          //send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+        if (recibir_y_ubicar_proceso(cliente_kernel) == 0) {
+          send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
+        }
+        else
+          send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
         break;
         
       case -1:
@@ -153,15 +148,29 @@ void* atender_cpu(void* arg)
 void* recibir_solicitud_instruccion(int cliente_cpu)
 {
   uint32_t pid;
-  t_pid_proceso* ubicacion_pid;
+  uint32_t pc;
+  t_proceso* proceso;
+  t_instruccion* instruccion;
 
   recv(cliente_cpu,&pid,sizeof(int32_t),MSG_WAITALL);
+  recv(cliente_cpu,&pc,sizeof(int32_t),MSG_WAITALL);
 
-  for(int i = 0; i<list_size(lista_pid_procesos);i++) {
-    ubicacion_pid = list_get(lista_pid_procesos,i);
-    if (ubicacion_pid->pid == pid) {
-      send(cliente_cpu, &ubicacion_pid->ubicacion, sizeof(ubicacion_pid->ubicacion), 0);
-      log_debug(logger,"Ubicacion del proceso %d enviada a CPU.",pid);
+  for(int i = 0; i<list_size(lista_procesos);i++) {
+
+    proceso = list_get(lista_procesos,i);
+
+    if (proceso->pid == pid) {
+
+      if (pc >= list_size(proceso->lista_instrucciones)) {
+      log_error(logger, "El PC %d excede la cantidad de instrucciones del proceso %d.", pc, pid);
+      return NULL;
+      }
+
+      instruccion = list_get(proceso->lista_instrucciones,pc);
+      send(cliente_cpu,&instruccion,sizeof(t_instruccion),0);
+
+      log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
+
       return NULL;
     }
   }
@@ -234,57 +243,36 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
   return lista_instrucciones;
 }
 
-void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones)
-{ 
-  int tamanio_lista = list_size(lista_instrucciones);
-
-  if (tamanio_lista == 0) {
-    log_error(logger, "Error: lista de instrucciones vacia.\n");
-    return NULL;
-  }
-
-  void* ubicacion_proceso = malloc(tamanio_proceso);
-  if (ubicacion_proceso == NULL) {
-      log_error(logger, "Error al asignar memoria para el proceso.\n");
-      return NULL; 
-  }
-
-  t_instruccion* instruccion;
-  uint32_t tamanio_instruccion = sizeof(instruccion->tipo) + sizeof(instruccion->parametro1) + sizeof(instruccion->parametro2);
-
-  for(int i = 0; i < tamanio_lista; i+=1) {
-    instruccion = list_get(lista_instrucciones, i);
-    log_debug(logger,"Instruccion: %d, Parametro: %d", instruccion->tipo,instruccion->parametro1);
-    memcpy(ubicacion_proceso + i * tamanio_instruccion, instruccion, tamanio_instruccion); 
-  }
-
-  return ubicacion_proceso;
-}
-
-void recibir_y_ubicar_proceso(int cliente_kernel)
+int recibir_y_ubicar_proceso(int cliente_kernel)
 {
   t_list* valores = recibir_paquete(cliente_kernel);
 
+  uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2); 
 
-  uint32_t longitud_path = *(int32_t*)list_get(valores, 0); // Primero necesitados la longitud del path para poder alojarlo en memoria
-  char* path = malloc(longitud_path);
-  memcpy(path, list_get(valores, 1), longitud_path); //ahora si guardamos el path en la variable path
+  if (verificar_espacio_memoria(tamanio_proceso)) {
 
-  uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2); // y aca se guarda el tamaño del proceso
+    uint32_t longitud_path = *(int32_t*)list_get(valores, 0); 
+    char* path = malloc(longitud_path);
+    memcpy(path, list_get(valores, 1), longitud_path); 
 
-  uint32_t pid = *(uint32_t*)list_get(valores, 3);
 
-  log_debug(logger,"Proceso recibido: %s",path);
-  
-  t_list* lista_instrucciones = leer_archivo_instrucciones(path);
-  void* ubicacion_proceso = ubicar_proceso_en_memoria(tamanio_proceso,lista_instrucciones);
+    uint32_t pid = *(uint32_t*)list_get(valores, 3);
 
-  t_pid_proceso* ubicacion_pid = malloc(sizeof(t_pid_proceso));
-  ubicacion_pid->pid = pid;
-  ubicacion_pid->ubicacion = ubicacion_proceso;
+    log_debug(logger,"Proceso %s con pid %d recibido",path,pid);
 
-  list_add(lista_pid_procesos,ubicacion_pid);
+    t_proceso* proceso = malloc(sizeof(t_proceso));
+    proceso->pid = pid;
+    proceso->lista_instrucciones = leer_archivo_instrucciones(path);
+
+    list_add(lista_procesos,proceso);
+
+    return 0;
+  }
+
+  log_warning(logger,"No hay lugar en memoria para el proceso.");
+  return -1;
 }
+
 
 void terminar_memoria(void)
 {

@@ -16,6 +16,7 @@ extern uint32_t tamanio_memoria;
 extern void* memoria;
 extern uint32_t memoria_usada;
 extern char* path_instrucciones;
+extern t_list* lista_procesos;
 
 
 ////////////////////////////////////////// ESTRUCTURAS //////////////////////////////////////////
@@ -24,8 +25,8 @@ extern char* path_instrucciones;
 typedef struct
 {
   uint32_t pid;
-  void* ubicacion;
-} t_pid_proceso;
+  t_list* lista_instrucciones;
+} t_proceso;
 
 
 
@@ -38,9 +39,8 @@ int recibir_handshake_memoria(int cliente_memoria);
 // KERNEL
 void* atender_kernel(void*);
 bool verificar_espacio_memoria(uint32_t tamanio_proceso);
-void recibir_y_ubicar_proceso(int);
+int recibir_y_ubicar_proceso(int);
 t_list* leer_archivo_instrucciones(char* path);
-void* ubicar_proceso_en_memoria(int tamanio_proceso, t_list* lista_instrucciones);
 
 // CPU
 void* atender_cpu(void*);
