@@ -16,8 +16,7 @@ int main(int argc, char* argv[])
   int conexion_kernel = crear_conexion(ip_kernel, puerto_kernel, IO);
 
   if (handshake_io(nombre_io, conexion_kernel) == 0) {
-    paquete(conexion_kernel);
-    //atender_interrupcion();
+    atender_interrupcion(conexion_kernel);
   }
 
   terminar_programa(conexion_kernel, logger, config);
