@@ -9,6 +9,16 @@ int servidor_memoria;
 char* puerto_escucha;
 
 t_list* lista_procesos;
+char* NOMBRES_INSTRUCCIONES[] = {
+  "NOOP",
+  "WRITE",
+  "READ",
+  "GOTO",
+  "INSTRUCCION_IO",
+  "INIT_PROC",
+  "DUMP_MEMORY",
+  "EXIT"
+};
 
 void inicializar_memoria(void)
 {
@@ -36,6 +46,7 @@ void* atender_cliente(void* arg)
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
 
   if (cliente == KERNEL) {
+    log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente);
     pthread_create(&hilo_atender, NULL, atender_kernel, arg);
     pthread_detach(hilo_atender);
   }
@@ -167,7 +178,20 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
       }
 
       instruccion = list_get(proceso->lista_instrucciones,pc);
-      send(cliente_cpu,&instruccion,sizeof(t_instruccion),0);
+
+      t_tipo_instruccion tipo = instruccion->tipo;
+      uint32_t parametro1 = instruccion->parametro1;
+      uint32_t parametro2 = instruccion->parametro2;
+
+      log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%d  %d>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
+
+      t_paquete* paquete = crear_paquete(INSTRUCCION);
+
+      agregar_a_paquete(paquete, &tipo, sizeof(tipo));
+      agregar_a_paquete(paquete, &parametro1, sizeof(uint32_t));
+      agregar_a_paquete(paquete, &parametro2, sizeof(uint32_t));
+
+      enviar_paquete(paquete, cliente_cpu);
 
       log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
 
@@ -204,22 +228,12 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
   while ((fgets(linea, sizeof(linea), file) != NULL)) {
     char* token = strtok(linea, " \n");
 
-    if (strcmp(token, "NOOP") == 0)
-      instruccion.tipo = NOOP;
-    else if(strcmp(token, "WRITE") == 0)
-      instruccion.tipo = WRITE;
-    else if(strcmp(token, "READ") == 0)
-      instruccion.tipo = READ;
-    else if(strcmp(token, "GOTO") == 0)
-      instruccion.tipo = GOTO;
-    else if(strcmp(token, "INSTRUCCION_IO") == 0)
-      instruccion.tipo = INSTRUCCION_IO;
-    else if(strcmp(token, "INIT_PROC") == 0)
-      instruccion.tipo = INIT_PROC;
-    else if(strcmp(token, "DUMP_MEMORY") == 0)
-      instruccion.tipo = DUMP_MEMORY;
-    else if(strcmp(token, "EXIT") == 0)
-      instruccion.tipo = EXIT;
+    for(int indice_intruccion = 0; indice_intruccion < CANTIDAD_INSTRUCCIONES; indice_intruccion++) {
+      if (strcmp(token, NOMBRES_INSTRUCCIONES[indice_intruccion]) == 0) {
+        instruccion.tipo = indice_intruccion;
+        break;
+      }
+    }
 
     char* param1 = strtok(NULL, " \n");
     char* param2 = strtok(NULL, " \n");
@@ -265,6 +279,8 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     proceso->lista_instrucciones = leer_archivo_instrucciones(path);
 
     list_add(lista_procesos,proceso);
+
+    log_info(logger, "## PID: <%d> - Proceso Creado - Tamaño: <%d>",pid,tamanio_proceso);
 
     return 0;
   }

@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 ////////////////////////////////////////// VARIABLES EXTERNAS //////////////////////////////////////////
+#define CANTIDAD_INSTRUCCIONES 8
 
 // CONEXIONES
 extern char* puerto_escucha;
@@ -17,6 +18,7 @@ extern void* memoria;
 extern uint32_t memoria_usada;
 extern char* path_instrucciones;
 extern t_list* lista_procesos;
+extern char* NOMBRES_INSTRUCCIONES[CANTIDAD_INSTRUCCIONES];
 
 
 ////////////////////////////////////////// ESTRUCTURAS //////////////////////////////////////////
