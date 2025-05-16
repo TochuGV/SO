@@ -3,17 +3,22 @@
 
 #include "./utils/utils.h"
 
-void* atender_cpu_dispatch(void* arg);
-void* atender_cpu_interrupt(void* arg);
-void* atender_memoria(void* arg);
+typedef struct {
+    char* ip;
+    char* puerto;
+} datos_conexion_t;
 
-void* conectar_kernel_dispatch(void* arg);
-void* conectar_kernel_interrupt(void* arg);
-void* conectar_memoria(void* arg);
+extern char* ip_kernel;
+extern char* ip_memoria;
+extern char* puerto_kernel_dispatch;
+extern char* puerto_kernel_interrupt;
+extern char* puerto_memoria;
+extern datos_conexion_t* datos_dispatch;
+extern datos_conexion_t* datos_interrupt;
+extern datos_conexion_t* datos_memoria;
 
-int32_t handshake_kernel_dispatch(int32_t, int);
-int32_t handshake_kernel_interrupt(int32_t, int);
-int32_t handshake_memoria(int32_t, int);
+void iniciar_cpu();
+void* conectar(void*);
 
 void* manejar_dispatch(int, int);
 t_pcb* recibir_pcb(int);
