@@ -26,4 +26,6 @@ t_pcb* deserializar_pcb(void*);
 void* recibir_instruccion(t_pcb*, int);
 //void* ciclo_de_instruccion(pcb);
 
+void decode(t_instruccion instruccion, uint32_t pid);
+
 #endif /* COMMON_CPU_H_ */

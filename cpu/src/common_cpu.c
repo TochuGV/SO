@@ -58,18 +58,22 @@ void* conectar(void* arg) {
     return NULL;
 }
 
-void* manejar_dispatch(conexion_kernel_dispatch,conexion_memoria) {
+void* manejar_dispatch(int conexion_kernel_dispatch,int conexion_memoria) {
   // Paso 1: recibir el PCB desde kernel
   t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);
+  if (pcb == NULL) return NULL;
   
   // Paso 2: obtener la dirección de memoria de la instrucción
-  void* buffer = recibir_instruccion(pcb, conexion_memoria);
+   t_instruccion instruccion;
+   
+   recibir_instruccion(pcb, conexion_memoria);
   // Paso 3: ejecutar instrucción
+  decode(instruccion,pcb->pid);
   //ciclo_de_instruccion(pcb);
 
   // Paso 5: liberar memoria (si es necesario)
   free(pcb);
-  free(buffer);
+ 
 
   return NULL;
 }
@@ -107,11 +111,53 @@ t_pcb* deserializar_pcb(void* buffer) {
 void* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 
   send(conexion_memoria, &(pcb->pc), sizeof(uint32_t), 0);
+  send(conexion_memoria, & (pcb->pc), sizeof(uint32_t), 0);
 
   t_instruccion instruccion_recibida;
   recv(conexion_memoria, &instruccion_recibida, sizeof(t_instruccion), 0);
 
   return NULL;
+}
+
+void decode  ( t_instruccion instruccion, uint32_t pid) {
+  swithc (instruccion.tipo) {
+    case NOOP:
+         log_info (logger, "## PID: %d - Instrucción: NOOP" , pid );
+         break;
+    
+    case READ :
+         log_info(logger, "## PID: %d - Instruccion: READ - Direccion logica: %d - tamaño: %d", pid, instruccion.parametro1, instruccion.parametro2);
+         break;
+    
+    case WRITE : 
+         log_info(logger, "## PID: %d - Instruccion: WRITE - Direccion logica: %d - Valor: %d ", pid, instruccion.parametro1, instruccion.parametro2);
+         break;
+    
+    case GOTO: 
+         log_info(logger, "## PID: %d - Instruccion: GOTO - Nuevo PC: %d", pid, instruccion.parametro1);
+         break;
+    
+    case IO: 
+         log_info(logger, "## PID: %d - Instruccion: IO - Dispositivo: %d - Tiempo: %d", pid, instruccion.parametro1, instruccion.parametro2);
+         break;
+    
+    case INIT_PROC:
+         log_info(logger, "## PID: %d - Instruccion: INIT_PROC - Archivo: %d - Tamaño: %d", pid, instruccion.parametro1, instruccion.parametro2);
+         break;
+
+    case DUMP_MEMORY:
+         log_info(logger,"## PID: %d - Instruccion: DUMP_MEMORY", pid);
+         break;
+
+    case EXIT:
+         log_info (logger, "## PID: %d- Instruccion: EXIT", pid);
+         break;
+    
+    default: 
+    log_warning(logger, "## PID: %d - Instruccion desconocida: %d", pid, instruccion.tipo);
+     break;
+  
+   }
 }
 
 
