@@ -76,6 +76,7 @@ typedef struct {
     uint32_t parametro2;
 } t_instruccion;
 
+/*
 typedef enum {
   ESTADO_NEW,
   ESTADO_READY,
@@ -93,6 +94,7 @@ typedef struct {
 	uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
 	uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
 } t_pcb;
+*/
 /*
 typedef struct {
   const char* nombre;
