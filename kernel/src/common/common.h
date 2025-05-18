@@ -12,9 +12,12 @@ void* atender_cpu_dispatch(void* socket_cpu_dispatch);
 void* atender_io(void* socket_io);
 void* conectar_cpu_dispatch(void* arg);
 void* conectar_io(void* arg);
-t_pcb* crear_pcb(uint32_t);
+/*
+t_pcb* crear_pcb();
 void destruir_pcb(t_pcb*);
 void* serializar_pcb(t_pcb*, int);
+uint32_t generar_pid();
+*/
 void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente);
 int32_t handshake_kernel(int conexion_memoria);
 

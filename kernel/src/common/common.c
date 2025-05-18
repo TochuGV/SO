@@ -91,11 +91,22 @@ void* atender_io(void* arg)
   }
 }
 
-t_pcb* crear_pcb(uint32_t pid){
+/*
+uint32_t ultimo_pid = 0;
+pthread_mutex_t mutex_pid = PTHREAD_MUTEX_INITIALIZER;
+
+uint32_t generar_pid(){
+  pthread_mutex_lock(&mutex_pid);
+  uint32_t nuevo_pid = ultimo_pid++;
+  pthread_mutex_unlock(&mutex_pid);
+  return nuevo_pid;
+};
+
+t_pcb* crear_pcb(){
   t_pcb* nuevo_pcb = malloc(sizeof(t_pcb));
   if(!nuevo_pcb) return NULL;
 
-  nuevo_pcb->pid = pid;
+  nuevo_pcb->pid = generar_pid();
   nuevo_pcb->pc = 0;
 
   for(int i = 0; i < CANTIDAD_ESTADOS; i++){
@@ -112,18 +123,16 @@ void destruir_pcb(t_pcb* pcb){
 };
 
 void* serializar_pcb(t_pcb* pcb, int bytes){
-  /*
-  int tamanio_me = sizeof(uint32_t) * 7;
-  int tamanio_mt = sizeof(uint32_t) * 7;
-  int tamanio = sizeof(uint32_t) * 2 + tamanio_me + tamanio_mt;
+  //int tamanio_me = sizeof(uint32_t) * 7;
+  //int tamanio_mt = sizeof(uint32_t) * 7;
+  //int tamanio = sizeof(uint32_t) * 2 + tamanio_me + tamanio_mt;
 
-  Se pueden calcular los bytes antes de llamar a la función, o calcularlos dentro de la función o crear otra.
-  Si se calculan antes, el parámetro es 'int bytes', sino tendría que ser 'int* bytes'.
+  //Se pueden calcular los bytes antes de llamar a la función, o calcularlos dentro de la función o crear otra.
+  //Si se calculan antes, el parámetro es 'int bytes', sino tendría que ser 'int* bytes'.
 
-  Ejemplo de uso:
-    int bytes = sizeof(uint32_t) * (2 + CANTIDAD_ESTADOS * 2);
-    void* buffer = serializar_pcb(pcb, bytes);
-  */
+  //Ejemplo de uso:
+  //  int bytes = sizeof(uint32_t) * (2 + CANTIDAD_ESTADOS * 2);
+  //  void* buffer = serializar_pcb(pcb, bytes);
 
   void* magic = malloc(bytes);
   int desplazamiento = 0;
@@ -142,6 +151,7 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   return magic;
 };
+*/
 
 void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente)
 {
@@ -181,4 +191,4 @@ int32_t handshake_kernel(int conexion_memoria)
     return -1;
   }
   return 0;
-}
+};
