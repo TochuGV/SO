@@ -1,6 +1,8 @@
 #include "main.h"
 #include "pcb/pcb.h"
+#include "planificacion/planificacion.h"
 
+/*
 void probar_pcb(){
   printf("Iniciando la prueba de funcionamiento de PCB...\n");
 
@@ -32,6 +34,7 @@ void probar_pcb(){
 
   printf("Destrucción exitosa. Prueba exitosa");
 }
+*/
 
 int main(int argc, char* argv[]) 
 {
@@ -44,7 +47,25 @@ int main(int argc, char* argv[])
   //char* puerto_cpu_interrupt = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
   char* PUERTO_ESCUCHA_IO = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
 
-  probar_pcb();
+  iniciar_planificacion_largo_plazo();
+  
+  t_pcb* pcb1 = crear_pcb();
+  t_pcb* pcb2 = crear_pcb();
+  t_pcb* pcb3 = crear_pcb();
+  t_pcb* pcb4 = crear_pcb();
+  t_pcb* pcb5 = crear_pcb();
+
+  agregar_proceso_a_new(pcb1);
+  agregar_proceso_a_new(pcb2);
+  agregar_proceso_a_new(pcb3);
+  agregar_proceso_a_new(pcb4);
+  agregar_proceso_a_new(pcb5);
+
+  finalizar_proceso(pcb1);
+  finalizar_proceso(pcb2);
+  finalizar_proceso(pcb3);
+  finalizar_proceso(pcb4);
+  finalizar_proceso(pcb5);
 
   pthread_t hilo_conexion_cpu_dispatch;
   //pthread_t hilo_conexion_cpu_interrupt;
