@@ -5,9 +5,9 @@ int main(int argc, char* argv[])
   logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_INFO);
   config = iniciar_config("cpu.config");
 
-  int32_t identificador_cpu = atoi(argv[1]);
+   int32_t identificador_cpu = atoi(argv[1]);
 
-  iniciar_cpu();
+  iniciar_cpu(identificador_cpu);
 
   //Hilos
   pthread_t hilo_kernel_dispatch;
@@ -22,13 +22,6 @@ int main(int argc, char* argv[])
   pthread_join(hilo_kernel_interrupt, NULL);
   pthread_join(hilo_memoria, NULL);
 
-  //void* dispatch = manejar_dispatch(conexion_kernel_dispatch,conexion_memoria);
-  
-  //terminar_programa(conexion, logger, config);
-  //free (dispatch);
-  free(datos_dispatch);
-  free(datos_interrupt);
-  free(datos_memoria);
   return EXIT_SUCCESS;
 }
 
