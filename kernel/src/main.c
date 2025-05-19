@@ -2,40 +2,6 @@
 #include "pcb/pcb.h"
 #include "planificacion/planificacion.h"
 
-/*
-void probar_pcb(){
-  printf("Iniciando la prueba de funcionamiento de PCB...\n");
-
-  t_pcb* pcb = crear_pcb();
-  if(pcb == NULL){
-    printf("ERROR: No se pudo crear el PCB\n");
-    return;
-  };
-
-  printf("Creación exitosa");
-
-  printf("PID: %u, PC: %u\n", pcb->pid, pcb->pc);
-  for(int i = 0; i < CANTIDAD_ESTADOS; i++){
-    printf("Estado %d -> ME: %u, MT: %u\n", i, pcb->me[i], pcb->mt[i]);
-  };
-
-  int bytes = sizeof(uint32_t) * (2 + CANTIDAD_ESTADOS * 2);
-  void* buffer = serializar_pcb(pcb, bytes);
-  if(buffer == NULL){
-    printf("ERROR: No se pudo serializar el PCB\n");
-    destruir_pcb(pcb);
-    return;
-  };
-
-  printf("Serialización exitosa. Tamaño: %d Bytes\n", bytes);
-
-  free(buffer);
-  destruir_pcb(pcb);
-
-  printf("Destrucción exitosa. Prueba exitosa");
-}
-*/
-
 int main(int argc, char* argv[]) 
 {
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
@@ -48,16 +14,37 @@ int main(int argc, char* argv[])
   char* PUERTO_ESCUCHA_IO = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
 
   iniciar_planificacion_largo_plazo();
+  iniciar_planificacion_corto_plazo();
   
   t_pcb* pcb1 = crear_pcb();
+  t_pcb* pcb2 = crear_pcb();
+  
   inicializar_proceso(pcb1);
+  inicializar_proceso(pcb2);
+
+  /*
   cambiar_estado(pcb1, ESTADO_NEW, ESTADO_READY);
   cambiar_estado(pcb1, ESTADO_READY, ESTADO_EXEC);
   cambiar_estado(pcb1, ESTADO_EXEC, ESTADO_BLOCKED);
   cambiar_estado(pcb1, ESTADO_BLOCKED, ESTADO_READY);
   cambiar_estado(pcb1, ESTADO_READY, ESTADO_EXEC);
   cambiar_estado(pcb1, ESTADO_EXEC, ESTADO_EXIT);
+  */
+  
+  mover_proceso_a_ready(pcb1);
+  mover_proceso_a_ready(pcb2);
+
+  t_pcb* proceso_ejecutar = obtener_siguiente_proceso();
+
+  if(!proceso_ejecutar){
+    printf("ERROR: No se seleccionó un proceso de READY");
+    return -1;
+  };
+
+  printf("Proceso <%d> seleccionado para ejecución (Estado: %s).\n", proceso_ejecutar->pid, obtener_nombre_estado(ESTADO_EXEC));
+
   finalizar_proceso(pcb1);
+  finalizar_proceso(pcb2);
 
   pthread_t hilo_conexion_cpu_dispatch;
   //pthread_t hilo_conexion_cpu_interrupt;

@@ -75,5 +75,5 @@ const char* obtener_nombre_estado(t_estado estado){
     case ESTADO_SUSP_READY: return "SUSPENDED_READY";
     case ESTADO_EXIT: return "EXIT";
     default: return "UNKNOWN";
-  }
-}
+  };
+};
