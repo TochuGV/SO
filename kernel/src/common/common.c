@@ -120,3 +120,13 @@ int32_t handshake_kernel(int conexion_memoria){
   return 0;
 };
 
+char* crear_cadena_metricas_estado(t_pcb* pcb){
+  char* buffer = string_from_format("## (<%d>) - Métricas de estado: ", pcb->pid);
+  for(int i = 0; i < CANTIDAD_ESTADOS; i++){
+    char* aux = string_from_format("%s (%d) (%d)", obtener_nombre_estado(i), pcb->me[i], pcb->mt[i]);
+    string_append(&buffer, aux);
+    if(i < CANTIDAD_ESTADOS - 1) string_append(&buffer, ", ");
+    free(aux);
+  };
+  return buffer;
+};

@@ -46,14 +46,7 @@ void finalizar_proceso(t_pcb* pcb){
   //log_info(logger, "## (<%d>) - Finaliza el proceso", pcb->pid);
   log_fin_proceso(pcb->pid);
 
-  char* buffer = string_from_format("## (<%d>) - Métricas de estado: ", pcb->pid);
-  for(int i = 0; i < CANTIDAD_ESTADOS; i++){
-    char* aux = string_from_format("%s (%d) (%d)", obtener_nombre_estado(i), pcb->me[i], pcb->mt[i]);
-    string_append(&buffer, aux);
-    if(i < CANTIDAD_ESTADOS - 1) string_append(&buffer, ", ");
-    free(aux);
-  };
-
+  char* buffer = crear_cadena_metricas_estado(pcb);
   //log_info(logger, "%s", buffer);
   log_metricas_estado(buffer);
   free(buffer);

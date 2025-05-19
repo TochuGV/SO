@@ -3,6 +3,7 @@
 
 #include "pcb/pcb.h"
 #include "logger/logger.h"
+#include "common/common.h"
 #include "utils/utils.h" // Revisar después
 #include <commons/collections/queue.h>
 #include <semaphore.h>

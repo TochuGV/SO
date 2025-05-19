@@ -2,6 +2,7 @@
 #define COMMON_H_
 
 #include "./utils/utils.h"
+#include "pcb/pcb.h"
 #include <stdint.h>
 
 extern int conexion_cpu_dispatch;
@@ -14,5 +15,6 @@ void* conectar_cpu_dispatch(void* arg);
 void* conectar_io(void* arg);
 void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente);
 int32_t handshake_kernel(int conexion_memoria);
+char* crear_cadena_metricas_estado(t_pcb*);
 
 #endif /* COMMON_H_ */
