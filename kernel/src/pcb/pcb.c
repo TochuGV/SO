@@ -65,7 +65,7 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
   return magic;
 };
 
-const char* obtener_nombre_estado(t_estado estado){
+char* obtener_nombre_estado(t_estado estado){
   switch(estado){
     case ESTADO_NEW: return "NEW";
     case ESTADO_READY: return "READY";

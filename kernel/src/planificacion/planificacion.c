@@ -28,16 +28,23 @@ void entrar_estado(t_pcb* pcb, int estado){
 void inicializar_proceso(t_pcb *pcb){
   queue_push(cola_new, pcb);
   entrar_estado(pcb, ESTADO_NEW);
-  log_info(logger, "## (<%d>) Se crea el proceso - Estado: NEW", pcb->pid);
+  //log_info(logger, "## (<%d>) Se crea el proceso - Estado: NEW", pcb->pid);
+  log_creacion_proceso(pcb->pid);
 };
 
 void cambiar_estado(t_pcb* pcb, t_estado actual, t_estado siguiente){
-  log_info(logger, "## (<%d>) Pasa del estado <%s> al estado <%s>", pcb->pid, obtener_nombre_estado(actual), obtener_nombre_estado(siguiente));
   entrar_estado(pcb, siguiente);
+  //log_info(logger, "## (<%d>) Pasa del estado <%s> al estado <%s>", pcb->pid, obtener_nombre_estado(actual), obtener_nombre_estado(siguiente));
+  log_cambio_estado(pcb->pid, obtener_nombre_estado(actual), obtener_nombre_estado(siguiente));
 };
 
 void finalizar_proceso(t_pcb* pcb){
-  log_info(logger, "## (<%d>) - Finaliza el proceso", pcb->pid);
+  //cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
+  //Revisar que de cualquier estado puede pasar a EXIT.
+  //Revisar si tiene sentido los campos 'me' y 'mt' para EXIT.
+  
+  //log_info(logger, "## (<%d>) - Finaliza el proceso", pcb->pid);
+  log_fin_proceso(pcb->pid);
 
   char* buffer = string_from_format("## (<%d>) - Métricas de estado: ", pcb->pid);
   for(int i = 0; i < CANTIDAD_ESTADOS; i++){
@@ -47,7 +54,8 @@ void finalizar_proceso(t_pcb* pcb){
     free(aux);
   };
 
-  log_info(logger, "%s", buffer);
+  //log_info(logger, "%s", buffer);
+  log_metricas_estado(buffer);
   free(buffer);
   destruir_pcb(pcb);
 };

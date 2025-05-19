@@ -2,6 +2,7 @@
 #define PLANIFICACION_H_
 
 #include "pcb/pcb.h"
+#include "logger/logger.h"
 #include "utils/utils.h" // Revisar después
 #include <commons/collections/queue.h>
 #include <semaphore.h>
