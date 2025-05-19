@@ -6,6 +6,7 @@
 typedef struct {
     char* ip;
     char* puerto;
+    int32_t id_cpu;
 } datos_conexion_t;
 
 extern char* ip_kernel;
@@ -17,15 +18,28 @@ extern datos_conexion_t* datos_dispatch;
 extern datos_conexion_t* datos_interrupt;
 extern datos_conexion_t* datos_memoria;
 
-void iniciar_cpu();
+//Configuraciones iniciales
+void iniciar_cpu(int32_t);
 void* conectar(void*);
 
-void* manejar_dispatch(int, int);
+//Ciclo completo de instrucción
+void* ciclo_de_instruccion(int, int);
+
+//Manejo de PCB
 t_pcb* recibir_pcb(int);
 t_pcb* deserializar_pcb(void*);
-void* recibir_instruccion(t_pcb*, int);
-//void* ciclo_de_instruccion(pcb);
 
-void decode(t_instruccion instruccion, uint32_t pid);
+//Manejo de instrucción
+t_list* recibir_instruccion(t_pcb*, int)
+void trabajar_instruccion (t_instruccion, t_pcb*)
+
+//Ejecución de instrucción
+void ejecutar_noop();
+void ejecutar_read(uint32_t,uint32_t);
+void ejecutar_write(uint32_t,uint32_t);
+void ejecutar_io(uint32_t,uint32_t);
+void ejecutar_init_proc(uint32_t,uint32_t);
+void ejecutar_dump_memory();
+void ejecutar_exit();
 
 #endif /* COMMON_CPU_H_ */
