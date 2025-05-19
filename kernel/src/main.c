@@ -50,22 +50,14 @@ int main(int argc, char* argv[])
   iniciar_planificacion_largo_plazo();
   
   t_pcb* pcb1 = crear_pcb();
-  t_pcb* pcb2 = crear_pcb();
-  t_pcb* pcb3 = crear_pcb();
-  t_pcb* pcb4 = crear_pcb();
-  t_pcb* pcb5 = crear_pcb();
-
-  agregar_proceso_a_new(pcb1);
-  agregar_proceso_a_new(pcb2);
-  agregar_proceso_a_new(pcb3);
-  agregar_proceso_a_new(pcb4);
-  agregar_proceso_a_new(pcb5);
-
+  inicializar_proceso(pcb1);
+  cambiar_estado(pcb1, ESTADO_NEW, ESTADO_READY);
+  cambiar_estado(pcb1, ESTADO_READY, ESTADO_EXEC);
+  cambiar_estado(pcb1, ESTADO_EXEC, ESTADO_BLOCKED);
+  cambiar_estado(pcb1, ESTADO_BLOCKED, ESTADO_READY);
+  cambiar_estado(pcb1, ESTADO_READY, ESTADO_EXEC);
+  cambiar_estado(pcb1, ESTADO_EXEC, ESTADO_EXIT);
   finalizar_proceso(pcb1);
-  finalizar_proceso(pcb2);
-  finalizar_proceso(pcb3);
-  finalizar_proceso(pcb4);
-  finalizar_proceso(pcb5);
 
   pthread_t hilo_conexion_cpu_dispatch;
   //pthread_t hilo_conexion_cpu_interrupt;
@@ -93,4 +85,4 @@ int main(int argc, char* argv[])
   terminar_programa(conexion_memoria, logger, config);
 
 	return EXIT_SUCCESS;
-}
+};

@@ -23,7 +23,7 @@ t_pcb* crear_pcb(){
   for(int i = 0; i < CANTIDAD_ESTADOS; i++){
     nuevo_pcb->me[i] = 0;
     nuevo_pcb->mt[i] = 0;
-  }
+  };
 
   return nuevo_pcb;
 };
@@ -64,3 +64,16 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   return magic;
 };
+
+const char* obtener_nombre_estado(t_estado estado){
+  switch(estado){
+    case ESTADO_NEW: return "NEW";
+    case ESTADO_READY: return "READY";
+    case ESTADO_EXEC: return "EXEC";
+    case ESTADO_BLOCKED: return "BLOCKED";
+    case ESTADO_SUSP_BLOCKED: return "SUSPENDED_BLOCKED";
+    case ESTADO_SUSP_READY: return "SUSPENDED_READY";
+    case ESTADO_EXIT: return "EXIT";
+    default: return "UNKNOWN";
+  }
+}
