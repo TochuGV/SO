@@ -21,20 +21,11 @@ int main(int argc, char* argv[])
   
   inicializar_proceso(pcb1);
   inicializar_proceso(pcb2);
-
-  /*
-  cambiar_estado(pcb1, ESTADO_NEW, ESTADO_READY);
-  cambiar_estado(pcb1, ESTADO_READY, ESTADO_EXEC);
-  cambiar_estado(pcb1, ESTADO_EXEC, ESTADO_BLOCKED);
-  cambiar_estado(pcb1, ESTADO_BLOCKED, ESTADO_READY);
-  cambiar_estado(pcb1, ESTADO_READY, ESTADO_EXEC);
-  cambiar_estado(pcb1, ESTADO_EXEC, ESTADO_EXIT);
-  */
   
   mover_proceso_a_ready(pcb1);
   mover_proceso_a_ready(pcb2);
 
-  t_pcb* proceso_ejecutar = obtener_siguiente_proceso();
+  t_pcb* proceso_ejecutar = mover_proceso_a_exec();
 
   if(!proceso_ejecutar){
     printf("ERROR: No se seleccionó un proceso de READY");

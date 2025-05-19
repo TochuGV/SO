@@ -25,7 +25,7 @@ void finalizar_proceso(t_pcb*);
 
 // Planificación de corto plazo (READY)
 void mover_proceso_a_ready(t_pcb*);
-t_pcb* obtener_siguiente_proceso();
+t_pcb* mover_proceso_a_exec();
 
 #endif
 

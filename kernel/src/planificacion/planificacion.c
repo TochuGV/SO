@@ -33,7 +33,7 @@ void inicializar_proceso(t_pcb *pcb){
 
 void cambiar_estado(t_pcb* pcb, t_estado actual, t_estado siguiente){
   log_info(logger, "## (<%d>) Pasa del estado <%s> al estado <%s>", pcb->pid, obtener_nombre_estado(actual), obtener_nombre_estado(siguiente));
-  pcb->me[siguiente]++;
+  entrar_estado(pcb, siguiente);
 };
 
 void finalizar_proceso(t_pcb* pcb){
@@ -49,7 +49,6 @@ void finalizar_proceso(t_pcb* pcb){
 
   log_info(logger, "%s", buffer);
   free(buffer);
-
   destruir_pcb(pcb);
 };
 
@@ -57,20 +56,20 @@ void mover_proceso_a_ready(t_pcb* pcb) {
   pthread_mutex_lock(&mutex_ready); 
   queue_push(cola_ready, pcb); 
   pthread_mutex_unlock(&mutex_ready); 
-  log_info(logger, "## (<%d>) Proceso movido a READY", pcb->pid); 
+  cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
 };
 
-t_pcb* obtener_siguiente_proceso() {
+t_pcb* mover_proceso_a_exec() {
   pthread_mutex_lock(&mutex_ready); 
 
   if (queue_is_empty(cola_ready)) { 
     pthread_mutex_unlock(&mutex_ready); 
-    log_info(logger, "No hay procesos en READY."); 
+    log_info(logger, "No hay procesos en la cola READY"); 
     return NULL;
   };
   
   t_pcb* pcb = queue_pop(cola_ready);
   pthread_mutex_unlock(&mutex_ready);
-  log_info(logger, "## (<%d>) Proceso seleccionado para EXEC", pcb->pid);
+  cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
   return pcb;
 };
