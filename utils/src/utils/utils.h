@@ -86,6 +86,14 @@ typedef enum {
   FINALIZADO
 } t_estado;
 
+typedef enum {
+    EJECUCION_CONTINUA,
+    EJECUCION_FINALIZADA,
+    EJECUCION_BLOQUEADA_IO,
+    EJECUCION_BLOQUEADA_INIT_PROC,
+    EJECUCION_BLOQUEADA_DUMP,
+} t_estado_ejecucion;
+
 typedef struct {
 	uint32_t pid; //identificador del proceso
 	uint32_t pc; //contador de programa

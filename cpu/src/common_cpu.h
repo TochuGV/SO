@@ -32,14 +32,18 @@ t_pcb* deserializar_pcb(void*);
 //Manejo de instrucción
 t_list* recibir_instruccion(t_pcb*, int)
 void trabajar_instruccion (t_instruccion, t_pcb*)
+void actualizar_kernel(t_instruccion,t_estado_ejecucion,t_pcb*,int);
 
-//Ejecución de instrucción
-void ejecutar_noop();
+//Ejecución de instrucción;
 void ejecutar_read(uint32_t,uint32_t);
 void ejecutar_write(uint32_t,uint32_t);
-void ejecutar_io(uint32_t,uint32_t);
-void ejecutar_init_proc(uint32_t,uint32_t);
-void ejecutar_dump_memory();
-void ejecutar_exit();
+
+//Envío de actualizaciónes a Kernel
+void enviar_finalizacion(t_instruccion,t_estado_ejecucion,t_pcb*,int);
+void enviar_bloqueo_IO(t_instruccion,t_estado_ejecucion,t_pcb*,int);
+void enviar_bloqueo_INIT_PROC(t_instruccion,t_estado_ejecucion,t_pcb*,int);
+void enviar_bloqueo_DUMP(t_instruccion,t_estado_ejecucion,t_pcb*,int);
+void llenar_paquete (t_paquete*,t_estado_ejecucion,t_pcb*);
+
 
 #endif /* COMMON_CPU_H_ */
