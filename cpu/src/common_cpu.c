@@ -1,5 +1,11 @@
 #include "common_cpu.h"
 
+#include <stdbool.h> 
+#include <pthread.h>
+
+bool interrupción_activa = false; //nos dice si el kernel mando un interrupcion
+pthread_mutex_t mutex_interrupcion = PTHREAD_MUTEX_INITIALIZER; // candado para q ningun hilo lea o escriba simultaneamente 
+
  char* ip_kernel;
  char* ip_memoria;
  char* puerto_kernel_dispatch;
@@ -271,3 +277,37 @@ void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
   agregar_a_paquete(paquete, &(pcb->pc), sizeof(int)); //PC actualizado
   agregar_a_paquete(paquete,&estado,sizeof(t_estado_ejecucion)); //Tipo de interrupción
 }
+
+void ejecutar_read(int direccion_logica, int tamanio){
+  log_info(logger, "Mock READ - Direccion logica: %d - Tamaño: %d", direccion_logica, tamanio);
+
+}
+
+void ejecutar_write (int direccion_logica, int valor ){
+  log_info(logger, "Mock WRITE - Direccion logica: %d - valor: %d", direccion_logica, valor );
+}
+
+void ejecutar_init_proc(int archivo, int tamanio){
+  log_info(logger, "Mock INIT_PROC - Archivo ID: %d - Tamaño: %d", archivo, tamanio);
+}
+
+//funcion que espera el mensaje de kernel
+void* escuchar_interrupt(void* socket_interrupt_ptr){
+  int socket_interrupt= *((int*)socket_interrupt_ptr);
+  int32_t mensaje;
+
+  while(1){
+    if (recv(socket_interrupt, &mensaje, sizeof(int32_t),MSG_WAITALL)>0){
+      pthread_mutex_lock(&mutex_interrupcion);
+      interrupcion_activa= true;
+      pthread_mutex_unlock(&mutex_interrupcion);
+
+      log_info(logger, "## Llega interrupcion al puerto Interrupt");
+
+
+    }
+  }
+  return NULL;
+
+}
+
