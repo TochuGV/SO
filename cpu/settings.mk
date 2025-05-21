@@ -6,8 +6,8 @@ SHARED_LIBPATHS=
 STATIC_LIBPATHS=../utils
 
 # Compiler flags
-CDEBUG=-g -Wall -DDEBUG -fdiagnostics-color=always
-CRELEASE=-O3 -Wall -DNDEBUG
+CDEBUG=-g -Wall - std= c99 -DDEBUG -fdiagnostics-color=always
+CRELEASE=-O3 -Wall -std = c99 -DNDEBUG
 
 # Source files (*.c) to be excluded from tests compilation
 TEST_EXCLUDE=src/main.c
