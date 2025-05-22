@@ -4,6 +4,7 @@
 //// INCLUDES
 #include<stdio.h>
 #include<stdlib.h>
+#include <stdbool.h> 
 #include<commons/log.h>
 #include<commons/string.h>
 #include<commons/config.h>
@@ -16,7 +17,6 @@
 #include<commons/log.h>
 #include<pthread.h>
 #include <strings.h>
-
 
 //// ESTRUCTURAS - ENUMERADORES
 typedef enum

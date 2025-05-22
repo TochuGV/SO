@@ -35,12 +35,9 @@ void trabajar_instruccion (t_instruccion, t_pcb*)
 void actualizar_kernel(t_instruccion,t_estado_ejecucion,t_pcb*,int);
 
 //Ejecución de instrucción;
-void ejecutar_read(uint32_t,uint32_t);
-void ejecutar_write(uint32_t,uint32_t);
-//void ejecutar_read (int direccion_logica, int tamanio); esto que puse comentado entiendo q es lo mismo que esta en la linea de arriba 
-//void ejecutar_write (int direccion_logica, int valor);
-//void ejecutar_init_proc(int archivo, int tamanio);
-void ejecutar_init_proc(int archivo, int tamanio);
+//void ejecutar_read(uint32_t,uint32_t);
+//void ejecutar_write(uint32_t,uint32_t);  Por ahora no las estamos usando
+//void ejecutar_init_proc(uint32_t, uint32_t);
 
 //Envío de actualizaciónes a Kernel
 void enviar_finalizacion(t_instruccion,t_estado_ejecucion,t_pcb*,int);
