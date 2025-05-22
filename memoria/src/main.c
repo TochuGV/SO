@@ -2,26 +2,18 @@
 
 int main(int argc, char* argv[]) 
 {
-
-  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_DEBUG);
-  log_info(logger, "Log de Memoria iniciado");
-
-  config = iniciar_config("memoria.config");
-	
-  pthread_t hilo_conexion_kernel;
-  //pthread_t hilo_conexion_cpu;
-
-  char* puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
+  inicializar_memoria();
   
-  pthread_create(&hilo_conexion_kernel, NULL, conectar_kernel, puerto_escucha);
-  //pthread_create(&hilo_conexion_cpu, NULL, conectar_cpu, puerto_escucha);
+  while (1) {
+    int* cliente_memoria = malloc(sizeof(int));
+    *cliente_memoria = accept(servidor_memoria, NULL, NULL);
+    pthread_t hilo_atender;
+    pthread_create(&hilo_atender, NULL, atender_cliente, cliente_memoria);
+  }
 
-  pthread_join(hilo_conexion_kernel,NULL);
-  //pthread_join(hilo_conexion_cpu,NULL);
-
-
-  //terminar_programa(conexion, logger, config);
+  terminar_memoria();
 
   return EXIT_SUCCESS;
 
 }
+
