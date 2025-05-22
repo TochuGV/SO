@@ -22,6 +22,22 @@ int main(int argc, char* argv[])
   pthread_join(hilo_kernel_interrupt, NULL);
   pthread_join(hilo_memoria, NULL);
 
+  bool cpu_disponible=true;
+
+  while (1) {
+    if (cpu_disponible) {
+        //Paso 1: Recibir el PCB desde Kernel
+        t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);
+        if (pcb == NULL) {
+          log_info(logger, "No se recibió ningún PCB");
+          continue;
+        }
+        cpu_disponible = false;
+        ciclo_de_instruccion(pcb, conexion_kernel_dispatch, conexion_kernel_interrupt, conexion_memoria);
+        cpu_disponible = true;
+    }
+}
+
   return EXIT_SUCCESS;
 }
 

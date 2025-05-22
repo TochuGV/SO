@@ -92,6 +92,7 @@ typedef enum {
     EJECUCION_BLOQUEADA_IO,
     EJECUCION_BLOQUEADA_INIT_PROC,
     EJECUCION_BLOQUEADA_DUMP,
+    EJECUCION_BLOQUEADA_SOLICITUD
 } t_estado_ejecucion;
 
 typedef struct {

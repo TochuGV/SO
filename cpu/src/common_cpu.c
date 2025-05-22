@@ -1,13 +1,16 @@
 #include "common_cpu.h"
 
-bool interrupción_activa = false; //nos dice si el kernel mando un interrupcion
-pthread_mutex_t mutex_interrupcion = PTHREAD_MUTEX_INITIALIZER; // candado para q ningun hilo lea o escriba simultaneamente 
+//bool interrupción_activa = false; 
+//pthread_mutex_t mutex_interrupcion = PTHREAD_MUTEX_INITIALIZER; No hace falta por ahora
 
  char* ip_kernel;
  char* ip_memoria;
  char* puerto_kernel_dispatch;
  char* puerto_kernel_interrupt;
  char* puerto_memoria;
+ int conexion_kernel_dispatch;
+ int conexion_kernel_interrupt;
+ int conexion_memoria;
  datos_conexion_t* datos_dispatch;
  datos_conexion_t* datos_interrupt;
  datos_conexion_t* datos_memoria;
@@ -25,23 +28,26 @@ void iniciar_cpu(int32_t identificador_cpu) {
   datos_dispatch->ip = ip_kernel;
   datos_dispatch->puerto = puerto_kernel_dispatch;
   datos_dispatch->id_cpu = identificador_cpu;
+  datos_dispatch->socket = conexion_kernel_dispatch;
 
   datos_interrupt = malloc(sizeof(datos_conexion_t));
   datos_interrupt->ip = ip_kernel;
   datos_interrupt->puerto = puerto_kernel_interrupt;
   datos_interrupt->id_cpu = identificador_cpu;
+  datos_interrupt->socket = conexion_kernel_interrupt;
 
   datos_memoria = malloc(sizeof(datos_conexion_t));
   datos_memoria->ip = ip_memoria;
   datos_memoria->puerto = puerto_memoria;
   datos_memoria->id_cpu = identificador_cpu;
+  datos_memoria->socket = conexion_memoria;
 }
 
 //Conexiones
 void* conectar(void* arg) {
   datos_conexion_t* datos = (datos_conexion_t*) arg;
-    int socket = crear_conexion(datos->ip, datos->puerto, CPU);
-    if (socket == -1) {
+    datos->socket = crear_conexion(datos->ip, datos->puerto, CPU);
+    if (datos->socket == -1) {
         log_error(logger, "Fallo al conectar");
         pthread_exit(NULL);
     }
@@ -49,9 +55,9 @@ void* conectar(void* arg) {
     int32_t handshake_header = CPU;
     int32_t respuesta;
     int32_t identificador = datos->id_cpu;
-    send(socket, &handshake_header, sizeof(int32_t), 0);
-    recv(socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
-    send(socket, &identificador, sizeof(int32_t), 0);
+    send(datos->socket, &handshake_header, sizeof(int32_t), 0);
+    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
+    send(datos->socket, &identificador, sizeof(int32_t), 0);
 
     if (respuesta <= 0) {
       log_error(logger, "Fallo al recibir respuesta del handshake");
@@ -66,17 +72,13 @@ void* conectar(void* arg) {
     return NULL;
 }
 
-void* ciclo_de_instruccion(int conexion_kernel_dispatch,int conexion_memoria) {
-  t_pcb* pcb; 
+void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion_memoria,int conexion_kernel_interrupt) {
   t_list* lista_instruccion;
   t_instruccion instruccion;
   t_resultado_ejecucion estado=EJECUCION_CONTINUA;
-  // Paso 1: recibir el PCB desde Kernel
-  pcb = recibir_pcb(conexion_kernel_dispatch);
-  if (pcb == NULL) return NULL;
 
   while(estado==EJECUCION_CONTINUA){
-    //Log Fetch instrucción
+    //Log 1.  Fetch instrucción
     log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid,pcb->pc);
     
     // Paso 2: obtener la instrucción desde Memoria
@@ -88,14 +90,20 @@ void* ciclo_de_instruccion(int conexion_kernel_dispatch,int conexion_memoria) {
     list_destroy_and_destroy_elements(lista_instruccion,free);
     // Paso 3: interpretar y ejecutar instrucción
     estado = trabajar_instruccion(instruccion,pcb);
+    // Paso 4: Chequear interrupción
+    if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
+      log_info(logger, "PID %d interrumpido", pcb->pid);
+      estado = EJECUCION_BLOQUEADA_SOLICITUD;
+    }
   }
-  // Paso 4: devolver PCB actualizado a Kernel
+  // Paso 5: devolver PCB actualizado a Kernel
   actualizar_kernel(instruccion,estado,pcb,conexion_kernel_dispatch);
-  // Paso 5: liberar memoria
+  // Paso 6: liberar memoria
   free(pcb);
 
   return NULL;
 }
+
 
 //Recibir información del PCB desde Kernel
 t_pcb* recibir_pcb(int conexion_kernel_dispatch) {
@@ -141,7 +149,7 @@ t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 //Decode y Execute Instrucción
 t_resultado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) {
   switch (instruccion.tipo) {
-  //El log_info en cada Case corresponde a Instrucción Ejecutada
+  //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
          log_info (logger, "## PID: %d - Ejecutando: NOOP", pcb->pid);
          sleep(1); //Uso una duración de 1 segundo como default para NOOP
@@ -275,7 +283,26 @@ void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
 }
 
 //funcion que espera el mensaje de kernel
-void* escuchar_interrupt(void* socket_interrupt_ptr){
+bool chequear_interrupcion(int socket_interrupt, int pid_actual) {
+    int pid_interrupcion;
+    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
+
+    if (bytes > 0) {
+      //Log 2. Interrupción Recibida
+        log_info(logger, "LLega interrupción al puerto Interrupt %d", pid_interrupcion);
+        if (pid_interrupcion == pid_actual) {
+            return true;
+        } else {
+            log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
+        }
+    }
+
+    return false;
+}
+
+/*
+Por ahora no es necesario manejarnos con semáforos y esta versión no chequea el PID
+bool escuchar_interrupt(int conexion_kernel_interrupt){
   int socket_interrupt= *((int*)socket_interrupt_ptr);
   int32_t mensaje;
 
@@ -286,11 +313,7 @@ void* escuchar_interrupt(void* socket_interrupt_ptr){
       pthread_mutex_unlock(&mutex_interrupcion);
 
       log_info(logger, "## Llega interrupcion al puerto Interrupt");
-
-
     }
   }
   return NULL;
-
-}
-
+}*/
