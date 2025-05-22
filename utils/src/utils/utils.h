@@ -4,7 +4,6 @@
 //// INCLUDES
 #include<stdio.h>
 #include<stdlib.h>
-#include <stdbool.h> 
 #include<commons/log.h>
 #include<commons/string.h>
 #include<commons/config.h>
@@ -85,15 +84,6 @@ typedef enum {
   SUSP_READY,
   FINALIZADO
 } t_estado;
-
-typedef enum {
-    EJECUCION_CONTINUA,
-    EJECUCION_FINALIZADA,
-    EJECUCION_BLOQUEADA_IO,
-    EJECUCION_BLOQUEADA_INIT_PROC,
-    EJECUCION_BLOQUEADA_DUMP,
-    EJECUCION_BLOQUEADA_SOLICITUD
-} t_estado_ejecucion;
 
 typedef struct {
 	uint32_t pid; //identificador del proceso
