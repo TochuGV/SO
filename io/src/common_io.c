@@ -28,10 +28,31 @@ int32_t handshake_io(char* nombre, int conexion_kernel)
     return 0;
   }
 }
-/*
-void atender_interrupcion(int conexion_kernel)
-{
-  int32_t interrupcion; //esto debe ser un struct con nombre de dispositivo y cantidad de ms
-  recv(conexion_kernel, &interrupcion, sizeof(int32_t), MSG_WAITALL);
-  // ...
-}*/
+
+
+/*atender_interrupcion() recibe solicitudes de IO del Kernel, ejecuta un usleep() para simular la operación y luego notifica al Kernel cuando finaliza. 
+También registra logs para monitorear el inicio y fin de cada IO.*/
+
+void atender_interrupcion(int conexion_kernel) {
+    int32_t pid;
+    int32_t tiempo_io;
+
+    while (1) { // Mantener el módulo IO activo para escuchar solicitudes
+        if (recv(conexion_kernel, &pid, sizeof(int32_t), MSG_WAITALL) <= 0) {
+            log_error(logger, "Error al recibir PID, desconectando...");
+            break;
+        }
+        if (recv(conexion_kernel, &tiempo_io, sizeof(int32_t), MSG_WAITALL) <= 0) {
+            log_error(logger, "Error al recibir tiempo de IO, desconectando...");
+            break;
+        }
+
+        log_info(logger, "## PID: %d - Inicio de IO - Tiempo: %d ms", pid, tiempo_io);
+
+        usleep(tiempo_io * 1000); // Simular la ejecución de la IO
+
+        log_info(logger, "## PID: %d - Fin de IO", pid);
+
+        send(conexion_kernel, &pid, sizeof(int32_t), 0); // Notificar al Kernel que terminó la IO
+    }
+}
