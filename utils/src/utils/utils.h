@@ -76,22 +76,25 @@ typedef struct {
     uint32_t parametro2;
 } t_instruccion;
 
+/*
 typedef enum {
-  NEW,
-  READY,
-  EXEC,
-  BLOCKED,
-  SUSP_BLOCKED,
-  SUSP_READY,
-  FINALIZADO
+  ESTADO_NEW,
+  ESTADO_READY,
+  ESTADO_EXEC,
+  ESTADO_BLOCKED,
+  ESTADO_SUSP_BLOCKED,
+  ESTADO_SUSP_READY,
+  ESTADO_EXIT,
+  CANTIDAD_ESTADOS
 } t_estado;
 
 typedef struct {
 	uint32_t pid; //identificador del proceso
 	uint32_t pc; //contador de programa
-	uint32_t* me; //cantidad de veces en un estado
-	uint32_t* mt; //tiempo que permanecio en ese estado en milisegundos
+	uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
+	uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
 } t_pcb;
+*/
 /*
 typedef struct {
   const char* nombre;

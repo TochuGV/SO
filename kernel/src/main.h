@@ -2,9 +2,6 @@
 #define MAIN_H_
 
 #include "./utils/utils.h"
-#include "common_kernel.h"
-
-
+#include "./common/common.h"
 
 #endif /* MAIN_H_ */
-
