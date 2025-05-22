@@ -3,33 +3,41 @@
 int main(int argc, char* argv[]) 
 {
   logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_INFO);
-  log_info(logger, "Log de CPU iniciado");
-  
   config = iniciar_config("cpu.config");
 
-  char* ip_kernel = config_get_string_value(config, "IP_KERNEL");
-  //char* ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+   int32_t identificador_cpu = atoi(argv[1]);
 
-  int32_t identificador_cpu = atoi(argv[1]);
+  iniciar_cpu(identificador_cpu);
 
-  char* puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
-  //char* puerto_kernel_interrupt = config_get_string_value(config, "PUERTO_KERNEL_INTERRUPT");
-  //char* puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+  //Hilos
+  pthread_t hilo_kernel_dispatch;
+  pthread_t hilo_kernel_interrupt;
+  pthread_t hilo_memoria;
 
-  int conexion_kernel_dispatch = crear_conexion(ip_kernel, puerto_kernel_dispatch, CPU);
+  pthread_create(&hilo_kernel_dispatch, NULL, conectar, datos_dispatch);
+  pthread_create(&hilo_kernel_interrupt, NULL, conectar, datos_interrupt);
+  pthread_create(&hilo_memoria, NULL, conectar, datos_memoria);
 
-  //int conexion_kernel_interrupt = crear_conexion(ip_kernel, puerto_kernel_interrupt, CPU);
+  pthread_join(hilo_kernel_dispatch, NULL);
+  pthread_join(hilo_kernel_interrupt, NULL);
+  pthread_join(hilo_memoria, NULL);
 
-  //int conexion_memoria = crear_conexion(ip_memoria, puerto_memoria, CPU);
+  bool cpu_disponible=true;
 
-  if (handshake_cpu(identificador_cpu, conexion_kernel_dispatch) == 0) {
-    paquete(conexion_kernel_dispatch);
-  }
-
-  
-  //terminar_programa(conexion, logger, config);
+  while (1) {
+    if (cpu_disponible) {
+        //Paso 1: Recibir el PCB desde Kernel
+        t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);
+        if (pcb == NULL) {
+          log_info(logger, "No se recibió ningún PCB");
+          continue;
+        }
+        cpu_disponible = false;
+        ciclo_de_instruccion(pcb, conexion_kernel_dispatch, conexion_kernel_interrupt, conexion_memoria);
+        cpu_disponible = true;
+    }
+}
 
   return EXIT_SUCCESS;
-
 }
 

@@ -17,7 +17,6 @@
 #include<pthread.h>
 #include <strings.h>
 
-
 //// ESTRUCTURAS - ENUMERADORES
 typedef enum
 {
