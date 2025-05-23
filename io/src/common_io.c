@@ -24,7 +24,7 @@ int32_t handshake_io(char* nombre, int conexion_kernel)
     return -1;
   }
   else {
-    log_info(logger," %s se ha conectado a Kernel exitosamente!",nombre);
+    log_info(logger,"%s se ha conectado a Kernel exitosamente!", nombre);
     return 0;
   }
 }

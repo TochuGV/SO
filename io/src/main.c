@@ -10,10 +10,10 @@ int main(int argc, char* argv[])
 
   char* nombre_io = argv[1];
   
-  char* ip_kernel = config_get_string_value(config, "IP_KERNEL");
-  char* puerto_kernel = config_get_string_value(config, "PUERTO_KERNEL");
+  char* IP_KERNEL = config_get_string_value(config, "IP_KERNEL");
+  char* PUERTO_KERNEL = config_get_string_value(config, "PUERTO_KERNEL");
   
-  int conexion_kernel = crear_conexion(ip_kernel, puerto_kernel, IO);
+  int conexion_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL, IO);
 
   if (handshake_io(nombre_io, conexion_kernel) == 0) {
     atender_interrupcion(conexion_kernel);

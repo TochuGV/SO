@@ -68,7 +68,7 @@ int recibir_handshake_memoria(int cliente_memoria)
   int32_t resultado_ok = 0;
   int32_t resultado_error = -1;
 
-  recv(cliente_memoria,&handshake,sizeof(int32_t),MSG_WAITALL);
+  recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL);
 
   switch (handshake)
   {
@@ -80,8 +80,8 @@ int recibir_handshake_memoria(int cliente_memoria)
   case CPU:
     int32_t identificador_cpu;
     send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
-    recv(cliente_memoria,&identificador_cpu,sizeof(int32_t),MSG_WAITALL);
-    log_debug(logger,"CPU %d conectada.",identificador_cpu);
+    recv(cliente_memoria, &identificador_cpu, sizeof(int32_t),MSG_WAITALL);
+    log_debug(logger, "CPU %d conectada.", identificador_cpu);
     return CPU;
     break;
   
@@ -265,14 +265,14 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
 
   if (verificar_espacio_memoria(tamanio_proceso)) {
 
-    uint32_t longitud_path = *(int32_t*)list_get(valores, 0); 
-    char* path = malloc(longitud_path);
-    memcpy(path, list_get(valores, 1), longitud_path); 
+    uint32_t longitud_archivo_pseudocodigo = *(int32_t*)list_get(valores, 0); 
+    char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo;
+    memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
 
 
     uint32_t pid = *(uint32_t*)list_get(valores, 3);
 
-    log_debug(logger,"Proceso %s con pid %d recibido",path,pid);
+    log_debug(logger,"Proceso %s con pid %d recibido",archivo_pseudocodigo,pid);
 
     t_proceso* proceso = malloc(sizeof(t_proceso));
     proceso->pid = pid;

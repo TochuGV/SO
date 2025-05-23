@@ -83,9 +83,9 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion
     
     // Paso 2: obtener la instrucción desde Memoria
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
-    instruccion->tipo = *(t_instruccion*)list_get(lista_instruccion, 0);
-    instruccion->parametro1 = *(t_instruccion*)list_get(lista_instruccion, 1);
-    instruccion->parametro2 = *(t_instruccion*)list_get(lista_instruccion, 2);
+    instruccion->tipo = *(int*)list_get(lista_instruccion, 0);
+    instruccion->parametro1 = *(uint32_t*)list_get(lista_instruccion, 1);
+    instruccion->parametro2 = *(uint32_t*)list_get(lista_instruccion, 2);
 
     list_destroy_and_destroy_elements(lista_instruccion,free);
     // Paso 3: interpretar y ejecutar instrucción
@@ -137,6 +137,7 @@ t_pcb* deserializar_pcb(void* buffer) {
 //Solicitar instrucción a Memoria
 t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 
+  send(conexion_memoria, &(pcb->pid), sizeof(uint32_t), 0);
   send(conexion_memoria, &(pcb->pc), sizeof(uint32_t), 0);
 
   t_list* lista_instrucciones;
@@ -179,7 +180,6 @@ t_resultado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pc
     
     case IO: 
          log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %d - Tiempo: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         sleep (instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_BLOQUEADA_IO;
          break;
@@ -237,7 +237,7 @@ void actualizar_kernel(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb
 
 //Proceso finalizado
 void enviar_finalizacion(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch) {
-  t_paquete* paquete = crear_paquete(PAQUETE);
+  t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
   llenar_paquete(paquete,estado,pcb);
 
   enviar_paquete(paquete, conexion_kernel_dispatch);
@@ -246,7 +246,7 @@ void enviar_finalizacion(t_instruccion instruccion,t_estado_ejecucion estado,t_p
 
 //Bloqueo por IO
 void enviar_bloqueo_IO(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(PAQUETE);
+  t_paquete* paquete = crear_paquete(SYSCALL_IO);
   llenar_paquete(paquete,estado,pcb);
   agregar_a_paquete(paquete, &(instruccion.parametro1), sizeof(int)); // dispositivo
   agregar_a_paquete(paquete, &(instruccion.parametro2), sizeof(int)); // tiempo
@@ -257,7 +257,7 @@ void enviar_bloqueo_IO(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb
 
 //Bloqueo por INIT_PROC
 void enviar_bloqueo_INIT_PROC(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(PAQUETE);
+  t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
   llenar_paquete(paquete,estado,pcb);
   agregar_a_paquete(paquete, &(instruccion.parametro1), sizeof(int)); // archivo
   agregar_a_paquete(paquete, &(instruccion.parametro2), sizeof(int)); // tamaño
@@ -268,7 +268,7 @@ void enviar_bloqueo_INIT_PROC(t_instruccion instruccion,t_estado_ejecucion estad
 
 //Bloqueo por Dump Memory
 void enviar_bloqueo_DUMP(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(PAQUETE);
+  t_paquete* paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
   llenar_paquete(paquete,estado,pcb);
 
   enviar_paquete(paquete, conexion_kernel_dispatch);
@@ -277,8 +277,8 @@ void enviar_bloqueo_DUMP(t_instruccion instruccion,t_estado_ejecucion estado,t_p
 
 //Funcion auxiliar para empaquetar PID, PC y tipo de interrupción
 void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
-  agregar_a_paquete(paquete, &(pcb->pid), sizeof(int)); //PID del proceso ejecutado
-  agregar_a_paquete(paquete, &(pcb->pc), sizeof(int)); //PC actualizado
+  agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t)); //PID del proceso ejecutado
+  agregar_a_paquete(paquete, &(pcb->pc), sizeof(uint32_t)); //PC actualizado
   agregar_a_paquete(paquete,&estado,sizeof(t_estado_ejecucion)); //Tipo de interrupción
 }
 

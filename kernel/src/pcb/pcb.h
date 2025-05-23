@@ -2,7 +2,9 @@
 #define PCB_H
 
 #include <stdint.h>
+#include <utils/utils.h>
 
+/*
 typedef enum {
   ESTADO_NEW,
   ESTADO_READY,
@@ -20,6 +22,7 @@ typedef struct {
 	uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
 	uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
 } t_pcb;
+*/
 
 uint32_t generar_pid();
 t_pcb* crear_pcb();
