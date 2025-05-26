@@ -22,7 +22,7 @@ extern pthread_t hilo_conexion_io;
 
 void inicializar_kernel();
 void extraer_datos_config();
-void crear_hilos();
-void unir_hilos();
+//void crear_hilos();
+//void unir_hilos();
 
 #endif /* INIT_H_ */

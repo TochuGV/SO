@@ -16,7 +16,7 @@ void* atender_cpu_dispatch(void* socket_cpu_dispatch);
 void* atender_io(void* socket_io);
 int recibir_handshake_kernel(int);
 void* atender_cliente(void* arg);
-void* enviar_proceso_a_memoria(char* path, uint32_t tamanio_proceso, int socket_cliente);
+uint32_t enviar_proceso_a_memoria(char*, uint32_t, uint32_t, int);
 int32_t handshake_kernel(int conexion_memoria);
 char* crear_cadena_metricas_estado(t_pcb*);
 

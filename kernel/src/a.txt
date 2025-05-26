@@ -1,0 +1,51 @@
+  /*
+  iniciar_planificacion_largo_plazo();
+  iniciar_planificacion_corto_plazo();
+  
+  t_pcb* pcb1 = crear_pcb();
+  t_pcb* pcb2 = crear_pcb();
+  
+  inicializar_proceso(pcb1);
+  inicializar_proceso(pcb2);
+  //t_pcb* proceso_inicial = crear_pcb();
+
+  //inicializar_proceso(proceso_inicial);
+
+  //mover_proceso_a_ready(pcb1); //ESTAN MAL LOS PARAMETROS
+  //mover_proceso_a_ready(pcb2);
+
+  t_pcb* proceso_ejecutar = mover_proceso_a_exec();
+
+  if(!proceso_ejecutar){
+    printf("ERROR: No se seleccionó un proceso de READY");
+    return -1;
+  };
+
+  printf("Proceso <%d> seleccionado para ejecución (Estado: %s).\n", proceso_ejecutar->pid, obtener_nombre_estado(ESTADO_EXEC));
+
+  finalizar_proceso(pcb1);
+  finalizar_proceso(pcb2);
+  */
+
+  -------------------------------------------
+
+  switch (cod_op) {
+      case SYSCALL_EXIT:
+        // finalizar proceso
+            break;
+          case SYSCALL_IO:
+            // llamar a io
+            break;
+          case SYSCALL_INIT_PROC:
+            // crear un proceso
+            break;
+          case SYSCALL_DUMP_MEMORY:
+            // por ahora nada
+            break;
+          case -1:
+            log_error(logger, "El cliente se desconectó. Terminando servidor...");
+            pthread_exit((void*)EXIT_FAILURE);
+          default:
+            log_warning(logger, "Operación desconocida. No quieras meter la pata.");
+            break;
+    };
