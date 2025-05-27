@@ -23,4 +23,5 @@ char* crear_cadena_metricas_estado(t_pcb*);
 extern char* NOMBRES_SYSCALLS[4];
 extern char* NOMBRES_DISPOSITIVOS_IO[5];
 
+char* token_io_to_string(int32_t);
 #endif /* COMMON_H_ */
