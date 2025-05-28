@@ -1,4 +1,5 @@
 #include "common.h"
+#include <ctype.h>
 
 int32_t handshake_io(char* nombre, int conexion_kernel){
   int32_t tipo = IO;
@@ -31,6 +32,7 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
     log_error(logger, "La conexión con Kernel falló. Finalizando conexión...");
     return -1;
   } else {
+    convertir_primera_letra_en_mayuscula(nombre);
     log_info(logger, "%s se ha conectado a Kernel exitosamente!", nombre);
     return 0;
   };
@@ -59,4 +61,9 @@ void atender_interrupcion(int conexion_kernel) {
     //log_info(logger, "## PID: %d - Fin de IO", pid);
     send(conexion_kernel, &pid, sizeof(int32_t), 0); // Notificar al Kernel que terminó la IO
   };
+};
+
+void convertir_primera_letra_en_mayuscula(char* cadena){
+  if(cadena == NULL || cadena[0] == '\0') return;
+  cadena[0] = toupper(cadena[0]);
 };
