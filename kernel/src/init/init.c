@@ -12,30 +12,36 @@ char* ESTIMACION_INICIAL;
 char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
+t_list* lista_cpus;
+
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 
 void inicializar_kernel(){
-  /*
-  logger_info = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_INFO);
-  log_info(logger_info, "Logger Info de Kernel iniciado");
-  logger_debug = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
-  log_debug(logger_debug, "Logger Debug de Kernel iniciado");
-  */
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_INFO);
-  log_info(logger, "Log de Kernel iniciado en 'init'");
+  log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
+  extraer_datos_config();
+  lista_cpus = list_create();
 };
 
 void extraer_datos_config(){
   IP_MEMORIA = config_get_string_value(config, "IP_MEMORIA");
   PUERTO_MEMORIA = config_get_string_value(config, "PUERTO_MEMORIA");
   PUERTO_ESCUCHA_DISPATCH = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+  PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
   PUERTO_ESCUCHA_IO = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
-  log_info(logger, "Datos extraídos del archivo de configuración");
+  ALGORITMO_CORTO_PLAZO = config_get_string_value(config, "ALGORITMO_CORTO_PLAZO");
+  ALGORITMO_INGRESO_A_READY = config_get_string_value(config, "ALGORITMO_INGRESO_A_READY");
+  ALFA = config_get_string_value(config, "ALFA");
+  ESTIMACION_INICIAL = config_get_string_value(config, "ESTIMACION_INICIAL");
+  TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
+  //LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
+  log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
+/*
 void crear_hilos(){
   pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
@@ -49,3 +55,4 @@ void unir_hilos(){
   pthread_join(hilo_conexion_io, NULL);
   log_info(logger, "Unión de hilos realizada");
 };
+*/

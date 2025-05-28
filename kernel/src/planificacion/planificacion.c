@@ -53,17 +53,19 @@ void finalizar_proceso(t_pcb* pcb){
   destruir_pcb(pcb);
 };
 
+/*
 void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) {
   t_pcb* pcb;
-  pcb = queue_pop(cola_new)
-  if (enviar_proceso_a_memoria(archivo_pseudocodigo, tamanio_proceso, pcb->pid, conexion_memoria) == 0) {
+  pcb = queue_pop(cola_new);
+  //if (enviar_proceso_a_memoria(archivo_pseudocodigo, tamanio_proceso, pcb->pid, conexion_memoria) == 0) {
     pthread_mutex_lock(&mutex_ready);
     queue_push(cola_ready, pcb); 
     pthread_mutex_unlock(&mutex_ready); 
     cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
-  }
-  return NULL;
+  //}
+  //return NULL;
 }
+*/
 
 t_pcb* mover_proceso_a_exec() {
   pthread_mutex_lock(&mutex_ready); 

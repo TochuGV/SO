@@ -44,11 +44,11 @@ void iniciar_cpu(int32_t identificador_cpu) {
 }
 
 //Conexiones
-void* conectar(void* arg) {
+void* conectar_dispatch(void* arg) {
   datos_conexion_t* datos = (datos_conexion_t*) arg;
     datos->socket = crear_conexion(datos->ip, datos->puerto, CPU);
     if (datos->socket == -1) {
-        log_error(logger, "Fallo al conectar");
+        log_error(logger, "Fallo al conectar con Kernel Dispatch");
         pthread_exit(NULL);
     }
 
@@ -56,26 +56,83 @@ void* conectar(void* arg) {
     int32_t respuesta;
     int32_t identificador = datos->id_cpu;
     send(datos->socket, &handshake_header, sizeof(int32_t), 0);
-    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
     send(datos->socket, &identificador, sizeof(int32_t), 0);
-
-    if (respuesta <= 0) {
-      log_error(logger, "Fallo al recibir respuesta del handshake");
-      close(socket);
+    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
+    
+    if (respuesta < 0) {
+      log_error(logger, "Fallo al recibir respuesta del handshake con Kernel Dispatch");
+      close(datos->socket);
       pthread_exit(NULL);
     }
 
-    log_info(logger, "Conexión exitosa");
+    log_info(logger, "Conexión con Kernel Dispatch exitosa");
 
     free(datos);
 
     return NULL;
 }
 
+void* conectar_interrupt(void* arg) {
+  datos_conexion_t* datos = (datos_conexion_t*) arg;
+    datos->socket = crear_conexion(datos->ip, datos->puerto, CPU);
+    if (datos->socket == -1) {
+        log_error(logger, "Fallo al conectar con Kernel Interrupt");
+        pthread_exit(NULL);
+    }
+
+    int32_t handshake_header = CPU;
+    int32_t respuesta;
+    int32_t identificador = datos->id_cpu;
+    send(datos->socket, &handshake_header, sizeof(int32_t), 0);
+    send(datos->socket, &identificador, sizeof(int32_t), 0);
+    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
+
+    if (respuesta < 0) {
+      log_error(logger, "Fallo al recibir respuesta del handshake con Kernel Interrupt");
+      close(datos->socket);
+      pthread_exit(NULL);
+    }
+
+    log_info(logger, "Conexión con Kernel Interrupt exitosa");
+
+    free(datos);
+
+    return NULL;
+}
+
+void* conectar_memoria(void* arg) {
+  datos_conexion_t* datos = (datos_conexion_t*) arg;
+    datos->socket = crear_conexion(datos->ip, datos->puerto, CPU);
+    if (datos->socket == -1) {
+        log_error(logger, "Fallo al conectar con Memoria");
+        pthread_exit(NULL);
+    }
+
+    int32_t handshake_header = CPU;
+    int32_t identificador = datos->id_cpu;
+    int32_t respuesta;
+    send(datos->socket, &handshake_header, sizeof(int32_t), 0);
+    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
+    send(datos->socket, &identificador, sizeof(int32_t), 0);
+
+    if (respuesta < 0) {
+      log_error(logger, "Fallo al recibir respuesta del handshake con Memoria");
+      close(datos->socket);
+      pthread_exit(NULL);
+    }
+
+    log_info(logger, "Conexión con Memoria exitosa");
+
+    free(datos);
+
+    return NULL;
+}
+
+//Realizar todo el ciclo de cada instrucción
 void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion_memoria,int conexion_kernel_interrupt) {
   t_list* lista_instruccion;
   t_instruccion instruccion;
-  t_resultado_ejecucion estado=EJECUCION_CONTINUA;
+  t_estado_ejecucion estado=EJECUCION_CONTINUA;
 
   while(estado==EJECUCION_CONTINUA){
     //Log 1.  Fetch instrucción
@@ -83,9 +140,9 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion
     
     // Paso 2: obtener la instrucción desde Memoria
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
-    instruccion->tipo = *(int*)list_get(lista_instruccion, 0);
-    instruccion->parametro1 = *(uint32_t*)list_get(lista_instruccion, 1);
-    instruccion->parametro2 = *(uint32_t*)list_get(lista_instruccion, 2);
+    instruccion.parametro1 = *(int*)list_get(lista_instruccion, 0);
+    instruccion.parametro1 = *(uint32_t*)list_get(lista_instruccion, 1);
+    instruccion.parametro2 = *(uint32_t*)list_get(lista_instruccion, 2);
 
     list_destroy_and_destroy_elements(lista_instruccion,free);
     // Paso 3: interpretar y ejecutar instrucción
@@ -134,6 +191,7 @@ t_pcb* deserializar_pcb(void* buffer) {
   return pcb;
 }
 
+
 //Solicitar instrucción a Memoria
 t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 
@@ -146,9 +204,8 @@ t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
   return lista_instrucciones;
 }
 
-
 //Decode y Execute Instrucción
-t_resultado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) {
+t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) {
   switch (instruccion.tipo) {
   //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
@@ -160,14 +217,14 @@ t_resultado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pc
     
     case READ :
          log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %d - tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         ejecutar_read(instruccion.parametro1, instruccion.parametro2);
+         //ejecutar_read(instruccion.parametro1, instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_CONTINUA;
          break;
     
     case WRITE : 
          log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %d - Valor: %d ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         ejecutar_write(instruccion.parametro1, instruccion.parametro2);
+         //ejecutar_write(instruccion.parametro1, instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_CONTINUA;
          break;
@@ -178,7 +235,7 @@ t_resultado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pc
          return EJECUCION_CONTINUA;
          break;
     
-    case IO: 
+    case INSTRUCCION_IO: 
          log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %d - Tiempo: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_BLOQUEADA_IO;
@@ -186,14 +243,13 @@ t_resultado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pc
     
     case INIT_PROC:
          log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %d - Tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
+         //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_BLOQUEADA_INIT_PROC;
          break;
 
     case DUMP_MEMORY:
          log_info(logger,"## PID: %d - Ejecutando: DUMP_MEMORY", pcb->pid);
-         ejecutar_dump_memory();
          pcb->pc++;
          return EJECUCION_BLOQUEADA_DUMP;
          break;
@@ -283,7 +339,7 @@ void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
 }
 
 //funcion que espera el mensaje de kernel
-bool chequear_interrupcion(int socket_interrupt, int pid_actual) {
+bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
     int pid_interrupcion;
     int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
 

@@ -14,9 +14,9 @@ int main(int argc, char* argv[])
   pthread_t hilo_kernel_interrupt;
   pthread_t hilo_memoria;
 
-  pthread_create(&hilo_kernel_dispatch, NULL, conectar, datos_dispatch);
-  pthread_create(&hilo_kernel_interrupt, NULL, conectar, datos_interrupt);
-  pthread_create(&hilo_memoria, NULL, conectar, datos_memoria);
+  pthread_create(&hilo_kernel_dispatch, NULL, conectar_dispatch, datos_dispatch);
+  pthread_create(&hilo_kernel_interrupt, NULL, conectar_interrupt, datos_interrupt);
+  pthread_create(&hilo_memoria, NULL, conectar_memoria, datos_memoria);
 
   pthread_join(hilo_kernel_dispatch, NULL);
   pthread_join(hilo_kernel_interrupt, NULL);

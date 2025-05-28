@@ -50,12 +50,12 @@ typedef enum
 
 typedef enum
 {
-	KERNEL,
-  CPU,
-  CPU_DISPATCH,
-  CPU_INTERRUPT,
-  MEMORIA,
-  IO
+	KERNEL = 100,
+  CPU = 101,
+  CPU_DISPATCH = 102,
+  CPU_INTERRUPT = 103,
+  MEMORIA = 104,
+  IO = 200
 } header_modulo;
 
 typedef struct
