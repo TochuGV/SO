@@ -12,7 +12,7 @@ int main(int argc, char* argv[]){
   
   pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
-  //pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, puerto_cpu_interrupt);
+  pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
 
   int conexion_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, KERNEL);
   
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     //mover_proceso_a_ready(archivo_pseudocodigo, tamanio_proceso);
   
   pthread_join(hilo_conexion_cpu_dispatch, NULL);
-  //pthread_join(hilo_conexion_cpu_interrupt, NULL);
+  pthread_join(hilo_conexion_cpu_interrupt, NULL);
   pthread_join(hilo_conexion_io, NULL);
   
   terminar_programa(conexion_memoria, logger, config);

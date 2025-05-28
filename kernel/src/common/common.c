@@ -1,9 +1,5 @@
 #include "common.h"
 
-//int conexion_cpu_dispatch;
-//int conexion_cpu_interrupt;
-//int conexion_io;
-
 void* conectar_cpu_dispatch(void* arg){
   char* puerto = (char*) arg;
   int socket_escucha = iniciar_servidor(puerto);
