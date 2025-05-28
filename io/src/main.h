@@ -2,8 +2,8 @@
 #define MAIN_H_
 
 #include "./utils/utils.h"
-#include "common_io.h"
-
+#include "./common/common.h"
+#include "init/init.h"
 
 #endif /* MAIN_H_ */
 
