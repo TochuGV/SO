@@ -125,23 +125,25 @@ int recibir_handshake_kernel(int cliente_kernel){
         return -1;
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_debug(logger, "CPU %d conectada.", id_cpu);
+      log_info(logger, "CPU %d conectada.", id_cpu);
       return CPU;
     case IO:
+      log_debug(logger, "Handshake recibido: IO");
       int32_t token_io;
       if (recv(cliente_kernel, &token_io, sizeof(int32_t), MSG_WAITALL) <= 0){
         log_error(logger, "Handshake IO inválido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
+      log_debug(logger, "Token IO recibido: %d", token_io);
       char* nombre_io = token_io_to_string(token_io);
       if (nombre_io == NULL) {
-        send(cliente_kernel, &error, sizeof(int32_t), 0);
         log_warning(logger, "Tipo de IO desconocido");
+        send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_debug(logger, "Dispositivo '%s' conectado", nombre_io);
+      log_info(logger, "Dispositivo '%s' conectado", nombre_io);
       return IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);

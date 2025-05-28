@@ -17,14 +17,8 @@ pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 
 void inicializar_kernel(){
-  /*
-  logger_info = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_INFO);
-  log_info(logger_info, "Logger Info de Kernel iniciado");
-  logger_debug = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
-  log_debug(logger_debug, "Logger Debug de Kernel iniciado");
-  */
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_INFO);
-  log_info(logger, "Log de Kernel iniciado");
+  log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
   extraer_datos_config();
 };
@@ -41,7 +35,7 @@ void extraer_datos_config(){
   ESTIMACION_INICIAL = config_get_string_value(config, "ESTIMACION_INICIAL");
   TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
   //LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
-  log_info(logger, "Datos extraídos del archivo de configuración");
+  log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
 /*
