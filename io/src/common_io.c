@@ -27,15 +27,14 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
     return -1;
   };
 
-  if(resultado == -1) {
+  if (resultado == -1) {
     log_error(logger, "La conexión con Kernel falló. Finalizando conexión...");
     return -1;
   } else {
-    log_info(logger,"%s se ha conectado a Kernel exitosamente!", nombre);
+    log_info(logger, "%s se ha conectado a Kernel exitosamente!", nombre);
     return 0;
   };
 };
-
 
 /*atender_interrupcion() recibe solicitudes de IO del Kernel, ejecuta un usleep() para simular la operación y luego notifica al Kernel cuando finaliza. 
 También registra logs para monitorear el inicio y fin de cada IO.*/

@@ -202,56 +202,36 @@ void paquete(int conexion)
   }
 }
 
-//// LISTAS
-/*
-void agregar_puertos_a_lista(int header, t_config* config, t_list* lista)
-{
-  switch (header)
-  {
-    case KERNEL:
-      char* claves[] = {"PUERTO_ESCUCHA_DISPATCH", "PUERTO_ESCUCHA_INTERRUPT", "PUERTO_ESCUCHA_IO"};
-      for (int i = 0; i < 3; i++) {
-      char* puerto = config_get_string_value(config, claves[i]);
-      list_add(lista, puerto);
-      }
-      break;
-    default:
-      break;
-  }
-}*/
-
 //// CONEXIONES
-int iniciar_servidor(char* puerto)
-{
-	struct addrinfo hints, *servinfo;
+int iniciar_servidor(char* puerto){
+  struct addrinfo hints, *servinfo;
 
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_flags = AI_PASSIVE;
+  
+  getaddrinfo(NULL, puerto, &hints, &servinfo);
+  
+  int socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
+  
+  setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int));
+  
+  bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
+  
+  listen(socket_servidor, SOMAXCONN);
+  
+  freeaddrinfo(servinfo);
+  
+  log_trace(logger, "Listo para escuchar a mi cliente");
+  
+  return socket_servidor;
+};
 
-	getaddrinfo(NULL, puerto, &hints, &servinfo);
-
-	int socket_servidor = socket(servinfo->ai_family, servinfo->ai_socktype, servinfo->ai_protocol);
-
-	setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int));
-
-	bind(socket_servidor, servinfo->ai_addr, servinfo->ai_addrlen);
-
-	listen(socket_servidor, SOMAXCONN);
-
-	freeaddrinfo(servinfo);
-	log_trace(logger, "Listo para escuchar a mi cliente");
-
-	return socket_servidor;
-}
-
-int esperar_cliente(int socket_servidor)
-{
-	int socket_cliente = accept(socket_servidor, NULL, NULL);
-
-	return socket_cliente;
-}
+int esperar_cliente(int socket_servidor){
+  int socket_cliente = accept(socket_servidor, NULL, NULL);
+  return socket_cliente;
+};
 
 int recibir_operacion(int socket_cliente)
 {
@@ -278,294 +258,93 @@ int crear_conexion(char *ip, char* puerto, int header_cliente)
 	getaddrinfo(ip, puerto, &hints, &server_info);
 
 	int socket_cliente = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
-/*
-  if (header_cliente == KERNEL) {
-    if (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-      log_error(logger, "No se pudo conectar a Memoria.");
-      freeaddrinfo(server_info);
-      return -1;
-    }
-  } 
 
-  else {*/
-    log_info(logger, "Esperando servidor...");
-    while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-    sleep(1);
+  log_info(logger, "Esperando servidor...");
+  while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
+  sleep(1);
   }
-  //}
 
 	freeaddrinfo(server_info);
 
 	return socket_cliente;
 }
-/*
-int32_t enviar_handshake_desde(int header_cliente, int socket_cliente)
-{
-  int32_t handshake;
-  int32_t resultado;
-  switch (header_cliente)
-  {
-  case KERNEL:
-    handshake = 1;
-    send(socket_cliente, &handshake, sizeof(int32_t), 0);
-    recv(socket_cliente, &resultado, sizeof(int32_t), MSG_WAITALL);
-    break;
-  case CPU:
-    handshake = 2;
-    send(socket_cliente, &handshake, sizeof(int32_t), 0);
-    recv(socket_cliente, &resultado, sizeof(int32_t), MSG_WAITALL);
-    break;
-  case IO:
-    handshake = 3;
-    send(socket_cliente, &handshake, sizeof(int32_t), 0);
-    recv(socket_cliente, &resultado, sizeof(int32_t), MSG_WAITALL);
-    break;
-  
-  default:
-    break;
-  }
-  return resultado;
-}*/
 
-int recibir_handshake_de(int header_cliente, int socket_cliente)
-{
+
+int recibir_handshake_de(int header_cliente, int socket_cliente){
   int32_t handshake;
   int32_t resultado_ok = 0;
   int32_t resultado_error = -1;
 
-  switch (header_cliente)
-  {
-  case IO:
-    int32_t token_io;
-    char* nombre_io;
-    recv(socket_cliente, &token_io, sizeof(int32_t), MSG_WAITALL);
-    if (token_io == IMPRESORA)
-      nombre_io = "Impresora";
-    else if (token_io == TECLADO)
-      nombre_io = "Teclado";
-    else if (token_io == MOUSE)
-      nombre_io = "Mouse";
-    else if (token_io == AURICULARES)
-      nombre_io = "Auriculares";
-    else if (token_io == PARLANTE)
-      nombre_io = "Parlante";
-    else{
-      send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-      return -1;
-    }
+  switch (header_cliente){
+    case IO:
+      int32_t token_io;
+      char* nombre_io;
+      recv(socket_cliente, &token_io, sizeof(int32_t), MSG_WAITALL);
+      if (token_io == IMPRESORA)
+        nombre_io = "Impresora";
+      else if (token_io == TECLADO)
+        nombre_io = "Teclado";
+      else if (token_io == MOUSE)
+        nombre_io = "Mouse";
+      else if (token_io == AURICULARES)
+        nombre_io = "Auriculares";
+      else if (token_io == PARLANTE)
+        nombre_io = "Parlante";
+      else{
+        send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
+        return -1;
+      };
 
-    send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-    log_debug(logger, "Dispositivo %s conectado.", nombre_io);
-    return 0;
-    break;
-
-  case CPU:
-    int32_t identificador_cpu;
-    recv(socket_cliente, &identificador_cpu, sizeof(int32_t), MSG_WAITALL);
-    if (identificador_cpu < 0) {
-      send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-      return -1;
-    }
-    else {
       send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-      log_debug(logger, "CPU %d conectada.", identificador_cpu);
+      log_debug(logger, "Dispositivo %s conectado.", nombre_io);
       return 0;
-    }
-    break;
-
-  case KERNEL:
-    recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL);
-    if (handshake == KERNEL) {
-      send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-      return 0;
-    }
-    else {
-      send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-      return -1;
-    }
-    break;
-
-  default:
-    break;
-  }
-  return -1;
-}
-/*
-void* iniciar_conexion(void* arg) 
-{
-  char* puerto = (char*)arg;
-
-	int socket_servidor = iniciar_servidor(puerto);
-	log_info(logger, "Listo para recibir al cliente");
-	int socket_cliente = esperar_cliente(socket_servidor);
-
-  if (recibir_handshake(socket_cliente) == 0) {
-    pthread_exit((void*)EXIT_FAILURE);
-  } else {
-
-    t_list* lista;
-
-    while (1) {
-      int cod_op = recibir_operacion(socket_cliente);
-      switch (cod_op) {
-      case MENSAJE:
-        recibir_mensaje(socket_cliente);
-        break;
-      case PAQUETE:
-        lista = recibir_paquete(socket_cliente);
-        list_iterate(lista, (void*) iterator);
-        break;
-      case PATH:
-        //void* ubicacion_proceso = recibir_path(socket_cliente);
-        //log_debug(logger,"Ubicacion del proceso en memoria: %p", ubicacion_proceso);
-      case -1:
-        log_error(logger, "El cliente se desconectó. Terminando servidor...");
-        pthread_exit((void*)EXIT_FAILURE);
-      default:
-        log_warning(logger,"Operación desconocida. No quieras meter la pata.");
-        break;
-      }
-    }
-    return NULL;
-  }
-}*/
-/*
-void* conectar_puertos_a_servidor(void* arg)
-{
-  t_list* lista_puertos = (t_list*)arg;
-  int lista_tamanio = list_size(lista_puertos);
-  pthread_t thread_puerto[lista_tamanio];
-  char* puerto[lista_tamanio];
-  int i = 0;
-  while(i < lista_tamanio)
-  {
-    puerto[i] = list_get(lista_puertos, i);
-    pthread_create(&thread_puerto[i], NULL, iniciar_conexion, puerto[i]);
-    i+=1;
-  }
-  i = 0;
-  while(i < lista_tamanio)
-  {
-    pthread_join(thread_puerto[i], NULL);
-    i+=1;
-  }
-  return NULL;
-}*/
-/*
-int conectarse_a(int header_servidor, int header_cliente, t_config* config)
-{
-  char* ip;
-  char* puerto;
-  int conexion;
-
-  // Elegir el cliente
-  switch (header_cliente)
-  {
-
-
-    case KERNEL:
-      // Para este cliente elegir el servidor
-      switch (header_servidor)
-      {
-      case MEMORIA:
-        ip = config_get_string_value(config, "IP_MEMORIA");
-        puerto = config_get_string_value(config, "PUERTO_MEMORIA");
-        conexion = crear_conexion(ip, puerto, header_cliente);
-        if (conexion == -1) {
-          break;
-        } else {
-          if (enviar_handshake_desde(KERNEL, conexion) == 0) {
-          log_info(logger, "Conexión con módulo Memoria exitosa!");
-          //paquete(conexion);
-          break;
-          } else {
-          log_error(logger, "Error: La conexión con el servidor falló.");
-          }
-        }
-      default:
-        break;
-      }
       break;
-      
-
 
     case CPU:
-      // Para este cliente elegir el servidor
-      switch (header_servidor)
-      {
-      case KERNEL:
-        ip = config_get_string_value(config, "IP_KERNEL");
-        puerto = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
-        conexion = crear_conexion(ip, puerto, header_cliente);
-        if (enviar_handshake_desde(CPU, conexion) == 0) {
-          log_info(logger, "Conexión con módulo Kernel exitosa!");
-          paquete(conexion);
-          break;
-        } else {
-          log_error(logger, "Error: La conexión con el servidor falló.");
-        }
-        break;
-      case MEMORIA:
-        ip = config_get_string_value(config, "IP_MEMORIA");
-        puerto = config_get_string_value(config, "PUERTO_MEMORIA");
-        conexion = crear_conexion(ip, puerto, header_cliente);
-        if (enviar_handshake_desde(CPU, conexion) == 0) {
-          log_info(logger, "Conexión con módulo Memoria exitosa!");
-          paquete(conexion);
-          break;
-        } else {
-          log_error(logger, "Error: La conexión con el servidor falló.");
-        }
-        break;
-      default:
-        break;
+      int32_t identificador_cpu;
+      recv(socket_cliente, &identificador_cpu, sizeof(int32_t), MSG_WAITALL);
+      if (identificador_cpu <= 0) {
+        send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
+        return -1;
       }
+      else {
+        send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
+        log_debug(logger, "CPU %d conectada.", identificador_cpu);
+        return 0;
+      };
       break;
 
-
-
-    case IO:
-      // Para este cliente elegir el servidor
-      switch (header_servidor)
-      {
-      case KERNEL:
-        ip = config_get_string_value(config, "IP_KERNEL");
-        puerto = config_get_string_value(config, "PUERTO_KERNEL");
-        conexion = crear_conexion(ip, puerto, header_cliente);
-        if (enviar_handshake_desde(IO, conexion) == 0) {
-          log_info(logger, "Conexión con módulo Kernel exitosa!");
-          paquete(conexion);
-          break;
-        } else {
-          log_error(logger, "Error: La conexión con el servidor falló.");
-        }
-        break;
-      default:
-        break;
+    case KERNEL:
+      recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL);
+      if (handshake == KERNEL) {
+        send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
+        log_debug(logger,"Modulo Kernel conectado.");
+        return 0;
       }
+      else {
+        send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
+        return -1;
+      };
       break;
+
     default:
       break;
-
-  }
-  return conexion;
-}*/
+    };
+  return -1;
+};
 
 void liberar_conexion(int socket_cliente)
 {
 	close(socket_cliente);
 }
 
-int iniciar_conexion(void* arg) 
-{
+int iniciar_conexion(void* arg){
   char* puerto = (char*)arg;
-
-	int socket_servidor = iniciar_servidor(puerto);
-	log_info(logger, "Listo para recibir al cliente");
-	int socket_cliente = esperar_cliente(socket_servidor);
-
+  int socket_servidor = iniciar_servidor(puerto);
+  log_info(logger, "Listo para recibir al cliente");
+  int socket_cliente = esperar_cliente(socket_servidor);
   return socket_cliente;
-}
+};
 
 //// FINALIZAR
 void terminar_programa(int conexion, t_log* logger, t_config* config)
@@ -574,12 +353,3 @@ void terminar_programa(int conexion, t_log* logger, t_config* config)
 	log_destroy(logger);
 	config_destroy(config);	
 }
-/*
-const DispositivoIO dispositivos[] = {
-    {"impresora", IMPRESORA},
-    {"teclado", TECLADO},
-    {"mouse", MOUSE},
-    {"auriculares", AURICULARES},
-    {"parlante", PARLANTE},
-    {NULL, -1}
-};*/

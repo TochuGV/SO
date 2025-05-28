@@ -2,23 +2,24 @@
 #define UTILS_H_
 
 //// INCLUDES
-#include<stdio.h>
-#include<stdlib.h>
-#include<commons/log.h>
-#include<commons/string.h>
-#include<commons/config.h>
-#include<readline/readline.h>
-#include<signal.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<netdb.h>
-#include<string.h>
-#include<commons/log.h>
-#include<pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h> 
+#include <commons/log.h>
+#include <commons/string.h>
+#include <commons/config.h>
+#include <readline/readline.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <string.h>
+#include <commons/log.h>
+#include <pthread.h>
 #include <strings.h>
 
-
 //// ESTRUCTURAS - ENUMERADORES
+/*
 typedef enum
 {
 	MENSAJE,
@@ -27,6 +28,25 @@ typedef enum
   SYSCALL,
   NOMBRE_IO
 } op_code;
+*/
+
+typedef enum
+{
+	MENSAJE,
+	PAQUETE,
+  SOLICITUD_MEMORIA,
+  NOMBRE_IO,
+  SOLICITUD_INSTRUCCION,
+  INSTRUCCION
+} op_code_comunicacion;
+
+typedef enum
+{
+  SYSCALL_EXIT,
+  SYSCALL_IO,
+  SYSCALL_INIT_PROC,
+  SYSCALL_DUMP_MEMORY
+} tipo_syscall;
 
 typedef enum
 {
@@ -46,7 +66,7 @@ typedef struct
 
 typedef struct
 {
-	op_code codigo_operacion;
+	op_code_comunicacion codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
 
@@ -62,13 +82,21 @@ typedef enum {
 } t_tipo_instruccion;
 
 typedef enum {
+  EJECUCION_CONTINUA,
+  EJECUCION_FINALIZADA,
+  EJECUCION_BLOQUEADA_IO,
+  EJECUCION_BLOQUEADA_INIT_PROC,
+  EJECUCION_BLOQUEADA_DUMP,
+  EJECUCION_BLOQUEADA_SOLICITUD
+} t_estado_ejecucion;
+
+typedef enum {
   IMPRESORA,
   TECLADO,
   MOUSE,
   AURICULARES,
   PARLANTE
 } nombre_dispositivo_io;
-
 
 typedef struct {
     t_tipo_instruccion tipo;
@@ -93,6 +121,7 @@ typedef struct {
 	uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
 	uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
 } t_pcb;
+
 /*
 typedef struct {
   const char* nombre;
@@ -142,11 +171,10 @@ int recibir_operacion(int);
 int crear_conexion(char*, char*, int);
 int32_t enviar_handshake_desde(int, int);
 int recibir_handshake_de(int,int);
-//void* iniciar_conexion(void*);
 void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
 void liberar_conexion(int);
-int iniciar_conexion(void* arg);
+int iniciar_conexion(void*);
 
 //// FINALIZAR
 void terminar_programa(int, t_log*, t_config*);
