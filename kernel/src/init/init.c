@@ -12,6 +12,8 @@ char* ESTIMACION_INICIAL;
 char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
+t_list* lista_cpus;
+
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
@@ -21,6 +23,7 @@ void inicializar_kernel(){
   log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
   extraer_datos_config();
+  lista_cpus = list_create();
 };
 
 void extraer_datos_config(){
