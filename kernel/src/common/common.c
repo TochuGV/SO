@@ -214,25 +214,7 @@ int recibir_handshake_kernel(int cliente_kernel){
   };
   return -1;
 };
-/*
-void* atender_cliente(void* arg){
-  int cliente_kernel = *(int*)arg;
-  pthread_t hilo_atender;
-  int32_t cliente = recibir_handshake_kernel(cliente_kernel);
 
-  if(cliente == IO){
-    pthread_create(&hilo_atender, NULL, atender_io, arg);
-    pthread_join(hilo_atender, NULL);
-  } else if (cliente == CPU) {
-    pthread_create(&hilo_atender, NULL, atender_cpu_dispatch, arg);
-    pthread_join(hilo_atender, NULL);
-  } else {
-    log_warning(logger, "Handshake desconocido");
-  }
-  pthread_detach(pthread_self());
-  return NULL;
-};
-*/
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   uint32_t longitud_archivo_pseudocodigo;
@@ -276,6 +258,7 @@ int32_t handshake_kernel(int conexion_memoria){
     log_error(logger, "Error: La conexión con Memoria falló. Finalizando conexión...");
     return -1;
   };
+  log_info(logger, "Kernel se conectó exitosamente a Memoria")
   return 0;
 };
 
