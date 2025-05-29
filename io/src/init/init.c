@@ -5,7 +5,7 @@ char* PUERTO_KERNEL;
 char* LOG_LEVEL;
 
 void inicializar_io(){
-  logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_INFO);
+  logger = iniciar_logger("io.log", "Kernel", LOG_LEVEL_INFO);
   log_debug(logger, "Log de IO iniciado");
   config = iniciar_config("io.config");
   extraer_datos_config();
