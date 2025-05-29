@@ -3,17 +3,17 @@
 //bool interrupción_activa = false; 
 //pthread_mutex_t mutex_interrupcion = PTHREAD_MUTEX_INITIALIZER; No hace falta por ahora
 
- char* ip_kernel;
- char* ip_memoria;
- char* puerto_kernel_dispatch;
- char* puerto_kernel_interrupt;
- char* puerto_memoria;
- int conexion_kernel_dispatch;
- int conexion_kernel_interrupt;
- int conexion_memoria;
- datos_conexion_t* datos_dispatch;
- datos_conexion_t* datos_interrupt;
- datos_conexion_t* datos_memoria;
+  char* ip_kernel;
+  char* ip_memoria;
+  char* puerto_kernel_dispatch;
+  char* puerto_kernel_interrupt;
+  char* puerto_memoria;
+  int conexion_kernel_dispatch;
+  int conexion_kernel_interrupt;
+  int conexion_memoria;
+  datos_conexion_t* datos_dispatch;
+  datos_conexion_t* datos_interrupt;
+  datos_conexion_t* datos_memoria;
 
 void iniciar_cpu(int32_t identificador_cpu) {
 
@@ -54,7 +54,7 @@ void* conectar_dispatch(void* arg) {
 
     int32_t handshake_header = CPU;
     int32_t identificador = datos->id_cpu;
-    int32_t tipo_conexion = 0;
+    int32_t tipo_conexion = CPU_DISPATCH;
     int32_t respuesta;
     send(datos->socket, &handshake_header, sizeof(int32_t), 0);
     send(datos->socket, &identificador, sizeof(int32_t), 0);
@@ -84,7 +84,7 @@ void* conectar_interrupt(void* arg) {
 
     int32_t handshake_header = CPU;
     int32_t identificador = datos->id_cpu;
-    int32_t tipo_conexion = 1;
+    int32_t tipo_conexion = CPU_INTERRUPT;
     int32_t respuesta;
     send(datos->socket, &handshake_header, sizeof(int32_t), 0);
     send(datos->socket, &identificador, sizeof(int32_t), 0);

@@ -48,15 +48,17 @@ typedef enum
   SYSCALL_DUMP_MEMORY
 } tipo_syscall;
 
-typedef enum
-{
+typedef enum {
 	KERNEL = 100,
-  CPU = 101,
-  CPU_DISPATCH = 102,
-  CPU_INTERRUPT = 103,
-  MEMORIA = 104,
-  IO = 200
+  MEMORIA = 101,
+  CPU = 102,
+  IO = 103
 } header_modulo;
+
+typedef enum {
+  CPU_DISPATCH,
+  CPU_INTERRUPT
+} tipo_conexion_cpu;
 
 typedef struct
 {
