@@ -166,14 +166,13 @@ int recibir_handshake_kernel(int cliente_kernel){
 
 
       if (recv(cliente_kernel, &id_cpu, sizeof(int32_t), MSG_WAITALL) <= 0 || 
-          recv(cliente_kernel, &tipo_conexion, sizeof(int32_t), MSG_WAITALL) <= 0 ||
-          id_cpu <= 0 || (tipo_conexion != 0 && tipo_conexion != 1)){
-        printf("ID CPU: %d, TIPO_CONEXION: %d ", id_cpu, tipo_conexion);
+        recv(cliente_kernel, &tipo_conexion, sizeof(int32_t), MSG_WAITALL) <= 0 ||
+        id_cpu <= 0 || (tipo_conexion != CPU_DISPATCH && tipo_conexion != CPU_INTERRUPT)){
         log_error(logger, "Handshake CPU inválido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
-      printf("ID CPU: %d, TIPO_CONEXION: %d ", id_cpu, tipo_conexion);
+
       bool misma_cpu(void* elem){
         return ((t_cpu*)elem)->id_cpu == id_cpu;
       };
@@ -184,11 +183,11 @@ int recibir_handshake_kernel(int cliente_kernel){
         cpu->id_cpu = id_cpu;
         cpu->socket_dispatch = -1;
         cpu->socket_interrupt = -1;
-        cpu->disponible = true; // Inicialmente está libre
+        cpu->disponible = true;
         list_add(lista_cpus, cpu);
       };
 
-      if(tipo_conexion == 0){
+      if(tipo_conexion == CPU_DISPATCH){
         if(cpu->socket_dispatch != -1){
           log_error(logger, "CPU %d ya tiene conexión Dispatch", id_cpu);
           send(cliente_kernel, &error, sizeof(int32_t), 0);
