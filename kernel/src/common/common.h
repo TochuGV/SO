@@ -2,6 +2,7 @@
 #define COMMON_H_
 
 #include "./utils/utils.h"
+#include "init/init.h"
 #include "pcb/pcb.h"
 #include <stdint.h>
 

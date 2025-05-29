@@ -6,12 +6,12 @@ int main(int argc, char* argv[]){
   char* archivo_pseudocodigo = argv[1];
   int32_t tamanio_proceso = atoi(argv[2]);
 
-  pthread_t hilo_conexion_cpu_dispatch;
-  //pthread_t hilo_conexion_cpu_interrupt;
-  pthread_t hilo_conexion_io;
+  //pthread_t hilo_conexion_cpu_dispatch;
+  //pthread_t hilo_conexion_cpu_interrupt; --> Ver si estos hilos los declaro en 'init' o acá.
+  //pthread_t hilo_conexion_io;
   
-  pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
+  pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
 
   int conexion_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, KERNEL);

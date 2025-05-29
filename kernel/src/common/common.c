@@ -169,7 +169,22 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
 
       //Revisar si ya hay uno conectado
+
+      bool cpu_ya_conectada(void* elem){
+        return *(int32_t*)elem == id_cpu;
+      };
+
+      if(list_any_satisfy(lista_cpus, cpu_ya_conectada)){
+        log_warning(logger, "CPU %d ya está conectada", id_cpu);
+        send(cliente_kernel, &error, sizeof(int32_t), 0);
+        return -1;
+      };
+
       //Agregar CPU a la lista de conectados
+
+      int32_t* id_nueva_cpu = malloc(sizeof(int32_t));
+      *id_nueva_cpu = id_cpu;
+      list_add(lista_cpus, id_nueva_cpu);
 
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
       log_info(logger, "CPU %d conectada.", id_cpu);
