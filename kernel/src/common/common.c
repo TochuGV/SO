@@ -162,17 +162,52 @@ int recibir_handshake_kernel(int cliente_kernel){
   switch(handshake){
     case CPU:
       int32_t id_cpu;
-      if (recv(cliente_kernel, &id_cpu, sizeof(int32_t), MSG_WAITALL) <= 0 || id_cpu <= 0){
+      int32_t tipo_conexion; //Dispatch = 0 | Interrupt = 1
+
+
+      if (recv(cliente_kernel, &id_cpu, sizeof(int32_t), MSG_WAITALL) <= 0 || 
+          recv(cliente_kernel, &tipo_conexion, sizeof(int32_t), MSG_WAITALL) <= 0 ||
+          id_cpu <= 0 || (tipo_conexion != 0 && tipo_conexion != 1)){
+        printf("ID CPU: %d, TIPO_CONEXION: %d ", id_cpu, tipo_conexion);
         log_error(logger, "Handshake CPU inválido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
+      printf("ID CPU: %d, TIPO_CONEXION: %d ", id_cpu, tipo_conexion);
+      bool misma_cpu(void* elem){
+        return ((t_cpu*)elem)->id_cpu == id_cpu;
+      };
 
-      //Revisar si ya hay uno conectado
-      //Agregar CPU a la lista de conectados
+      t_cpu* cpu = list_find(lista_cpus, misma_cpu);
+      if(cpu == NULL){
+        cpu = malloc(sizeof(t_cpu));
+        cpu->id_cpu = id_cpu;
+        cpu->socket_dispatch = -1;
+        cpu->socket_interrupt = -1;
+        cpu->disponible = true; // Inicialmente está libre
+        list_add(lista_cpus, cpu);
+      };
 
+      if(tipo_conexion == 0){
+        if(cpu->socket_dispatch != -1){
+          log_error(logger, "CPU %d ya tiene conexión Dispatch", id_cpu);
+          send(cliente_kernel, &error, sizeof(int32_t), 0);
+          return -1;
+        };
+        cpu->socket_dispatch = cliente_kernel;
+        log_info(logger, "CPU %d conectó Dispatch", id_cpu);
+      } else {
+        if(cpu->socket_interrupt != -1){
+          log_error(logger, "CPU %d ya tiene una conexión Interrupt", id_cpu);
+          send(cliente_kernel, &error, sizeof(int32_t), 0);
+          return -1;
+        };
+        cpu->socket_interrupt = cliente_kernel;
+        log_info(logger, "CPU %d conectó Interrupt", id_cpu);
+      };
+      
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_info(logger, "CPU %d conectada.", id_cpu);
+      //log_info(logger, "CPU %d conectada.", id_cpu); //Agregar validación para cuando se conecten Dispatch e Interrupt
       return CPU;
     case IO:
       log_debug(logger, "Handshake recibido: IO");
@@ -199,25 +234,7 @@ int recibir_handshake_kernel(int cliente_kernel){
   };
   return -1;
 };
-/*
-void* atender_cliente(void* arg){
-  int cliente_kernel = *(int*)arg;
-  pthread_t hilo_atender;
-  int32_t cliente = recibir_handshake_kernel(cliente_kernel);
 
-  if(cliente == IO){
-    pthread_create(&hilo_atender, NULL, atender_io, arg);
-    pthread_join(hilo_atender, NULL);
-  } else if (cliente == CPU) {
-    pthread_create(&hilo_atender, NULL, atender_cpu_dispatch, arg);
-    pthread_join(hilo_atender, NULL);
-  } else {
-    log_warning(logger, "Handshake desconocido");
-  }
-  pthread_detach(pthread_self());
-  return NULL;
-};
-*/
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   uint32_t longitud_archivo_pseudocodigo;
@@ -261,6 +278,7 @@ int32_t handshake_kernel(int conexion_memoria){
     log_error(logger, "Error: La conexión con Memoria falló. Finalizando conexión...");
     return -1;
   };
+  log_info(logger, "Kernel se conectó exitosamente a Memoria");
   return 0;
 };
 

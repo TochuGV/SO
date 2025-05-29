@@ -68,11 +68,18 @@ int recibir_handshake_memoria(int cliente_memoria)
   int32_t resultado_ok = 0;
   int32_t resultado_error = -1;
 
-  recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL);
+ // recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL);
+  
+if (recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL) <= 0) {
+    log_error(logger, "Error recibiendo handshake de Kernel. Cerrando conexión...");
+    close(cliente_memoria);
+    return -1;
+}
 
   switch (handshake)
   {
   case KERNEL:
+    log_debug(logger, "Memoria responde OK al Kernel");
     send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
     return KERNEL;
     break;
@@ -266,7 +273,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
   if (verificar_espacio_memoria(tamanio_proceso)) {
 
     uint32_t longitud_archivo_pseudocodigo = *(int32_t*)list_get(valores, 0); 
-    char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo;
+    char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
     memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
 
 
@@ -276,14 +283,14 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
 
     t_proceso* proceso = malloc(sizeof(t_proceso));
     proceso->pid = pid;
-    proceso->lista_instrucciones = leer_archivo_instrucciones(path);
+    proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
 
     list_add(lista_procesos,proceso);
 
     log_info(logger, "## PID: <%d> - Proceso Creado - Tamaño: <%d>",pid,tamanio_proceso);
 
     return 0;
-  }
+  };
 
   log_warning(logger,"No hay lugar en memoria para el proceso.");
   return -1;

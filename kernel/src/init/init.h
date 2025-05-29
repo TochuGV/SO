@@ -2,7 +2,7 @@
 #define INIT_H_
 
 #include "./utils/utils.h"
-#include "./common/common.h"
+//#include "./common/common.h"
 
 extern char* IP_MEMORIA;
 extern char* PUERTO_MEMORIA;
@@ -15,6 +15,8 @@ extern char* ALFA;
 extern char* ESTIMACION_INICIAL;
 extern char* TIEMPO_SUSPENSION;
 extern char* LOG_LEVEL;
+
+extern t_list* lista_cpus;
 
 extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;

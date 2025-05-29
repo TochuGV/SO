@@ -13,6 +13,7 @@ extern t_queue* cola_ready;
 
 extern pthread_mutex_t mutex_new;       // Mutex para proteger la cola NEW
 extern pthread_mutex_t mutex_ready;     // Mutex para proteger la cola READY
+extern pthread_mutex_t mutex_cpus;
 
 extern sem_t hay_procesos_en_new;       // Semáforo para indicar si hay procesos en NEW
 
