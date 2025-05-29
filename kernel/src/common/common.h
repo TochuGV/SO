@@ -13,10 +13,10 @@ extern int conexion_memoria;
 
 //t_list* lista_cpus; // Lista global de CPUs disponibles
 typedef struct {
-    int32_t id_cpu;
-    int socket_dispatch;
-    int socket_interrupt;
-    bool disponible;
+  int32_t id_cpu;
+  int socket_dispatch;
+  int socket_interrupt;
+  bool disponible;
 } t_cpu;
 
 

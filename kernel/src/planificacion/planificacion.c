@@ -6,6 +6,7 @@ t_queue* cola_ready;
 
 pthread_mutex_t mutex_new = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_ready = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_cpus = PTHREAD_MUTEX_INITIALIZER;
 
 sem_t hay_procesos_en_new;
 
@@ -68,6 +69,7 @@ void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) 
 }
 */
 
+/*
 void mover_proceso_a_exec() {
   pthread_mutex_lock(&mutex_ready); 
 
@@ -105,13 +107,13 @@ void mover_proceso_a_exec() {
   cpu_seleccionada->disponible = false;
   pthread_mutex_unlock(&mutex_cpus);
 
-  /*
   t_pcb* pcb = queue_pop(cola_ready);
   pthread_mutex_unlock(&mutex_ready);
   cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
   return pcb;
-  */
 };
+  */
+
 
 /*
 //liberar cpu despues de exec.

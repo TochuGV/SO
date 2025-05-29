@@ -53,10 +53,12 @@ void* conectar_dispatch(void* arg) {
     }
 
     int32_t handshake_header = CPU;
-    int32_t respuesta;
     int32_t identificador = datos->id_cpu;
+    int32_t tipo_conexion = 0;
+    int32_t respuesta;
     send(datos->socket, &handshake_header, sizeof(int32_t), 0);
     send(datos->socket, &identificador, sizeof(int32_t), 0);
+    send(datos->socket, &tipo_conexion, sizeof(int32_t), 0);
     recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
     
     if (respuesta < 0) {
@@ -81,10 +83,12 @@ void* conectar_interrupt(void* arg) {
     }
 
     int32_t handshake_header = CPU;
-    int32_t respuesta;
     int32_t identificador = datos->id_cpu;
+    int32_t tipo_conexion = 1;
+    int32_t respuesta;
     send(datos->socket, &handshake_header, sizeof(int32_t), 0);
     send(datos->socket, &identificador, sizeof(int32_t), 0);
+    send(datos->socket, &tipo_conexion, sizeof(int32_t), 0);
     recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
 
     if (respuesta < 0) {
