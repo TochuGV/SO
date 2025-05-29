@@ -162,15 +162,45 @@ int recibir_handshake_kernel(int cliente_kernel){
   switch(handshake){
     case CPU:
       int32_t id_cpu;
+      int32_t tipo_conexion; //Dispatch = 0 | Interrupt = 1
       if (recv(cliente_kernel, &id_cpu, sizeof(int32_t), MSG_WAITALL) <= 0 || id_cpu <= 0){
         log_error(logger, "Handshake CPU inválido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
 
+      //recv(socket, &tipo_conexion, sizeof(int32_t), MSG_WAITALL);
+
       //Revisar si ya hay uno conectado
 
-      bool cpu_ya_conectada(void* elem){
+      bool misma_cpu(void* elem){
+        return ((t_cpu*)elem)->id_cpu == id_cpu;
+      };
+
+      t_cpu* cpu = list_find(lista_cpus, misma_cpu);
+
+      if(cpu == NULL){
+        t_cpu* cpu = malloc(sizeof(t_cpu));
+        cpu->id_cpu = id_cpu;
+        cpu->socket_dispatch = -1;
+        cpu->socket_interrupt = -1;
+        cpu->disponible = true; // Inicialmente está libre
+        list_add(lista_cpus, cpu);
+      };
+
+      if(tipo_conexion == 0 && cpu->socket_dispatch != -1){
+        log_error(logger, "CPU %d ya tiene conexión Dispatch", id_cpu);
+        send(cliente_kernel, &error, sizeof(int32_t), 0);
+        return -1;
+      };
+
+      if(tipo_conexion == 1 && cpu->socket_interrupt != -1){
+        log_error(logger, "CPU %d ya tiene una conexión Interrupt", id_cpu);
+        send(cliente_kernel, &error, sizeof(int32_t), 0);
+        return -1;
+      };
+
+      /*bool cpu_ya_conectada(void* elem){
         return *(int32_t*)elem == id_cpu;
       };
 
@@ -178,16 +208,26 @@ int recibir_handshake_kernel(int cliente_kernel){
         log_warning(logger, "CPU %d ya está conectada", id_cpu);
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
-      };
+      }; */
 
       //Agregar CPU a la lista de conectados
 
+      if(tipo_conexion == 0){
+        cpu->socket_dispatch = cliente_kernel;
+        log_info(logger, "CPU %d conectó Dispatch", id_cpu);
+      } else {
+        cpu->socket_interrupt = cliente_kernel;
+        log_info(logger, "CPU %d conectó Interrupt", id_cpu);
+      };
+
+      /*
       int32_t* id_nueva_cpu = malloc(sizeof(int32_t));
       *id_nueva_cpu = id_cpu;
       list_add(lista_cpus, id_nueva_cpu);
-
+      */
+      
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_info(logger, "CPU %d conectada.", id_cpu);
+      log_info(logger, "CPU %d conectada.", id_cpu); //Agregar validación para cuando se conecten Dispatch e Interrupt
       return CPU;
     case IO:
       log_debug(logger, "Handshake recibido: IO");

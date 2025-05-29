@@ -18,7 +18,8 @@ void iniciar_planificacion_largo_plazo(void* args){
 void iniciar_planificacion_corto_plazo() {
   cola_ready = queue_create();
   pthread_mutex_init(&mutex_ready, NULL);
-}
+  pthread_mutex_init(&mutex_cpus, NULL);
+};
 
 void entrar_estado(t_pcb* pcb, int estado){
   //t_temporal* cronometro1 = temporal_create();
@@ -67,17 +68,60 @@ void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) 
 }
 */
 
-t_pcb* mover_proceso_a_exec() {
+void mover_proceso_a_exec() {
   pthread_mutex_lock(&mutex_ready); 
 
   if (queue_is_empty(cola_ready)) { 
-    pthread_mutex_unlock(&mutex_ready); 
     log_info(logger, "No hay procesos en la cola READY"); 
-    return NULL;
+    pthread_mutex_unlock(&mutex_ready); 
+    return;
   };
   
+  pthread_mutex_lock(&mutex_cpus);
+  t_cpu* cpu_seleccionada = NULL;
+  for(int i = 0; i < list_size(lista_cpus); i++){
+    t_cpu* cpu_actual = list_get(lista_cpus, i);
+    if(cpu_actual->disponible){
+      cpu_seleccionada = cpu_actual;
+      break;
+    };
+  };
+  pthread_mutex_unlock(&mutex_cpus);
+
+  if(cpu_seleccionada == NULL){
+    log_info(logger, "No hay CPUs disponibles. Esperando...");
+    pthread_mutex_unlock(&mutex_ready);
+    return;
+  };
+
+  t_pcb* pcb_elegido = list_remove(cola_ready, 0);
+  pthread_mutex_unlock(&mutex_ready);
+
+  log_info("Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
+
+  enviar_a_cpu(pcb_elegido, cpu_seleccionada->socket_dispatch);
+
+  pthread_mutex_lock(&mutex_cpus);
+  cpu_seleccionada->disponible = false;
+  pthread_mutex_unlock(&mutex_cpus);
+
+  /*
   t_pcb* pcb = queue_pop(cola_ready);
   pthread_mutex_unlock(&mutex_ready);
   cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
   return pcb;
+  */
 };
+
+/*
+//liberar cpu despues de exec.
+void liberar_cpu(int id_cpu) {
+  for(int i = 0; i < list_size(lista_cpus); i++) {
+    t_cpu* cpu_actual = list_get(lista_cpus, i);
+    if(cpu_actual->id_cpu == id_cpu){
+      cpu_actual->disponible = true;
+      break;
+    };
+  };
+};
+*/
