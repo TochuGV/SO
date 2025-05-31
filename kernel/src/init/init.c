@@ -13,6 +13,9 @@ char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
 t_list* lista_cpus;
+t_list* lista_pcbs;
+
+pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
@@ -24,6 +27,8 @@ void inicializar_kernel(){
   config = iniciar_config("kernel.config");
   extraer_datos_config();
   lista_cpus = list_create();
+  lista_pcbs = list_create();
+  pthread_mutex_init(&mutex_pcbs, NULL);
 };
 
 void extraer_datos_config(){

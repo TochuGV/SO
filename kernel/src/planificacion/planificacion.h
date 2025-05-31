@@ -28,7 +28,6 @@ void finalizar_proceso(t_pcb*);
 
 // Planificación de corto plazo (READY)
 //void mover_proceso_a_ready(char*, int32_t);
-t_pcb* mover_proceso_a_exec();
+//void mover_proceso_a_exec();
 
 #endif
-

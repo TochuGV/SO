@@ -317,3 +317,13 @@ char* token_io_to_string(int32_t token) {
     default: return NULL;
   };
 };
+
+t_pcb* obtener_pcb_por_pid(uint32_t pid){
+  pthread_mutex_lock(&mutex_pcbs);
+  bool coincide(void* elem){
+    return ((t_pcb*)elem)->pid == pid;
+  };
+  t_pcb* pcb = list_find(lista_pcbs, coincide);
+  pthread_mutex_unlock(&mutex_pcbs);
+  return pcb;
+};

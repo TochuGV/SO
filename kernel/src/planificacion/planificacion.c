@@ -10,7 +10,7 @@ pthread_mutex_t mutex_cpus = PTHREAD_MUTEX_INITIALIZER;
 
 sem_t hay_procesos_en_new;
 
-void iniciar_planificacion_largo_plazo(void* args){
+void iniciar_planificacion_largo_plazo(){
   cola_new = queue_create();
   sem_init(&hay_procesos_en_new, 0, 0);
   pthread_mutex_init(&mutex_new, NULL); 

@@ -19,8 +19,6 @@ typedef struct {
   bool disponible;
 } t_cpu;
 
-
-
 void* conectar_cpu_dispatch(void*);
 void* atender_cpu_dispatch(void*);
 void* conectar_cpu_interrupt(void*);
@@ -37,5 +35,6 @@ extern char* NOMBRES_SYSCALLS[4];
 extern char* NOMBRES_DISPOSITIVOS_IO[5];
 
 char* token_io_to_string(int32_t);
+t_pcb* obtener_pcb_por_pid(uint32_t);
 
 #endif /* COMMON_H_ */
