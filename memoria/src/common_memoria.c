@@ -9,6 +9,8 @@ int servidor_memoria;
 char* puerto_escucha;
 
 t_list* lista_procesos;
+t_list* lista_ids_cpus;
+
 char* NOMBRES_INSTRUCCIONES[] = {
   "NOOP",
   "WRITE",
@@ -24,7 +26,7 @@ void inicializar_memoria(void)
 {
   config = iniciar_config("memoria.config");
   logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_DEBUG);
-  log_debug(logger, "Memoria iniciada :D!");
+  log_debug(logger, "Memoria iniciada!");
 
   puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
   tamanio_memoria = config_get_int_value(config, "TAM_MEMORIA");
@@ -36,9 +38,9 @@ void inicializar_memoria(void)
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
   lista_procesos = list_create();
+  lista_ids_cpus = list_create();
 }
 
-// Para memoria nomas necesito saber si la conexion es Kernel o de CPU, por eso un handshake tan basico
 void* atender_cliente(void* arg)
 {
   int cliente_memoria = *(int*)arg;
@@ -46,7 +48,7 @@ void* atender_cliente(void* arg)
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
 
   if (cliente == KERNEL) {
-    log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente);
+    log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente_memoria);
     pthread_create(&hilo_atender, NULL, atender_kernel, arg);
     pthread_detach(hilo_atender);
   }
@@ -55,7 +57,7 @@ void* atender_cliente(void* arg)
     pthread_join(hilo_atender,NULL);
   }
   else {
-    log_warning(logger, "Handshake desconocido");
+    log_warning(logger, "Error en el Handshake");
   }
   pthread_detach(pthread_self());
   return NULL;
@@ -67,31 +69,49 @@ int recibir_handshake_memoria(int cliente_memoria)
   int32_t handshake;
   int32_t resultado_ok = 0;
   int32_t resultado_error = -1;
-
- // recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL);
   
-if (recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL) <= 0) {
-    log_error(logger, "Error recibiendo handshake de Kernel. Cerrando conexión...");
-    close(cliente_memoria);
-    return -1;
-}
+  if (recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL) <= 0) {
+      log_error(logger, "Error recibiendo handshake. Cerrando conexión...");
+      close(cliente_memoria);
+      return -1;
+  }
 
   switch (handshake)
   {
   case KERNEL:
-    log_debug(logger, "Memoria responde OK al Kernel");
+
+    log_debug(logger, "Kernel conectado.");
     send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
     return KERNEL;
     break;
 
   case CPU:
     int32_t identificador_cpu;
-    send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
-    recv(cliente_memoria, &identificador_cpu, sizeof(int32_t),MSG_WAITALL);
-    log_debug(logger, "CPU %d conectada.", identificador_cpu);
-    return CPU;
+    recv(cliente_memoria,&identificador_cpu,sizeof(int32_t),MSG_WAITALL);
+    bool misma_cpu(void* elem)
+    {
+      return ((t_cpu_id_socket*)elem)->id == identificador_cpu;
+    }
+    t_cpu_id_socket* nueva_cpu = list_find(lista_ids_cpus, misma_cpu);
+
+    if (nueva_cpu == NULL) {
+
+      nueva_cpu = malloc(sizeof(t_cpu_id_socket));
+      nueva_cpu->id = identificador_cpu;
+      nueva_cpu->socket = cliente_memoria;
+      list_add(lista_ids_cpus, nueva_cpu);
+      
+      log_debug(logger, "CPU %d conectada.", identificador_cpu);
+      send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
+      return CPU;
+
+    } else {
+      log_error(logger,"Error, CPU ID: %d, ya esta conectada.", identificador_cpu);
+      send(cliente_memoria, &resultado_error, sizeof(int32_t), 0);
+      return -1;
+    }
     break;
-  
+
   default:
     send(cliente_memoria, &resultado_error, sizeof(int32_t), 0);
     break;
@@ -99,207 +119,11 @@ if (recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL) <= 0) {
   return -1;
 }
 
-void* atender_kernel(void* arg)
-{
-  int cliente_kernel = *(int*)arg;
-
-    t_list* lista;
-
-    while (1) {
-      int cod_op = recibir_operacion(cliente_kernel);
-      
-      switch (cod_op) {
-      case PAQUETE:
-        lista = recibir_paquete(cliente_kernel);
-        list_iterate(lista, (void*) iterator);
-        break;
-
-      case SOLICITUD_MEMORIA:
-
-        int32_t resultado_ok = 0;
-        int32_t resultado_error = -1;
-
-        if (recibir_y_ubicar_proceso(cliente_kernel) == 0) {
-          send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
-        }
-        else
-          send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
-        break;
-        
-      case -1:
-        log_error(logger, "Kernel se desconectó. Terminando servidor...");
-        pthread_exit((void*)EXIT_FAILURE);
-      default:
-        log_warning(logger,"Operación desconocida. No quieras meter la pata.");
-        break;
-      }
-    }
-  return NULL;
-}
-
-void* atender_cpu(void* arg)
-{
-  int cliente_cpu = *(int*)arg;
-
-    t_list* lista;
-    while (1) {
-      int cod_op = recibir_operacion(cliente_cpu);
-      switch (cod_op) {
-      case PAQUETE:
-        lista = recibir_paquete(cliente_cpu);
-        list_iterate(lista, (void*) iterator);
-        break;
-      case SOLICITUD_INSTRUCCION:
-        recibir_solicitud_instruccion(cliente_cpu);
-        break;
-      case -1:
-        log_error(logger, "CPU se desconectó. Terminando servidor...");
-        pthread_exit((void*)EXIT_FAILURE);
-      default:
-        log_warning(logger,"Operación desconocida. No quieras meter la pata.");
-        break;
-      }
-    }
-  return NULL;
-}
-
-void* recibir_solicitud_instruccion(int cliente_cpu)
-{
-  uint32_t pid;
-  uint32_t pc;
-  t_proceso* proceso;
-  t_instruccion* instruccion;
-
-  recv(cliente_cpu,&pid,sizeof(int32_t),MSG_WAITALL);
-  recv(cliente_cpu,&pc,sizeof(int32_t),MSG_WAITALL);
-
-  for(int i = 0; i<list_size(lista_procesos);i++) {
-
-    proceso = list_get(lista_procesos,i);
-
-    if (proceso->pid == pid) {
-
-      if (pc >= list_size(proceso->lista_instrucciones)) {
-      log_error(logger, "El PC %d excede la cantidad de instrucciones del proceso %d.", pc, pid);
-      return NULL;
-      }
-
-      instruccion = list_get(proceso->lista_instrucciones,pc);
-
-      t_tipo_instruccion tipo = instruccion->tipo;
-      uint32_t parametro1 = instruccion->parametro1;
-      uint32_t parametro2 = instruccion->parametro2;
-
-      log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%d  %d>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
-
-      t_paquete* paquete = crear_paquete(INSTRUCCION);
-
-      agregar_a_paquete(paquete, &tipo, sizeof(tipo));
-      agregar_a_paquete(paquete, &parametro1, sizeof(uint32_t));
-      agregar_a_paquete(paquete, &parametro2, sizeof(uint32_t));
-
-      enviar_paquete(paquete, cliente_cpu);
-
-      log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
-
-      return NULL;
-    }
-  }
-
-  log_warning(logger,"Error al encontrar el proceso que CPU solicita.");
-  return NULL;
-}
-
-bool verificar_espacio_memoria(uint32_t tamanio_proceso)
-{
-  if(memoria_usada + tamanio_proceso > tamanio_memoria)
-    return false;
-  
-  return true;
-}
-
-t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
-{
-  char path_archivo[256];
-  snprintf(path_archivo, sizeof(path_archivo), "%s%s", path_instrucciones, archivo_pseudocodigo);
-  FILE *file = fopen(path_archivo, "r");
-  if (file == NULL) {
-    log_error(logger, "Error: no se pudo ingresar al proceso");
-    return NULL;
-  }
-
-  t_list* lista_instrucciones = list_create();
-  t_instruccion instruccion;
-  char linea[256];
-
-  while ((fgets(linea, sizeof(linea), file) != NULL)) {
-    char* token = strtok(linea, " \n");
-
-    for(int indice_intruccion = 0; indice_intruccion < CANTIDAD_INSTRUCCIONES; indice_intruccion++) {
-      if (strcmp(token, NOMBRES_INSTRUCCIONES[indice_intruccion]) == 0) {
-        instruccion.tipo = indice_intruccion;
-        break;
-      }
-    }
-
-    char* param1 = strtok(NULL, " \n");
-    char* param2 = strtok(NULL, " \n");
-
-    if (param1 != NULL)
-      instruccion.parametro1 = atoi(param1);
-    else
-      instruccion.parametro1 = 0;
-
-    if (param2 != NULL)
-      instruccion.parametro2 = atoi(param2);
-    else
-      instruccion.parametro2 = 0;
-    
-    t_instruccion* nueva_instruccion = malloc(sizeof(t_instruccion));
-    *nueva_instruccion = instruccion;
-
-    list_add(lista_instrucciones, nueva_instruccion);
-  }
-
-  return lista_instrucciones;
-}
-
-int recibir_y_ubicar_proceso(int cliente_kernel)
-{
-  t_list* valores = recibir_paquete(cliente_kernel);
-
-  uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2); 
-
-  if (verificar_espacio_memoria(tamanio_proceso)) {
-
-    uint32_t longitud_archivo_pseudocodigo = *(int32_t*)list_get(valores, 0); 
-    char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
-    memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
-
-
-    uint32_t pid = *(uint32_t*)list_get(valores, 3);
-
-    log_debug(logger,"Proceso %s con pid %d recibido",archivo_pseudocodigo,pid);
-
-    t_proceso* proceso = malloc(sizeof(t_proceso));
-    proceso->pid = pid;
-    proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
-
-    list_add(lista_procesos,proceso);
-
-    log_info(logger, "## PID: <%d> - Proceso Creado - Tamaño: <%d>",pid,tamanio_proceso);
-
-    return 0;
-  };
-
-  log_warning(logger,"No hay lugar en memoria para el proceso.");
-  return -1;
-}
-
-
 void terminar_memoria(void)
 {
   close(servidor_memoria);
+  list_destroy_and_destroy_elements(lista_procesos, free);
+  list_destroy_and_destroy_elements(lista_ids_cpus, free);
 	log_destroy(logger);
 	config_destroy(config);	
 }

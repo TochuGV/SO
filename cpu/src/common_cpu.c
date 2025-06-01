@@ -116,8 +116,8 @@ void* conectar_memoria(void* arg) {
     int32_t identificador = datos->id_cpu;
     int32_t respuesta;
     send(datos->socket, &handshake_header, sizeof(int32_t), 0);
-    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
     send(datos->socket, &identificador, sizeof(int32_t), 0);
+    recv(datos->socket, &respuesta, sizeof(int32_t), MSG_WAITALL);
 
     if (respuesta < 0) {
       log_error(logger, "Fallo al recibir respuesta del handshake con Memoria");
