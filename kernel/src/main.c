@@ -3,8 +3,8 @@
 int main(int argc, char* argv[]){
   inicializar_kernel();
 
-  char* archivo_pseudocodigo = argv[1];
-  int32_t tamanio_proceso = atoi(argv[2]);
+  //char* archivo_pseudocodigo = argv[1];
+  //int32_t tamanio_proceso = atoi(argv[2]);
 
   //pthread_t hilo_conexion_cpu_dispatch;
   //pthread_t hilo_conexion_cpu_interrupt; --> Ver si estos hilos los declaro en 'init' o acá.
