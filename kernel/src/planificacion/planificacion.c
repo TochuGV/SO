@@ -55,22 +55,35 @@ void finalizar_proceso(t_pcb* pcb){
   destruir_pcb(pcb);
 };
 
-/*
 void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) {
-  t_pcb* pcb;
-  pcb = queue_pop(cola_new);
+  pthread_mutex_lock(&mutex_new);
+  if(queue_is_empty(cola_new)){
+    pthread_mutex_unlock(&mutex_new);
+    return;
+  };
+
+  t_pcb* pcb = queue_pop(cola_new);
+  pthread_mutex_unlock(&mutex_new);
   //if (enviar_proceso_a_memoria(archivo_pseudocodigo, tamanio_proceso, pcb->pid, conexion_memoria) == 0) {
-    pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb); 
-    pthread_mutex_unlock(&mutex_ready); 
-    cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+  pthread_mutex_lock(&mutex_ready);
+  queue_push(cola_ready, pcb); 
+  pthread_mutex_unlock(&mutex_ready); 
+  cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
   //}
   //return NULL;
 }
-*/
 
-/*
-void mover_proceso_a_exec() {
+void enviar_a_cpu(t_pcb* pcb, int socket_cpu_dispatch){
+  int bytes = sizeof(uint32_t) * (2 + 2 * CANTIDAD_ESTADOS);
+  void* stream = serializar_pcb(pcb, bytes);
+  t_paquete* paquete = crear_paquete(PCB);
+  agregar_a_paquete(paquete, stream, bytes);
+  enviar_paquete(paquete, socket_cpu_dispatch);
+  log_info(logger, "PCB del Proceso <%d> enviado a CPU", pcb->pid);
+  free(stream);
+}
+
+void mover_proceso_a_exec(){
   pthread_mutex_lock(&mutex_ready); 
 
   if (queue_is_empty(cola_ready)) { 
@@ -96,10 +109,10 @@ void mover_proceso_a_exec() {
     return;
   };
 
-  t_pcb* pcb_elegido = list_remove(cola_ready, 0);
+  t_pcb* pcb_elegido = queue_pop(cola_ready);
   pthread_mutex_unlock(&mutex_ready);
 
-  log_info("Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
+  log_info(logger, "Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
 
   enviar_a_cpu(pcb_elegido, cpu_seleccionada->socket_dispatch);
 
@@ -110,13 +123,8 @@ void mover_proceso_a_exec() {
   t_pcb* pcb = queue_pop(cola_ready);
   pthread_mutex_unlock(&mutex_ready);
   cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
-  return pcb;
 };
-  */
 
-
-/*
-//liberar cpu despues de exec.
 void liberar_cpu(int id_cpu) {
   for(int i = 0; i < list_size(lista_cpus); i++) {
     t_cpu* cpu_actual = list_get(lista_cpus, i);
@@ -126,4 +134,3 @@ void liberar_cpu(int id_cpu) {
     };
   };
 };
-*/

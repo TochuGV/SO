@@ -235,6 +235,7 @@ int recibir_handshake_kernel(int cliente_kernel){
 };
 
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
+  /*
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   uint32_t longitud_archivo_pseudocodigo;
   uint32_t resultado;
@@ -262,6 +263,9 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     enviar_paquete(paquete, socket_cliente);
   };
   return -1;
+  */
+  log_warning(logger, "Omitiendo el envío real a Memoria - Proceso <%d>", pid);
+  return 0;
 };
 
 int32_t handshake_kernel(int conexion_memoria){

@@ -2,7 +2,8 @@
 #define INIT_H_
 
 #include "./utils/utils.h"
-//#include "./common/common.h"
+#include "planificacion/planificacion.h"
+#include "./common/common.h"
 
 extern char* IP_MEMORIA;
 extern char* PUERTO_MEMORIA;

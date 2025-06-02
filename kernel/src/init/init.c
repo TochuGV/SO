@@ -29,6 +29,8 @@ void inicializar_kernel(){
   lista_cpus = list_create();
   lista_pcbs = list_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
+  iniciar_planificacion_largo_plazo();
+  iniciar_planificacion_corto_plazo();
 };
 
 void extraer_datos_config(){
