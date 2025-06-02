@@ -20,7 +20,7 @@ void* conectar_cpu_dispatch(void* arg){
 };
 
 void* atender_cpu_dispatch(void* arg){
-  int socket_cpu_dispatch = *(int*)arg;
+  int socket_cpu_dispatch = *(int*) arg;
   free(arg);
   if(recibir_handshake_kernel(socket_cpu_dispatch) != CPU){
     log_error(logger, "Se esperaba un CPU, pero se conectó otro tipo");
@@ -35,6 +35,10 @@ void* atender_cpu_dispatch(void* arg){
       break;
     };
     log_debug(logger, "Código de operación recibido: %d", cod_op);
+    
+    t_syscall* syscall = recibir_syscall(socket_cpu_dispatch);
+    manejar_syscall(syscall, socket_cpu_dispatch);
+    destruir_syscall(syscall);
   };
   close(socket_cpu_dispatch);
   return NULL;

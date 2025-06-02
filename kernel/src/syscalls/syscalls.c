@@ -36,9 +36,10 @@ void syscall_init_proc(t_syscall* syscall){
 void syscall_exit(t_syscall* syscall){
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
   if(pcb == NULL) return;
-  //Liberar la memoria y CPU
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
   finalizar_proceso(pcb);
+  //Liberar la memoria
+  liberar_cpu_por_pid(pcb->pid);
 };
 
 void syscall_io(t_syscall* syscall){

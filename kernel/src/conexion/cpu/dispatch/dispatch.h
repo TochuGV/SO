@@ -3,6 +3,7 @@
 
 #include "./common/common.h"
 #include "./conexion/handshake/entrante/entrante.h"
+#include "./syscalls/syscalls.h"
 
 void* conectar_cpu_dispatch(void*);
 void* atender_cpu_dispatch(void*);

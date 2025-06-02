@@ -125,7 +125,7 @@ void mover_proceso_a_exec(){
   cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
 };
 
-void liberar_cpu(int id_cpu) {
+void liberar_cpu(uint32_t id_cpu) {
   for(int i = 0; i < list_size(lista_cpus); i++) {
     t_cpu* cpu_actual = list_get(lista_cpus, i);
     if(cpu_actual->id_cpu == id_cpu){
@@ -133,4 +133,17 @@ void liberar_cpu(int id_cpu) {
       break;
     };
   };
+};
+
+void liberar_cpu_por_pid(uint32_t pid){
+  pthread_mutex_lock(&mutex_cpus);
+  for(int i = 0; i < list_size(lista_cpus); i++){
+    t_cpu* cpu = list_get(lista_cpus, i);
+    if(!cpu->disponible){
+      cpu->disponible = true;
+      log_debug(logger, "Se liberó la CPU %d, ya que el proceso <%d> finalizó", cpu->id_cpu, pid);
+      break;
+    };
+  };
+  pthread_mutex_unlock(&mutex_cpus);
 };

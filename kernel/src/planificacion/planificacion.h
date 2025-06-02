@@ -30,6 +30,7 @@ void finalizar_proceso(t_pcb*);
 void mover_proceso_a_ready(char*, int32_t);
 void enviar_a_cpu(t_pcb*, int);
 void mover_proceso_a_exec();
-void liberar_cpu(int);
+void liberar_cpu(uint32_t);
+void liberar_cpu_por_pid(uint32_t);
 
 #endif
