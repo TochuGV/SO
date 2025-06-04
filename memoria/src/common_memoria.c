@@ -39,19 +39,23 @@ void inicializar_memoria(void)
 }
 
 // Para memoria nomas necesito saber si la conexion es Kernel o de CPU, por eso un handshake tan basico
-void* atender_cliente(void* arg)
-{
+void* atender_cliente(void* arg){
   int cliente_memoria = *(int*)arg;
+  log_debug(logger, "Cliente aceptado con socket FD: %d", cliente_memoria);
+  free(arg);
   pthread_t hilo_atender;
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
 
+  int* socket_ptr = malloc(sizeof(int));
+  *socket_ptr = cliente_memoria;
+
   if (cliente == KERNEL) {
     log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente);
-    pthread_create(&hilo_atender, NULL, atender_kernel, arg);
+    pthread_create(&hilo_atender, NULL, atender_kernel, socket_ptr);
     pthread_detach(hilo_atender);
   }
   else if (cliente == CPU) {
-    pthread_create(&hilo_atender, NULL, atender_cpu, arg);
+    pthread_create(&hilo_atender, NULL, atender_cpu, socket_ptr);
     pthread_join(hilo_atender,NULL);
   }
   else {
@@ -59,8 +63,7 @@ void* atender_cliente(void* arg)
   }
   pthread_detach(pthread_self());
   return NULL;
-
-}
+};
 
 int recibir_handshake_memoria(int cliente_memoria)
 {
@@ -99,15 +102,16 @@ if (recv(cliente_memoria, &handshake, sizeof(int32_t), MSG_WAITALL) <= 0) {
   return -1;
 }
 
-void* atender_kernel(void* arg)
-{
+void* atender_kernel(void* arg){
   int cliente_kernel = *(int*)arg;
+  log_debug(logger, "Entrando a atender_kernel() con socket FD: %d", cliente_kernel);
 
     t_list* lista;
 
     while (1) {
+      log_debug(logger, "Esperando operación de Kernel...");
       int cod_op = recibir_operacion(cliente_kernel);
-      
+      log_debug(logger, "Código de operación recibido: %d", cod_op);
       switch (cod_op) {
       case PAQUETE:
         lista = recibir_paquete(cliente_kernel);
@@ -118,8 +122,9 @@ void* atender_kernel(void* arg)
 
         int32_t resultado_ok = 0;
         int32_t resultado_error = -1;
-
-        if (recibir_y_ubicar_proceso(cliente_kernel) == 0) {
+        int resultado = recibir_y_ubicar_proceso(cliente_kernel);
+        printf("%d", resultado);
+        if (resultado == 0) {
           send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
         }
         else
@@ -132,10 +137,10 @@ void* atender_kernel(void* arg)
       default:
         log_warning(logger,"Operación desconocida. No quieras meter la pata.");
         break;
-      }
-    }
+      };
+    };
   return NULL;
-}
+};
 
 void* atender_cpu(void* arg)
 {
@@ -223,6 +228,7 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
   char path_archivo[256];
   snprintf(path_archivo, sizeof(path_archivo), "%s%s", path_instrucciones, archivo_pseudocodigo);
   FILE *file = fopen(path_archivo, "r");
+  log_debug(logger, "Abriendo archivo de instrucciones: %s", path_archivo);
   if (file == NULL) {
     log_error(logger, "Error: no se pudo ingresar al proceso");
     return NULL;
@@ -267,15 +273,18 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
 int recibir_y_ubicar_proceso(int cliente_kernel)
 {
   t_list* valores = recibir_paquete(cliente_kernel);
-
+  if (!valores || list_size(valores) < 4) {
+    log_error(logger, "Paquete recibido de Kernel es inválido o incompleto");
+    return -1;
+  }
   uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2); 
-
+  printf("Hola");
   if (verificar_espacio_memoria(tamanio_proceso)) {
-
     uint32_t longitud_archivo_pseudocodigo = *(int32_t*)list_get(valores, 0); 
     char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
-    memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
-
+    memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo);
+    archivo_pseudocodigo[longitud_archivo_pseudocodigo - 1] = '\0';
+    log_debug(logger, "Nombre del archivo recibido: '%s' (longitud %d)", archivo_pseudocodigo, longitud_archivo_pseudocodigo);
 
     uint32_t pid = *(uint32_t*)list_get(valores, 3);
 
@@ -283,6 +292,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
 
     t_proceso* proceso = malloc(sizeof(t_proceso));
     proceso->pid = pid;
+    log_debug(logger, "Intentando leer archivo: '%s'", archivo_pseudocodigo);
     proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
 
     list_add(lista_procesos,proceso);

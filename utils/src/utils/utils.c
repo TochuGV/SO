@@ -82,7 +82,7 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente){
 	int bytes = paquete->buffer->size + 2*sizeof(int);
 
 	void* a_enviar = serializar_paquete(paquete, bytes);
-
+  log_debug(logger, "Enviando código de operación: %d al socket %d", paquete->codigo_operacion, socket_cliente);
 	send(socket_cliente, a_enviar, bytes, 0);
   eliminar_paquete(paquete);
 	free(a_enviar);
@@ -218,17 +218,17 @@ int esperar_cliente(int socket_servidor){
   return socket_cliente;
 };
 
-int recibir_operacion(int socket_cliente)
-{
+int recibir_operacion(int socket_cliente){
 	int cod_op;
-	if(recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
-		return cod_op;
-	else
-	{
+  int r = recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL);
+  log_debug(logger, "recv devolvió %d", r);
+	if(r > 0){
+    return cod_op;
+  } else {
 		close(socket_cliente);
 		return -1;
-	}
-}
+	};
+};
 
 int crear_conexion(char *ip, char* puerto, int header_cliente){
 	struct addrinfo hints;

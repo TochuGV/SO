@@ -20,9 +20,12 @@ pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
+pthread_t hilo_planificacion;
+
+int conexion_memoria;
 
 void inicializar_kernel(){
-  logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_INFO);
+  logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
   log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
   extraer_datos_config();
@@ -31,6 +34,8 @@ void inicializar_kernel(){
   pthread_mutex_init(&mutex_pcbs, NULL);
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
+
+  pthread_create(&hilo_planificacion, NULL, planificador_ciclo_general, NULL);
 };
 
 void extraer_datos_config(){

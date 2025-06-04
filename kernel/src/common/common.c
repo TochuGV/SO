@@ -1,27 +1,26 @@
 #include "common.h"
 
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
-  /*
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   uint32_t longitud_archivo_pseudocodigo;
-  uint32_t resultado;
+  int32_t resultado;
   if(archivo_pseudocodigo != NULL){
     longitud_archivo_pseudocodigo = strlen(archivo_pseudocodigo) + 1;
     agregar_a_paquete(paquete, &longitud_archivo_pseudocodigo, sizeof(uint32_t));// Enviar la longitud
     agregar_a_paquete(paquete, archivo_pseudocodigo, longitud_archivo_pseudocodigo);
     agregar_a_paquete(paquete, &tamanio_proceso, sizeof(tamanio_proceso));
     agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
-
     enviar_paquete(paquete, socket_cliente);
-
-    log_info(logger, "Archivo pseudocódigo enviado a memoria!");
-
-    recv(socket_cliente, &resultado, sizeof(uint32_t), MSG_WAITALL);
-
-    if (resultado == 0)
+    log_info(logger, "Archivo pseudocódigo '%s' enviado a memoria para el proceso <%d>", archivo_pseudocodigo, pid);
+    recv(socket_cliente, &resultado, sizeof(int32_t), MSG_WAITALL);
+    printf("%d", resultado);
+    if(resultado == 0){
+      log_debug(logger, "Memoria aceptó el proceso <%d>", pid);
       return 0;
-    else
+    } else {
+      log_warning(logger, "Memoria rechazó el proceso <%d> debido a falta de espacio u otro motivo", pid);
       return -1;    
+    }
   } else {
     longitud_archivo_pseudocodigo = 0;
     agregar_a_paquete(paquete, &longitud_archivo_pseudocodigo, sizeof(uint32_t));
@@ -29,9 +28,6 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     enviar_paquete(paquete, socket_cliente);
   };
   return -1;
-  */
-  log_warning(logger, "Omitiendo el envío real a Memoria - Proceso <%d>", pid);
-  return 0;
 };
 
 char* crear_cadena_metricas_estado(t_pcb* pcb){

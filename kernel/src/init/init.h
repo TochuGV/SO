@@ -26,6 +26,8 @@ extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
 
+extern int conexion_memoria;
+
 void inicializar_kernel();
 void extraer_datos_config();
 //void crear_hilos();

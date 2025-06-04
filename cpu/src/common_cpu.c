@@ -144,6 +144,9 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion
     
     // Paso 2: obtener la instrucción desde Memoria
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
+    if (list_size(lista_instruccion) == 0) {
+      log_warning(logger, "No se recibió ninguna instrucción desde Memoria");
+    }
     instruccion.parametro1 = *(int*)list_get(lista_instruccion, 0);
     instruccion.parametro1 = *(uint32_t*)list_get(lista_instruccion, 1);
     instruccion.parametro2 = *(uint32_t*)list_get(lista_instruccion, 2);
