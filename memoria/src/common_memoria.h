@@ -2,34 +2,55 @@
 #define COMMON_MEMORIA_H_
 
 #include "./utils/utils.h"
+#include "atencion_cpu.h"
+#include "atencion_kernel.h"
 #include <stdint.h>
 
-////////////////////////////////////////// VARIABLES EXTERNAS //////////////////////////////////////////
 #define CANTIDAD_INSTRUCCIONES 8
+
+
+////////////////////////////////////////// VARIABLES EXTERNAS //////////////////////////////////////////
 
 // CONEXIONES
 extern char* puerto_escucha;
 extern int servidor_memoria;
 
 
-// MEMORIA USUARIO
-extern uint32_t tamanio_memoria;
+// VALORES DE MEMORIA
 extern void* memoria;
+extern uint32_t tamanio_memoria;
 extern uint32_t memoria_usada;
+extern uint32_t tamanio_pagina;
+extern uint32_t entradas_por_tabla;
+extern uint32_t cantidad_niveles;
+extern uint32_t retardo_memoria;
+extern uint32_t retardo_swap;
+extern char* path_swapfile;
+extern char* path_dump;
 extern char* path_instrucciones;
-extern t_list* lista_procesos;
-extern char* NOMBRES_INSTRUCCIONES[CANTIDAD_INSTRUCCIONES];
 
+
+// LISTAS
+extern t_list* lista_procesos;
+extern t_list* lista_ids_cpus;
+
+
+// INSTRUCCIONES
+extern char* NOMBRES_INSTRUCCIONES[CANTIDAD_INSTRUCCIONES];
 
 ////////////////////////////////////////// ESTRUCTURAS //////////////////////////////////////////
 
-// CPU
 typedef struct
 {
   uint32_t pid;
   t_list* lista_instrucciones;
 } t_proceso;
 
+typedef struct
+{
+  int32_t id;
+  int socket;
+} t_cpu_id_socket;
 
 
 ////////////////////////////////////////// FUNCIONES //////////////////////////////////////////
@@ -38,18 +59,9 @@ typedef struct
 void* atender_cliente(void* arg);
 int recibir_handshake_memoria(int cliente_memoria);
 
-// KERNEL
-void* atender_kernel(void*);
-bool verificar_espacio_memoria(uint32_t tamanio_proceso);
-int recibir_y_ubicar_proceso(int);
-t_list* leer_archivo_instrucciones(char* path);
-
-// CPU
-void* atender_cpu(void*);
-void* recibir_solicitud_instruccion(int cliente_cpu);
-
 // UTILS
 void inicializar_memoria(void);
+void obtener_configs(void);
 void terminar_memoria(void);
 
 #endif /* COMMON_MEMORIA_H_ */
