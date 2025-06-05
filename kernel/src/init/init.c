@@ -34,8 +34,6 @@ void inicializar_kernel(){
   pthread_mutex_init(&mutex_pcbs, NULL);
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
-
-  pthread_create(&hilo_planificacion, NULL, planificador_ciclo_general, NULL);
 };
 
 void extraer_datos_config(){

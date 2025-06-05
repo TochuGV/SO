@@ -13,7 +13,6 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     enviar_paquete(paquete, socket_cliente);
     log_info(logger, "Archivo pseudocódigo '%s' enviado a memoria para el proceso <%d>", archivo_pseudocodigo, pid);
     recv(socket_cliente, &resultado, sizeof(int32_t), MSG_WAITALL);
-    printf("%d", resultado);
     if(resultado == 0){
       log_debug(logger, "Memoria aceptó el proceso <%d>", pid);
       return 0;
@@ -28,6 +27,21 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     enviar_paquete(paquete, socket_cliente);
   };
   return -1;
+};
+
+void esperar_enter_para_planificar(){ //Se podría ver alguna forma de que se loggee el mensaje "Presiona 'Enter' para comenzar la planificación..."
+  char* leido = readline("Presiona 'Enter' para comenzar la planificación...\n");
+  if(leido != NULL && strlen(leido) == 0){
+    log_debug(logger, "Se presionó 'Enter', comenzando la planificación...");
+    free(leido);
+    return;
+  };
+  while(leido == NULL || strlen(leido) != 0){
+    free(leido);
+    leido = readline("Presiona solo 'Enter' para comenzar la planificación...\n");
+  };
+  log_debug(logger, "Se presionó 'Enter', comenzando la planificación...");
+  free(leido);
 };
 
 char* crear_cadena_metricas_estado(t_pcb* pcb){

@@ -19,16 +19,9 @@ typedef struct {
   bool disponible;
 } t_cpu;
 
-// void* conectar_cpu_dispatch(void*);
-// void* atender_cpu_dispatch(void*);
-// void* conectar_cpu_interrupt(void*);
-// void* atender_cpu_interrupt(void*);
-// void* conectar_io(void*);
-// void* atender_io(void*);
-// int recibir_handshake_kernel(int);
-// void* atender_cliente(void*);
+
 uint32_t enviar_proceso_a_memoria(char*, uint32_t, uint32_t, int);
-//int32_t handshake_kernel(int);
+void esperar_enter_para_planificar();
 char* crear_cadena_metricas_estado(t_pcb*);
 
 extern char* NOMBRES_SYSCALLS[4];

@@ -25,6 +25,7 @@ extern pthread_mutex_t mutex_pcbs;
 extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
+extern pthread_t hilo_planificacion;
 
 extern int conexion_memoria;
 

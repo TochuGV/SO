@@ -82,23 +82,20 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente){
 	int bytes = paquete->buffer->size + 2*sizeof(int);
 
 	void* a_enviar = serializar_paquete(paquete, bytes);
-  log_debug(logger, "Enviando código de operación: %d al socket %d", paquete->codigo_operacion, socket_cliente);
 	send(socket_cliente, a_enviar, bytes, 0);
   eliminar_paquete(paquete);
 	free(a_enviar);
 }
 
 void* serializar_paquete(t_paquete* paquete, int bytes){
-	void * a_enviar = malloc(bytes);
+	void* a_enviar = malloc(bytes);
 	int desplazamiento = 0;
-
 	memcpy(a_enviar + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
-	desplazamiento+= sizeof(int);
+	desplazamiento += sizeof(int);
 	memcpy(a_enviar + desplazamiento, &(paquete->buffer->size), sizeof(int));
-	desplazamiento+= sizeof(int);
+	desplazamiento += sizeof(int);
 	memcpy(a_enviar + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
-	desplazamiento+= paquete->buffer->size;
-
+	desplazamiento += paquete->buffer->size;
 	return a_enviar;
 }
 
