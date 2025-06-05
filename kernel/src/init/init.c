@@ -51,13 +51,13 @@ void extraer_datos_config(){
   log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
-/*
-void crear_hilos(){
-  pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
+void iniciar_conexiones_entre_modulos(){  
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
-  log_info(logger, "Creación de hilos realizada");
+  pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
+  pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
 };
 
+/*
 void unir_hilos(){
   log_info(logger, "Unión de hilos a punto de realizar");
   pthread_join(hilo_conexion_cpu_dispatch, NULL);

@@ -4,6 +4,10 @@
 #include "./utils/utils.h"
 #include "planificacion/planificacion.h"
 #include "./common/common.h"
+#include "conexion/cpu/dispatch/dispatch.h"
+#include "conexion/cpu/interrupt/interrupt.h"
+#include "conexion/io/io.h"
+#include "conexion/handshake/entrante/entrante.h"
 
 extern char* IP_MEMORIA;
 extern char* PUERTO_MEMORIA;
@@ -31,7 +35,7 @@ extern int conexion_memoria;
 
 void inicializar_kernel();
 void extraer_datos_config();
-//void crear_hilos();
+void iniciar_conexiones_entre_modulos();
 //void unir_hilos();
 
 #endif /* INIT_H_ */
