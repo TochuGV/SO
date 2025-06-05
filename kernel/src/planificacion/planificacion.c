@@ -10,7 +10,7 @@ pthread_mutex_t mutex_cpus = PTHREAD_MUTEX_INITIALIZER;
 
 sem_t hay_procesos_en_new;
 
-void iniciar_planificacion_largo_plazo(void* args){
+void iniciar_planificacion_largo_plazo(){
   cola_new = queue_create();
   sem_init(&hay_procesos_en_new, 0, 0);
   pthread_mutex_init(&mutex_new, NULL); 
@@ -55,69 +55,81 @@ void finalizar_proceso(t_pcb* pcb){
   destruir_pcb(pcb);
 };
 
-/*
 void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) {
-  t_pcb* pcb;
-  pcb = queue_pop(cola_new);
-  //if (enviar_proceso_a_memoria(archivo_pseudocodigo, tamanio_proceso, pcb->pid, conexion_memoria) == 0) {
+  pthread_mutex_lock(&mutex_new);
+  if(queue_is_empty(cola_new)){
+    pthread_mutex_unlock(&mutex_new);
+    return;
+  };
+
+  t_pcb* pcb = queue_pop(cola_new);
+  pthread_mutex_unlock(&mutex_new);
+  if(enviar_proceso_a_memoria(archivo_pseudocodigo, tamanio_proceso, pcb->pid, conexion_memoria) == 0) {
     pthread_mutex_lock(&mutex_ready);
     queue_push(cola_ready, pcb); 
     pthread_mutex_unlock(&mutex_ready); 
     cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
-  //}
-  //return NULL;
-}
-*/
+  } else {
+    cambiar_estado(pcb, ESTADO_NEW, ESTADO_EXIT); //Por ahora queda así
+    finalizar_proceso(pcb);
+  };
+};
 
-/*
-void mover_proceso_a_exec() {
+void enviar_a_cpu(t_pcb* pcb, int socket_cpu_dispatch){
+  int bytes = sizeof(uint32_t) * (2 + 2 * CANTIDAD_ESTADOS);
+  void* stream = serializar_pcb(pcb, bytes);
+  t_paquete* paquete = crear_paquete(PCB);
+  agregar_a_paquete(paquete, stream, bytes);
+  log_debug(logger, "Enviando PCB del Proceso <%d> al socket CPU Dispatch: %d", pcb->pid, socket_cpu_dispatch);
+  enviar_paquete(paquete, socket_cpu_dispatch);
+  log_info(logger, "PCB del Proceso <%d> enviado a CPU", pcb->pid);
+  free(stream);
+};
+
+void mover_proceso_a_exec(){
   pthread_mutex_lock(&mutex_ready); 
-
   if (queue_is_empty(cola_ready)) { 
     log_info(logger, "No hay procesos en la cola READY"); 
     pthread_mutex_unlock(&mutex_ready); 
     return;
   };
-  
+  t_pcb* pcb_elegido = queue_pop(cola_ready);
+  pthread_mutex_unlock(&mutex_ready);
   pthread_mutex_lock(&mutex_cpus);
   t_cpu* cpu_seleccionada = NULL;
   for(int i = 0; i < list_size(lista_cpus); i++){
     t_cpu* cpu_actual = list_get(lista_cpus, i);
     if(cpu_actual->disponible){
       cpu_seleccionada = cpu_actual;
+      cpu_actual->disponible = false;
       break;
     };
   };
   pthread_mutex_unlock(&mutex_cpus);
-
   if(cpu_seleccionada == NULL){
     log_info(logger, "No hay CPUs disponibles. Esperando...");
+    
+    pthread_mutex_lock(&mutex_ready);
+    queue_push(cola_ready, pcb_elegido); //Estas 3 líneas son opcionales por si no se puede asignar una CPU
     pthread_mutex_unlock(&mutex_ready);
+    
     return;
   };
-
-  t_pcb* pcb_elegido = list_remove(cola_ready, 0);
-  pthread_mutex_unlock(&mutex_ready);
-
-  log_info("Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
-
+  log_info(logger, "Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
   enviar_a_cpu(pcb_elegido, cpu_seleccionada->socket_dispatch);
-
-  pthread_mutex_lock(&mutex_cpus);
-  cpu_seleccionada->disponible = false;
-  pthread_mutex_unlock(&mutex_cpus);
-
-  t_pcb* pcb = queue_pop(cola_ready);
-  pthread_mutex_unlock(&mutex_ready);
-  cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
-  return pcb;
+  cambiar_estado(pcb_elegido, ESTADO_READY, ESTADO_EXEC);
 };
-  */
 
+void* planificador_ciclo_general(void* arg){
+  while(1){
+    mover_proceso_a_ready(NULL, 0);
+    mover_proceso_a_exec();
+    sleep(1);
+  };
+  return NULL;
+};
 
-/*
-//liberar cpu despues de exec.
-void liberar_cpu(int id_cpu) {
+void liberar_cpu(uint32_t id_cpu) {
   for(int i = 0; i < list_size(lista_cpus); i++) {
     t_cpu* cpu_actual = list_get(lista_cpus, i);
     if(cpu_actual->id_cpu == id_cpu){
@@ -126,4 +138,16 @@ void liberar_cpu(int id_cpu) {
     };
   };
 };
-*/
+
+void liberar_cpu_por_pid(uint32_t pid){
+  pthread_mutex_lock(&mutex_cpus);
+  for(int i = 0; i < list_size(lista_cpus); i++){
+    t_cpu* cpu = list_get(lista_cpus, i);
+    if(!cpu->disponible){
+      cpu->disponible = true;
+      log_debug(logger, "Se liberó la CPU %d, ya que el proceso <%d> finalizó", cpu->id_cpu, pid);
+      break;
+    };
+  };
+  pthread_mutex_unlock(&mutex_cpus);
+};

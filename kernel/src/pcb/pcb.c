@@ -3,8 +3,8 @@
 #include <pthread.h>
 #include <string.h>
 
-static uint32_t ultimo_pid = 0;
-static pthread_mutex_t mutex_pid = PTHREAD_MUTEX_INITIALIZER;
+uint32_t ultimo_pid = 0;
+pthread_mutex_t mutex_pid = PTHREAD_MUTEX_INITIALIZER;
 
 uint32_t generar_pid(){
   pthread_mutex_lock(&mutex_pid);
@@ -14,18 +14,15 @@ uint32_t generar_pid(){
 };
 
 t_pcb* crear_pcb(){
-  t_pcb* nuevo_pcb = malloc(sizeof(t_pcb));
-  if(!nuevo_pcb) return NULL;
-
-  nuevo_pcb->pid = generar_pid();
-  nuevo_pcb->pc = 0;
-
+  t_pcb* pcb_nuevo = malloc(sizeof(t_pcb));
+  if(!pcb_nuevo) return NULL;
+  pcb_nuevo->pid = generar_pid();
+  pcb_nuevo->pc = 0;
   for(int i = 0; i < CANTIDAD_ESTADOS; i++){
-    nuevo_pcb->me[i] = 0;
-    nuevo_pcb->mt[i] = 0;
+    pcb_nuevo->me[i] = 0;
+    pcb_nuevo->mt[i] = 0;
   };
-
-  return nuevo_pcb;
+  return pcb_nuevo;
 };
 
 void destruir_pcb(t_pcb* pcb){
@@ -52,13 +49,10 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   memcpy(magic + desplazamiento, &(pcb->pid), sizeof(uint32_t));
   desplazamiento += sizeof(uint32_t);
-  
   memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
   desplazamiento += sizeof(uint32_t);
-  
   memcpy(magic + desplazamiento, pcb->me, sizeof(uint32_t) * CANTIDAD_ESTADOS);
   desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
-  
   memcpy(magic + desplazamiento, pcb->mt, sizeof(uint32_t) * CANTIDAD_ESTADOS);
   desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
 

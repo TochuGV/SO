@@ -60,11 +60,10 @@ void obtener_configs(void)
   path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
 }
 
-
-
 void* atender_cliente(void* arg)
 {
   int cliente_memoria = *(int*)arg;
+  log_debug(logger, "Cliente aceptado con socket FD: %d", cliente_memoria);
   pthread_t hilo_atender;
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
 
@@ -82,8 +81,7 @@ void* atender_cliente(void* arg)
   }
   pthread_detach(pthread_self());
   return NULL;
-
-}
+};
 
 int recibir_handshake_memoria(int cliente_memoria)
 {
@@ -116,7 +114,6 @@ int recibir_handshake_memoria(int cliente_memoria)
     t_cpu_id_socket* nueva_cpu = list_find(lista_ids_cpus, misma_cpu);
 
     if (nueva_cpu == NULL) {
-
       nueva_cpu = malloc(sizeof(t_cpu_id_socket));
       nueva_cpu->id = identificador_cpu;
       nueva_cpu->socket = cliente_memoria;

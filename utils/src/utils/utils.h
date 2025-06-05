@@ -37,11 +37,11 @@ typedef enum
   SOLICITUD_MEMORIA,
   NOMBRE_IO,
   SOLICITUD_INSTRUCCION,
-  INSTRUCCION
+  INSTRUCCION,
+  PCB
 } op_code_comunicacion;
 
-typedef enum
-{
+typedef enum {
   SYSCALL_EXIT,
   SYSCALL_IO,
   SYSCALL_INIT_PROC,
@@ -118,19 +118,11 @@ typedef enum {
 } t_estado;
 
 typedef struct {
-	uint32_t pid; //identificador del proceso
-	uint32_t pc; //contador de programa
-	uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
-	uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
+  uint32_t pid; //identificador del proceso
+  uint32_t pc; //contador de programa
+  uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
+  uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
 } t_pcb;
-
-/*
-typedef struct {
-  const char* nombre;
-  int token;
-} DispositivoIO;
-
-extern const DispositivoIO dispositivos[];*/
 
 //// VARIABLES GLOBALES
 extern t_log* logger;
@@ -175,11 +167,12 @@ int32_t enviar_handshake_desde(int, int);
 int recibir_handshake_de(int,int);
 void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
-void liberar_conexion(int);
 int iniciar_conexion(void*);
 
 //// FINALIZAR
 void terminar_programa(int, t_log*, t_config*);
 
+/// KERNEL-IO
+nombre_dispositivo_io obtener_dispositivo_io(char*);
 
 #endif /* UTILS_H_ */
