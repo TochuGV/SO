@@ -16,10 +16,17 @@ extern char* puerto_escucha;
 extern int servidor_memoria;
 
 
-// MEMORIA USUARIO
-extern uint32_t tamanio_memoria;
+// VALORES DE MEMORIA
 extern void* memoria;
+extern uint32_t tamanio_memoria;
 extern uint32_t memoria_usada;
+extern uint32_t tamanio_pagina;
+extern uint32_t entradas_por_tabla;
+extern uint32_t cantidad_niveles;
+extern uint32_t retardo_memoria;
+extern uint32_t retardo_swap;
+extern char* path_swapfile;
+extern char* path_dump;
 extern char* path_instrucciones;
 
 
@@ -54,6 +61,7 @@ int recibir_handshake_memoria(int cliente_memoria);
 
 // UTILS
 void inicializar_memoria(void);
+void obtener_configs(void);
 void terminar_memoria(void);
 
 #endif /* COMMON_MEMORIA_H_ */

@@ -1,8 +1,15 @@
 #include "common_memoria.h"
 
-uint32_t tamanio_memoria;
 void* memoria;
+uint32_t tamanio_memoria;
 uint32_t memoria_usada;
+uint32_t tamanio_pagina;
+uint32_t entradas_por_tabla;
+uint32_t cantidad_niveles;
+uint32_t retardo_memoria;
+uint32_t retardo_swap;
+char* path_swapfile;
+char* path_dump;
 char* path_instrucciones;
 
 int servidor_memoria;
@@ -25,12 +32,10 @@ char* NOMBRES_INSTRUCCIONES[] = {
 void inicializar_memoria(void)
 {
   config = iniciar_config("memoria.config");
-  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_DEBUG);
+  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_TRACE);
   log_debug(logger, "Memoria iniciada!");
 
-  puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
-  tamanio_memoria = config_get_int_value(config, "TAM_MEMORIA");
-  path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+  obtener_configs();
 
   memoria = malloc(tamanio_memoria);
   memoria_usada = 0;
@@ -40,6 +45,22 @@ void inicializar_memoria(void)
   lista_procesos = list_create();
   lista_ids_cpus = list_create();
 }
+
+void obtener_configs(void)
+{
+  puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
+  tamanio_memoria = config_get_int_value(config, "TAM_MEMORIA");
+  tamanio_pagina = config_get_int_value(config, "TAM_PAGINA");
+  entradas_por_tabla = config_get_int_value(config, "ENTRADAS_POR_TABLA");
+  cantidad_niveles = config_get_int_value(config, "CANTIDAD_NIVELES");
+  retardo_memoria = config_get_int_value(config, "RETARDO_MEMORIA");
+  retardo_swap = config_get_int_value(config, "RETARDO_SWAP");
+  path_swapfile = config_get_string_value(config, "PATH_SWAPFILE");
+  path_dump = config_get_string_value(config, "DUMP_PATH");
+  path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+}
+
+
 
 void* atender_cliente(void* arg)
 {
