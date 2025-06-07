@@ -5,6 +5,7 @@
 #include "init/init.h"
 #include "pcb/pcb.h"
 #include <stdint.h>
+#include <commons/collections/queue.h>
 
 // extern int conexion_cpu_dispatch;
 // extern int conexion_cpu_interrupt;
@@ -19,6 +20,11 @@ typedef struct {
   bool disponible;
 } t_cpu;
 
+typedef struct {
+  t_queue* cola_bloqueados;
+  bool ocupado;
+  int socket;
+} t_dispositivo_io;
 
 uint32_t enviar_proceso_a_memoria(char*, uint32_t, uint32_t, int);
 void esperar_enter_para_planificar();

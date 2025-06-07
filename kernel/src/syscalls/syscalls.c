@@ -44,18 +44,39 @@ void syscall_exit(t_syscall* syscall){
 void syscall_io(t_syscall* syscall){
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
   if(pcb == NULL) return;
-
+  /*
   nombre_dispositivo_io dispositivo = obtener_dispositivo_io(syscall->arg1);
   if(dispositivo == -1){
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
     finalizar_proceso(pcb);
     return;
   };
+  */
 
+  if(!dictionary_has_key(diccionario_dispositivos, syscall->arg1)){
+    log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
+    cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
+    liberar_cpu_por_pid(pcb->pid);
+    finalizar_proceso(pcb);
+    mover_proceso_a_exec();
+    return;
+  };
+
+  t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
-  log_motivo_bloqueo(pcb->pid, dispositivo);
+  //log_motivo_bloqueo(pcb->pid, dispositivo);
 
-  //Revisar si algún proceso ya estaba en IO
+  if(dispositivo->ocupado){
+    queue_push(dispositivo->cola_bloqueados, pcb);
+    log_debug(logger, "Dispositivo <%s> ocupado. Proceso <%d> encolado", syscall->arg1, pcb->pid);
+  } else {
+    dispositivo->ocupado = true;
+    //enviar_peticion_io(dispositivo->socket, syscall->arg1, atoi(syscall->arg2), pcb->pid);
+    log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
+  };
+
+  liberar_cpu_por_pid(pcb->pid);
+  mover_proceso_a_exec();
 };
 
 void syscall_dump_memory(t_syscall* syscall){

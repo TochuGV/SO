@@ -15,6 +15,8 @@ char* LOG_LEVEL;
 t_list* lista_cpus;
 t_list* lista_pcbs;
 
+t_dictionary* diccionario_dispositivos;
+
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t hilo_conexion_cpu_dispatch;
@@ -55,6 +57,19 @@ void iniciar_conexiones_entre_modulos(){
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
   pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
+};
+
+void inicializar_dispositivos_io(){
+  diccionario_dispositivos = dictionary_create();
+  char* nombres[] = {"IMPRESORA", "TECLADO", "MOUSE", "AURICULARES", "PARLANTE"}; //A modo de ejemplo
+  for(int i = 0; i < 5; i++){
+    t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
+    dispositivo->cola_bloqueados = queue_create();
+    dispositivo->ocupado = false;
+    dispositivo->socket = -1;
+    dictionary_put(diccionario_dispositivos, nombres[i], dispositivo);
+  };
+  log_debug(logger, "Dispositivos IO inicializados");
 };
 
 /*

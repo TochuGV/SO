@@ -24,6 +24,8 @@ extern char* LOG_LEVEL;
 extern t_list* lista_cpus;
 extern t_list* lista_pcbs;
 
+extern t_dictionary* diccionario_dispositivos;
+
 extern pthread_mutex_t mutex_pcbs;
 
 extern pthread_t hilo_conexion_cpu_dispatch;
