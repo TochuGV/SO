@@ -29,16 +29,16 @@ t_syscall* recibir_syscall(int socket_cliente){
 void syscall_init_proc(t_syscall* syscall){
   t_pcb* pcb_nuevo = crear_pcb();
   inicializar_proceso(pcb_nuevo);
-  mover_proceso_a_ready(syscall->arg1, atoi(syscall->arg2));
+  mover_proceso_a_ready(syscall->arg1, atoi(syscall->arg2)); //En el futuro, intentar_ingresar_procesos_a_ready()
 };
 
 void syscall_exit(t_syscall* syscall){
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
   if(pcb == NULL) return;
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
-  finalizar_proceso(pcb);
-  //Liberar la memoria
   liberar_cpu_por_pid(pcb->pid);
+  finalizar_proceso(pcb);
+  mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
 };
 
 void syscall_io(t_syscall* syscall){
