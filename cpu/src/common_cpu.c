@@ -82,9 +82,8 @@ void* conectar_dispatch(void* arg) {
     }
 
     log_info(logger, "Conexión con Kernel Dispatch exitosa");
-
+    conexion_kernel_dispatch = datos->socket;
     free(datos);
-
     return NULL;
 }
 
@@ -182,22 +181,21 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion
   return NULL;
 }
 
-
 //Recibir información del PCB desde Kernel
 t_pcb* recibir_pcb(int conexion_kernel_dispatch) {
-  void* buffer = malloc(sizeof(uint32_t)*2);
-
-  int bytes_recibidos= recv(conexion_kernel_dispatch,buffer,sizeof(uint32_t)*2,MSG_WAITALL);
-  if (bytes_recibidos <= 0) {
-    log_info(logger,"Fallo al recibir instrucción");
-    free (buffer);
+  int cod_op = recibir_operacion(conexion_kernel_dispatch);
+  if(cod_op != PCB) {
+    log_error(logger, "ERROR");
     return NULL;
-  }
-
+  };
+  
+  t_list* campos = recibir_paquete(conexion_kernel_dispatch);
+  if(list_size(campos) == 0) return NULL;
+  void* buffer = list_get(campos, 0);
   t_pcb* pcb = deserializar_pcb(buffer);
-  free (buffer);
+  list_destroy_and_destroy_elements(campos, free);
   return pcb;
-}
+};
 
 t_pcb* deserializar_pcb(void* buffer) {
   t_pcb* pcb = malloc(sizeof(t_pcb));
@@ -238,14 +236,14 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
     
     case READ :
          log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %d - tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+         //ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_CONTINUA;
          break;
     
     case WRITE : 
          log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %d - Valor: %d ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-        ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+        //ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
          pcb->pc++;
          return EJECUCION_CONTINUA;
          break;
@@ -276,7 +274,7 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
          break;
 
     case EXIT:
-         log_info (logger, "## PID: %d- Ejecutando: EXIT", pcb->pid);
+         log_info(logger, "## PID: %d- Ejecutando: EXIT", pcb->pid);
          pcb->pc++;
          return EJECUCION_FINALIZADA;
          break;
@@ -287,21 +285,21 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
      return EJECUCION_FINALIZADA;
    }
 }
-
+/*
 //Ejecutar Write y Read
 void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
-  int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
+  int direccion_fisica = traducir_direccion (pid, direccion_logica, valor);
   //Log 4. Lectura/Escritura Memoria
-  log.info("PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
+  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
 }
 
 
-void ejecutar_write(uint32_t pid, uint32_t parametro1, uint32_t parametro2) {
-  int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
+void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
+  int direccion_fisica = traducir_direccion (pid, direccion_logica, valor);
   //Log 4. Lectura/Escritura Memoria
-  log.info("PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
+  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
 }
-
+*/
 
 //Retornar a Kernel el PCB actualizado y el motivo de la interrupción
 void actualizar_kernel(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
@@ -391,7 +389,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
 
     return false;
 }
-
+/*
 //MMU
 uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t parametro) {
   int tamaño_pagina, cant_entradas_tabla, cant_niveles;
@@ -413,16 +411,15 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
 
   if (marco != -1) {
     //Log 6. TLB Hit
-    log.info("PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
+    log_info(logger, "PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
     //Log 5. Obtener Marco
-    log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+    log_info(logger, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
     return marco * tamaño_pagina + desplazamiento;
   }
 
   //Log 7. TLB Miss
-  log.info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
+  log_info(logger, "PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
 
-  /*
   Acá tiene que hacer todo el ciclo de revisar las páginas y tablas de memoria hasta tener una coincidencia
   Si no hay coincidencia, tiene que devolver Page Fault
     for (int nivel=0; nivel < cant_niveles; nivel++) {
@@ -433,17 +430,17 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
     send(socket_memoria, &entrada_nivel, sizeof(int), 0);
 
     recv(socket_memoria, &tabla_actual, sizeof(int), MSG_WAITALL);
-  }*/
+  }
   
   actualizar_TLB(pid, nro_pagina, marco);
 
   //Log 5. Obtener Marco
-  log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+  log_info(logger, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
   return marco * tamaño_pagina + desplazamiento;
 }
-
+*/
 // consultar TLB 
-int consultar_TLB (pid, nro_pagina) {
+int consultar_TLB (uint32_t pid, int nro_pagina) {
   for (int i=0;i<parametros_tlb->cantidad_entradas ;i++) {
     if (tlb[i].pid==pid && tlb[i].pagina==nro_pagina) {
       return tlb[i].marco;
@@ -452,6 +449,7 @@ int consultar_TLB (pid, nro_pagina) {
   return -1;
 }
 
+/*
 //Insertar un nuevo marco en el TLB
 void actualizar_TLB (uint32_t pid, int pagina, int marco) {
   
@@ -465,7 +463,7 @@ void actualizar_TLB (uint32_t pid, int pagina, int marco) {
     break;
   }
 }
-
+*/
 
 
 /*

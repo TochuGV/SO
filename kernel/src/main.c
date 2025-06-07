@@ -6,6 +6,8 @@ int main(int argc, char* argv[]){
   char* archivo_pseudocodigo = argv[1];
   int32_t tamanio_proceso = atoi(argv[2]);
   
+  iniciar_conexiones_entre_modulos();
+
   conexion_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, KERNEL);
   
   if (handshake_kernel(conexion_memoria) != 0){

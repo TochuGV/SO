@@ -76,13 +76,13 @@ void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) 
 };
 
 void enviar_a_cpu(t_pcb* pcb, int socket_cpu_dispatch){
-  int bytes = sizeof(uint32_t) * (2 + 2 * CANTIDAD_ESTADOS);
-  void* stream = serializar_pcb(pcb, bytes);
+  int bytes;
+  void* stream = serializar_pcb_para_cpu(pcb, &bytes);
   t_paquete* paquete = crear_paquete(PCB);
   agregar_a_paquete(paquete, stream, bytes);
   log_debug(logger, "Enviando PCB del Proceso <%d> al socket CPU Dispatch: %d", pcb->pid, socket_cpu_dispatch);
   enviar_paquete(paquete, socket_cpu_dispatch);
-  log_info(logger, "PCB del Proceso <%d> enviado a CPU", pcb->pid);
+  log_debug(logger, "PCB del Proceso <%d> enviado a CPU", pcb->pid);
   free(stream);
 };
 

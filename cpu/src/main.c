@@ -2,10 +2,10 @@
 
 int main(int argc, char* argv[]) 
 {
-  logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_INFO);
+  logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_DEBUG);
   config = iniciar_config("cpu.config");
 
-   int32_t identificador_cpu = atoi(argv[1]);
+  int32_t identificador_cpu = atoi(argv[1]);
 
   iniciar_cpu(identificador_cpu);
 
@@ -19,6 +19,7 @@ int main(int argc, char* argv[])
   pthread_create(&hilo_memoria, NULL, conectar_memoria, datos_memoria);
 
   pthread_join(hilo_kernel_dispatch, NULL);
+  log_debug(logger, "Socket de Kernel Dispatch: %d", conexion_kernel_dispatch);
   pthread_join(hilo_kernel_interrupt, NULL);
   pthread_join(hilo_memoria, NULL);
 
@@ -29,15 +30,13 @@ int main(int argc, char* argv[])
         //Paso 1: Recibir el PCB desde Kernel
         t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);
         if (pcb == NULL) {
-          log_info(logger, "No se recibió ningún PCB");
+          //log_info(logger, "No se recibió ningún PCB");
           continue;
         }
         cpu_disponible = false;
         ciclo_de_instruccion(pcb, conexion_kernel_dispatch, conexion_kernel_interrupt, conexion_memoria);
         cpu_disponible = true;
     }
-}
-
+  }
   return EXIT_SUCCESS;
 }
-

@@ -59,6 +59,17 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
   return magic;
 };
 
+void* serializar_pcb_para_cpu(t_pcb* pcb, int* bytes){
+  *bytes = sizeof(uint32_t) * 2;
+  void* magic = malloc(*bytes);
+  int desplazamiento = 0;
+  memcpy(magic + desplazamiento, &(pcb->pid), sizeof(uint32_t));
+  desplazamiento += sizeof(uint32_t);
+  memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
+  desplazamiento += sizeof(uint32_t);
+  return magic;
+}
+
 char* obtener_nombre_estado(t_estado estado){
   switch(estado){
     case ESTADO_NEW: return "NEW";
