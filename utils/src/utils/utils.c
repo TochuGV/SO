@@ -82,23 +82,21 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente){
 	int bytes = paquete->buffer->size + 2*sizeof(int);
 
 	void* a_enviar = serializar_paquete(paquete, bytes);
-  log_debug(logger, "Enviando código de operación: %d al socket %d", paquete->codigo_operacion, socket_cliente);
+  log_debug(logger, "Enviando paquete. Cod op: %d, Size: %d", paquete->codigo_operacion, paquete->buffer->size);
 	send(socket_cliente, a_enviar, bytes, 0);
   eliminar_paquete(paquete);
 	free(a_enviar);
 }
 
 void* serializar_paquete(t_paquete* paquete, int bytes){
-	void * a_enviar = malloc(bytes);
+	void* a_enviar = malloc(bytes);
 	int desplazamiento = 0;
-
 	memcpy(a_enviar + desplazamiento, &(paquete->codigo_operacion), sizeof(int));
-	desplazamiento+= sizeof(int);
+	desplazamiento += sizeof(int);
 	memcpy(a_enviar + desplazamiento, &(paquete->buffer->size), sizeof(int));
-	desplazamiento+= sizeof(int);
+	desplazamiento += sizeof(int);
 	memcpy(a_enviar + desplazamiento, paquete->buffer->stream, paquete->buffer->size);
-	desplazamiento+= paquete->buffer->size;
-
+	desplazamiento += paquete->buffer->size;
 	return a_enviar;
 }
 
@@ -221,7 +219,8 @@ int esperar_cliente(int socket_servidor){
 int recibir_operacion(int socket_cliente){
 	int cod_op;
   int r = recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL);
-  log_debug(logger, "recv devolvió %d", r);
+  //log_debug(logger, "recv devolvió %d", r);
+  //if(r == -1) perror("recv");
 	if(r > 0){
     return cod_op;
   } else {
@@ -251,72 +250,7 @@ int crear_conexion(char *ip, char* puerto, int header_cliente){
 	freeaddrinfo(server_info);
 
 	return socket_cliente;
-}
-
-/*
-int recibir_handshake_de(int header_cliente, int socket_cliente){
-  int32_t handshake;
-  int32_t resultado_ok = 0;
-  int32_t resultado_error = -1;
-
-  switch (header_cliente){
-    case IO:
-      int32_t token_io;
-      char* nombre_io;
-      recv(socket_cliente, &token_io, sizeof(int32_t), MSG_WAITALL);
-      if (token_io == IMPRESORA)
-        nombre_io = "Impresora";
-      else if (token_io == TECLADO)
-        nombre_io = "Teclado";
-      else if (token_io == MOUSE)
-        nombre_io = "Mouse";
-      else if (token_io == AURICULARES)
-        nombre_io = "Auriculares";
-      else if (token_io == PARLANTE)
-        nombre_io = "Parlante";
-      else{
-        send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-        return -1;
-      };
-
-      send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-      log_debug(logger, "Dispositivo %s conectado.", nombre_io);
-      return 0;
-      break;
-
-    case CPU:
-      int32_t identificador_cpu;
-      recv(socket_cliente, &identificador_cpu, sizeof(int32_t), MSG_WAITALL);
-      if (identificador_cpu <= 0) {
-        send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-        return -1;
-      }
-      else {
-        send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-        log_debug(logger, "CPU %d conectada.", identificador_cpu);
-        return 0;
-      };
-      break;
-
-    case KERNEL:
-      recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL);
-      if (handshake == KERNEL) {
-        send(socket_cliente, &resultado_ok, sizeof(int32_t), 0);
-        log_debug(logger,"Modulo Kernel conectado.");
-        return 0;
-      }
-      else {
-        send(socket_cliente, &resultado_error, sizeof(int32_t), 0);
-        return -1;
-      };
-      break;
-
-    default:
-      break;
-    };
-  return -1;
 };
-*/
 
 int iniciar_conexion(void* arg){
   char* puerto = (char*)arg;
@@ -331,22 +265,4 @@ void terminar_programa(int conexion, t_log* logger, t_config* config){
 	close(conexion);
 	log_destroy(logger);
 	config_destroy(config);	
-};
-
-//KERNEL-IO
-
-nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
-  if (strcasecmp(nombre, "impresora") == 0)
-    return IMPRESORA;
-  else if (strcasecmp(nombre, "teclado") == 0)
-    return TECLADO;
-  else if (strcasecmp(nombre, "mouse") == 0)
-    return MOUSE;
-  else if (strcasecmp(nombre, "auriculares") == 0)
-    return AURICULARES;
-  else if (strcasecmp(nombre, "parlante") == 0)
-    return PARLANTE;
-  else {
-    return -1;
-  };
 };

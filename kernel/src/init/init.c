@@ -15,6 +15,8 @@ char* LOG_LEVEL;
 t_list* lista_cpus;
 t_list* lista_pcbs;
 
+t_dictionary* diccionario_dispositivos;
+
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t hilo_conexion_cpu_dispatch;
@@ -24,6 +26,18 @@ pthread_t hilo_planificacion;
 
 int conexion_memoria;
 
+void inicializar_dispositivos_io(){
+  diccionario_dispositivos = dictionary_create();
+  for(int i = 0; i < 5; i++){
+    t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
+    dispositivo->cola_bloqueados = queue_create();
+    dispositivo->ocupado = false;
+    dispositivo->socket = -1;
+    dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], dispositivo);
+  };
+  log_debug(logger, "Dispositivos IO inicializados");
+};
+
 void inicializar_kernel(){
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
   log_debug(logger, "Log de Kernel iniciado");
@@ -32,10 +46,9 @@ void inicializar_kernel(){
   lista_cpus = list_create();
   lista_pcbs = list_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
+  inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
-
-  pthread_create(&hilo_planificacion, NULL, planificador_ciclo_general, NULL);
 };
 
 void extraer_datos_config(){
@@ -53,13 +66,13 @@ void extraer_datos_config(){
   log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
-/*
-void crear_hilos(){
-  pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
+void iniciar_conexiones_entre_modulos(){  
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
-  log_info(logger, "Creación de hilos realizada");
+  pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
+  pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
 };
 
+/*
 void unir_hilos(){
   log_info(logger, "Unión de hilos a punto de realizar");
   pthread_join(hilo_conexion_cpu_dispatch, NULL);

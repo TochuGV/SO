@@ -1,5 +1,8 @@
 #include "common.h"
 
+char* NOMBRES_DISPOSITIVOS_IO[] = { "Impresora", "Teclado", "Mouse", "Auriculares", "Parlante" };
+char* NOMBRES_SYSCALLS[] = { "IO", "EXIT", "INIT_PROC", "DUMP_MEMORY" };
+
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   uint32_t longitud_archivo_pseudocodigo;
@@ -13,13 +16,12 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     enviar_paquete(paquete, socket_cliente);
     log_info(logger, "Archivo pseudocódigo '%s' enviado a memoria para el proceso <%d>", archivo_pseudocodigo, pid);
     recv(socket_cliente, &resultado, sizeof(int32_t), MSG_WAITALL);
-    printf("%d", resultado);
     if(resultado == 0){
       log_debug(logger, "Memoria aceptó el proceso <%d>", pid);
       return 0;
     } else {
       log_warning(logger, "Memoria rechazó el proceso <%d> debido a falta de espacio u otro motivo", pid);
-      return -1;    
+      return -1;
     }
   } else {
     longitud_archivo_pseudocodigo = 0;
@@ -30,30 +32,30 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
   return -1;
 };
 
+void esperar_enter_para_planificar(){ //Se podría ver alguna forma de que se loggee el mensaje "Presiona 'Enter' para comenzar la planificación..."
+  char* leido = readline("Presiona 'Enter' para comenzar la planificación...\n");
+  if(leido != NULL && strlen(leido) == 0){
+    log_debug(logger, "Se presionó 'Enter', comenzando la planificación...");
+    free(leido);
+    return;
+  };
+  while(leido == NULL || strlen(leido) != 0){
+    free(leido);
+    leido = readline("Presiona solo 'Enter' para comenzar la planificación...\n");
+  };
+  log_debug(logger, "Se presionó 'Enter', comenzando la planificación...");
+  free(leido);
+};
+
 char* crear_cadena_metricas_estado(t_pcb* pcb){
   char* buffer = string_from_format("## (<%d>) - Métricas de estado: ", pcb->pid);
-  for(int i = 0; i < CANTIDAD_ESTADOS; i++){
+  for(int i = 0; i < CANTIDAD_ESTADOS - 1; i++){
     char* aux = string_from_format("%s (%d) (%d)", obtener_nombre_estado(i), pcb->me[i], pcb->mt[i]);
     string_append(&buffer, aux);
-    if(i < CANTIDAD_ESTADOS - 1) string_append(&buffer, ", ");
+    if(i < CANTIDAD_ESTADOS - 2) string_append(&buffer, ", ");
     free(aux);
   };
   return buffer;
-};
-
-char* NOMBRES_SYSCALLS[] = {
-  "IO",
-  "EXIT"
-  "INIT_PROC",
-  "DUMP_MEMORY",
-};
-
-char* NOMBRES_DISPOSITIVOS_IO[] = {
-  "IMPRESORA",
-  "TECLADO",
-  "MOUSE",
-  "AURICULARES",
-  "PARLANTE"
 };
 
 char* token_io_to_string(int32_t token) {

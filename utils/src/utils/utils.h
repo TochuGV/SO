@@ -35,10 +35,11 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
   SOLICITUD_MEMORIA,
-  NOMBRE_IO,
+  PETICION_IO,
   SOLICITUD_INSTRUCCION,
   INSTRUCCION,
-  PCB
+  PCB,
+  SOLICITUD_DUMP_MEMORY
 } op_code_comunicacion;
 
 typedef enum {
@@ -122,6 +123,8 @@ typedef struct {
   uint32_t pc; //contador de programa
   uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
   uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
+  char* dispositivo_actual;
+  uint32_t duracion_io;
 } t_pcb;
 
 //// VARIABLES GLOBALES
@@ -164,7 +167,6 @@ int esperar_cliente(int);
 int recibir_operacion(int);
 int crear_conexion(char*, char*, int);
 int32_t enviar_handshake_desde(int, int);
-int recibir_handshake_de(int,int);
 void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
 int iniciar_conexion(void*);

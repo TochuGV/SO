@@ -22,11 +22,14 @@ t_pcb* crear_pcb(){
     pcb_nuevo->me[i] = 0;
     pcb_nuevo->mt[i] = 0;
   };
+  pcb_nuevo->dispositivo_actual = NULL;
+  pcb_nuevo->duracion_io = 0;
   return pcb_nuevo;
 };
 
 void destruir_pcb(t_pcb* pcb){
-  if(!pcb) return; //Revisar validación acá
+  if(!pcb) return;
+  if(pcb->dispositivo_actual) free (pcb->dispositivo_actual);
   free(pcb);
 };
 
@@ -58,6 +61,17 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   return magic;
 };
+
+void* serializar_pcb_para_cpu(t_pcb* pcb, int* bytes){
+  *bytes = sizeof(uint32_t) * 2;
+  void* magic = malloc(*bytes);
+  int desplazamiento = 0;
+  memcpy(magic + desplazamiento, &(pcb->pid), sizeof(uint32_t));
+  desplazamiento += sizeof(uint32_t);
+  memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
+  desplazamiento += sizeof(uint32_t);
+  return magic;
+}
 
 char* obtener_nombre_estado(t_estado estado){
   switch(estado){

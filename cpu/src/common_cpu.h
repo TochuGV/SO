@@ -72,7 +72,7 @@ uint32_t traducir_direccion(uint32_t,uint32_t,uint32_t);
 
 //Manejo de TLB
 int consultar_TLB (uint32_t,int);
-void actualizar_TLB (uint32_t,int, int);
+//void actualizar_TLB (uint32_t,int, int);
 
 
 #endif /* COMMON_CPU_H_ */

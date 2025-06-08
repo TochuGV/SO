@@ -28,6 +28,7 @@ uint32_t generar_pid();
 t_pcb* crear_pcb();
 void destruir_pcb(t_pcb*);
 void* serializar_pcb(t_pcb*, int);
+void* serializar_pcb_para_cpu(t_pcb*, int*);
 char* obtener_nombre_estado(t_estado);
 
 #endif

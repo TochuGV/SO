@@ -38,6 +38,18 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
   };
 };
 
+nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
+  if (strcasecmp(nombre, "impresora") == 0) return IMPRESORA;
+  else if (strcasecmp(nombre, "teclado") == 0) return TECLADO;
+  else if (strcasecmp(nombre, "mouse") == 0) return MOUSE;
+  else if (strcasecmp(nombre, "auriculares") == 0) return AURICULARES;
+  else if (strcasecmp(nombre, "parlante") == 0) return PARLANTE;
+  else {
+    log_error(logger, "Nombre de dispositivo IO desconocido: %s", nombre);
+    return -1;
+  };
+};
+
 /*atender_interrupcion() recibe solicitudes de IO del Kernel, ejecuta un usleep() para simular la operación y luego notifica al Kernel cuando finaliza. 
 También registra logs para monitorear el inicio y fin de cada IO.*/
 
