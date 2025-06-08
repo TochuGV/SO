@@ -77,26 +77,24 @@ void syscall_io(t_syscall* syscall){
 void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
   if(!pcb) return;
+  log_debug(logger, "Solicitando volcado de información para el proceso <%d>", pcb->pid);
 
-  //Enviar a Memoria una orden de DUMP con el PID
-  int socket_memoria = conexion_memoria; // Asumiendo que ya tienes la conexión con Memoria
-    //enviar_mensaje(socket_memoria, SYSCALL_DUMP_MEMORY, &(pcb->pid), sizeof(uint32_t));
-
-  // Bloquear el proceso mientras espera respuesta de Memoria
+  t_paquete* paquete = crear_paquete(SOLICITUD_DUMP_MEMORY);
+  agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
+  enviar_paquete(paquete, conexion_memoria);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
 
   // Recibir la respuesta de Memoria
-  int respuesta = recibir_operacion(socket_memoria);
-  /*
-  if (respuesta == OK) { //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
-        log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
-        cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
-    } else { // Si no se puede hacere el dump, el proceso se finaliza.
-        log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
-        cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
-        finalizar_proceso(pcb);
-    }
-    */
+  int respuesta = recibir_operacion(conexion_memoria);
+  if(respuesta == 0){ //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
+    log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
+    cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
+  } else { // Si no se puede hacere el dump, el proceso se finaliza.
+    log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
+    cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
+    finalizar_proceso(pcb);
+  };
+  eliminar_paquete(paquete);
 };
 
 void manejar_syscall(t_syscall* syscall, int socket_cpu_dispatch){

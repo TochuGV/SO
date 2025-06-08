@@ -7,6 +7,7 @@
 #include "planificacion/planificadores/corto_plazo/corto_plazo.h"
 #include "utils/utils.h" // Revisar después
 #include <commons/collections/queue.h>
+#include "./conexion/io/io.h"
 
 void manejar_respuesta_io(uint32_t);
 
