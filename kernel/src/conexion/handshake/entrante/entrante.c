@@ -64,11 +64,13 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       log_debug(logger, "Token IO recibido: %d", token_io);
       char* nombre_io = token_io_to_string(token_io);
+      log_debug(logger, "Buscando dispositivo IO con nombre <%s>", nombre_io);
       if(nombre_io == NULL){
         log_warning(logger, "Tipo de IO desconocido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
+      registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
       log_info(logger, "Dispositivo '%s' conectado", nombre_io);
       return IO;

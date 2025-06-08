@@ -35,3 +35,20 @@ void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) 
     finalizar_proceso(pcb);
   };
 };
+
+/*
+//Funcion que intente ingresar procesos a Ready si hay espacio
+void intentar_ingresar_procesos_a_ready() {
+    while (!list_is_empty(lista_pcbs_new)) {
+        if (hay_espacio_en_ready()) {  
+            t_pcb* pcb_nuevo = list_remove(lista_pcbs_new, 0);
+            cambiar_estado(pcb_nuevo, ESTADO_NEW, ESTADO_READY);
+            queue_push(cola_ready, pcb_nuevo); // Enviar el proceso a READY
+            log_info(logger, "Proceso <%d> movido a READY", pcb_nuevo->pid);
+        } else {
+            log_debug(logger, "No hay espacio disponible en READY. Procesos en NEW esperando...");
+            break;
+        }
+    }
+}
+*/

@@ -26,6 +26,19 @@ pthread_t hilo_planificacion;
 
 int conexion_memoria;
 
+void inicializar_dispositivos_io(){
+  diccionario_dispositivos = dictionary_create();
+  char* nombres[] = {"Impresora", "Teclado", "Mouse", "Auriculares", "Parlante"}; //A modo de ejemplo
+  for(int i = 0; i < 5; i++){
+    t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
+    dispositivo->cola_bloqueados = queue_create();
+    dispositivo->ocupado = false;
+    dispositivo->socket = -1;
+    dictionary_put(diccionario_dispositivos, nombres[i], dispositivo);
+  };
+  log_debug(logger, "Dispositivos IO inicializados");
+};
+
 void inicializar_kernel(){
   logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
   log_debug(logger, "Log de Kernel iniciado");
@@ -34,6 +47,7 @@ void inicializar_kernel(){
   lista_cpus = list_create();
   lista_pcbs = list_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
+  inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
 };
@@ -57,19 +71,6 @@ void iniciar_conexiones_entre_modulos(){
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
   pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
-};
-
-void inicializar_dispositivos_io(){
-  diccionario_dispositivos = dictionary_create();
-  char* nombres[] = {"IMPRESORA", "TECLADO", "MOUSE", "AURICULARES", "PARLANTE"}; //A modo de ejemplo
-  for(int i = 0; i < 5; i++){
-    t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
-    dispositivo->cola_bloqueados = queue_create();
-    dispositivo->ocupado = false;
-    dispositivo->socket = -1;
-    dictionary_put(diccionario_dispositivos, nombres[i], dispositivo);
-  };
-  log_debug(logger, "Dispositivos IO inicializados");
 };
 
 /*

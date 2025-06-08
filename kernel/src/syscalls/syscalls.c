@@ -53,25 +53,28 @@ void syscall_io(t_syscall* syscall){
   };
   */
 
-  if(!dictionary_has_key(diccionario_dispositivos, syscall->arg1)){
+  // Obtener el dispositivo directamente, sin chequeo previo
+  t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
+    
+  // Si el dispositivo no existe, finaliza el proceso
+  if(!dispositivo){
     log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
-    liberar_cpu_por_pid(pcb->pid);
-    finalizar_proceso(pcb);
-    mover_proceso_a_exec();
+    //finalizar_proceso_por_syscall(pcb);
     return;
-  };
+  }
 
-  t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
+  // Mover el proceso a bloqueado antes de evaluar disponibilidad
+  pcb->dispositivo_actual = strdup(syscall->arg1);
+  pcb->duracion_io = atoi(syscall->arg2);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
-  //log_motivo_bloqueo(pcb->pid, dispositivo);
 
   if(dispositivo->ocupado){
     queue_push(dispositivo->cola_bloqueados, pcb);
     log_debug(logger, "Dispositivo <%s> ocupado. Proceso <%d> encolado", syscall->arg1, pcb->pid);
   } else {
     dispositivo->ocupado = true;
-    //enviar_peticion_io(dispositivo->socket, syscall->arg1, atoi(syscall->arg2), pcb->pid);
+    enviar_peticion_io(dispositivo->socket, atoi(syscall->arg2), pcb->pid);
     log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
   };
 
@@ -79,15 +82,29 @@ void syscall_io(t_syscall* syscall){
   mover_proceso_a_exec();
 };
 
-void syscall_dump_memory(t_syscall* syscall){
+void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
   if(!pcb) return;
 
   //Enviar a Memoria una orden de DUMP con el PID
-  //Bloquear el proceso hasta recibir respuesta (o usar una estructura que lo maneje)
+  int socket_memoria = conexion_memoria; // Asumiendo que ya tienes la conexión con Memoria
+    //enviar_mensaje(socket_memoria, SYSCALL_DUMP_MEMORY, &(pcb->pid), sizeof(uint32_t));
 
-  //Supongamos que recibís OK:
-  cambiar_estado(pcb, ESTADO_EXEC, ESTADO_READY);
+  // Bloquear el proceso mientras espera respuesta de Memoria
+  cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
+
+  // Recibir la respuesta de Memoria
+  int respuesta = recibir_operacion(socket_memoria);
+  /*
+  if (respuesta == OK) { //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
+        log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
+        cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
+    } else { // Si no se puede hacere el dump, el proceso se finaliza.
+        log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
+        cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
+        finalizar_proceso(pcb);
+    }
+    */
 };
 
 void manejar_syscall(t_syscall* syscall, int socket_cpu_dispatch){

@@ -22,11 +22,14 @@ t_pcb* crear_pcb(){
     pcb_nuevo->me[i] = 0;
     pcb_nuevo->mt[i] = 0;
   };
+  pcb_nuevo->dispositivo_actual = NULL;
+  pcb_nuevo->duracion_io = 0;
   return pcb_nuevo;
 };
 
 void destruir_pcb(t_pcb* pcb){
-  if(!pcb) return; //Revisar validación acá
+  if(!pcb) return;
+  if(pcb->dispositivo_actual) free (pcb->dispositivo_actual);
   free(pcb);
 };
 

@@ -35,7 +35,7 @@ typedef enum
 	MENSAJE,
 	PAQUETE,
   SOLICITUD_MEMORIA,
-  NOMBRE_IO,
+  PETICION_IO,
   SOLICITUD_INSTRUCCION,
   INSTRUCCION,
   PCB
@@ -122,6 +122,8 @@ typedef struct {
   uint32_t pc; //contador de programa
   uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
   uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
+  char* dispositivo_actual;
+  uint32_t duracion_io;
 } t_pcb;
 
 //// VARIABLES GLOBALES

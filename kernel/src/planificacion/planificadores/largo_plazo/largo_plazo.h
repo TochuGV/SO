@@ -15,5 +15,6 @@ extern sem_t hay_procesos_en_new;
 void iniciar_planificacion_largo_plazo();
 void inicializar_proceso(t_pcb*);
 void mover_proceso_a_ready(char*, int32_t);
+//void intentar_ingresar_procesos_a_ready;
 
 #endif
