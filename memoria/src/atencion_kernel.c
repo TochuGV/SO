@@ -87,6 +87,10 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
     *nueva_instruccion = instruccion;
 
     list_add(lista_instrucciones, nueva_instruccion);
+
+    log_debug(logger, "Tipo: %d", instruccion.tipo);
+    log_debug(logger, "Parametro 1: %d", instruccion.parametro1);
+    log_debug(logger, "Parametro 2: %d", instruccion.parametro2);
   }
 
   return lista_instrucciones;

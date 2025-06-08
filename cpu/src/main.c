@@ -22,6 +22,7 @@ int main(int argc, char* argv[])
   log_debug(logger, "Socket de Kernel Dispatch: %d", conexion_kernel_dispatch);
   pthread_join(hilo_kernel_interrupt, NULL);
   pthread_join(hilo_memoria, NULL);
+  log_debug(logger, "Socket de Memoria: %d", conexion_memoria);
 
   bool cpu_disponible=true;
 

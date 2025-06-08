@@ -111,9 +111,8 @@ void* conectar_interrupt(void* arg) {
     }
 
     log_info(logger, "Conexión con Kernel Interrupt exitosa");
-
+    //conexion_kernel_interrupt = datos->socket;
     free(datos);
-
     return NULL;
 }
 
@@ -139,14 +138,13 @@ void* conectar_memoria(void* arg) {
     }
 
     log_info(logger, "Conexión con Memoria exitosa");
-
+    conexion_memoria = datos->socket;
     free(datos);
-
     return NULL;
 }
 
 //Realizar todo el ciclo de cada instrucción
-void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion_memoria,int conexion_kernel_interrupt) {
+void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexion_kernel_interrupt, int conexion_memoria){
   t_list* lista_instruccion;
   t_instruccion instruccion;
   t_estado_ejecucion estado=EJECUCION_CONTINUA;
@@ -160,9 +158,11 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch,int conexion
     if (list_size(lista_instruccion) == 0) {
       log_warning(logger, "No se recibió ninguna instrucción desde Memoria");
     }
-    instruccion.parametro1 = *(int*)list_get(lista_instruccion, 0);
+    
+    instruccion.tipo = *(int*)list_get(lista_instruccion, 0);
     instruccion.parametro1 = *(uint32_t*)list_get(lista_instruccion, 1);
     instruccion.parametro2 = *(uint32_t*)list_get(lista_instruccion, 2);
+
 
     list_destroy_and_destroy_elements(lista_instruccion,free);
     // Paso 3: interpretar y ejecutar instrucción
@@ -214,13 +214,19 @@ t_pcb* deserializar_pcb(void* buffer) {
 //Solicitar instrucción a Memoria
 t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 
-  send(conexion_memoria, &(pcb->pid), sizeof(uint32_t), 0);
-  send(conexion_memoria, &(pcb->pc), sizeof(uint32_t), 0);
+  t_paquete* paquete = crear_paquete(SOLICITUD_INSTRUCCION);
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
+  agregar_a_paquete(paquete, &pcb->pc, sizeof(uint32_t));
+  enviar_paquete(paquete, conexion_memoria);
 
-  t_list* lista_instrucciones;
-  lista_instrucciones=recibir_paquete(conexion_memoria);
+  t_list* instruccion;
+  int cod_op = recibir_operacion(conexion_memoria);
+  if (cod_op == INSTRUCCION)
+  {
+    instruccion = recibir_paquete(conexion_memoria);
+  }
 
-  return lista_instrucciones;
+  return instruccion;
 }
 
 //Decode y Execute Instrucción
@@ -228,63 +234,63 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
   switch (instruccion.tipo) {
   //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
-         log_info (logger, "## PID: %d - Ejecutando: NOOP", pcb->pid);
-         sleep(1); //Uso una duración de 1 segundo como default para NOOP
-         pcb->pc++;
-         return EJECUCION_CONTINUA;
-         break;
+      log_info (logger, "## PID: %d - Ejecutando: NOOP", pcb->pid);
+      sleep(1); //Uso una duración de 1 segundo como default para NOOP
+      pcb->pc++;
+      return EJECUCION_CONTINUA;
+      break;
     
     case READ :
-         log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %d - tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         //ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
-         pcb->pc++;
-         return EJECUCION_CONTINUA;
-         break;
+      log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %d - tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      //ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+      pcb->pc++;
+      return EJECUCION_CONTINUA;
+      break;
     
     case WRITE : 
-         log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %d - Valor: %d ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-        //ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
-         pcb->pc++;
-         return EJECUCION_CONTINUA;
-         break;
+      log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %d - Valor: %d ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      //ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+      pcb->pc++;
+      return EJECUCION_CONTINUA;
+      break;
     
     case GOTO: 
-         log_info(logger, "## PID: %d - Ejecutando: GOTO - Nuevo PC: %d", pcb->pid, instruccion.parametro1);
-         pcb->pc=instruccion.parametro1;
-         return EJECUCION_CONTINUA;
-         break;
+      log_info(logger, "## PID: %d - Ejecutando: GOTO - Nuevo PC: %d", pcb->pid, instruccion.parametro1);
+      pcb->pc=instruccion.parametro1;
+      return EJECUCION_CONTINUA;
+      break;
     
     case INSTRUCCION_IO: 
-         log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %d - Tiempo: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         pcb->pc++;
-         return EJECUCION_BLOQUEADA_IO;
-         break;
+      log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %d - Tiempo: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      pcb->pc++;
+      return EJECUCION_BLOQUEADA_IO;
+      break;
     
     case INIT_PROC:
-         log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %d - Tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-         //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
-         pcb->pc++;
-         return EJECUCION_BLOQUEADA_INIT_PROC;
-         break;
+      log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %d - Tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
+      pcb->pc++;
+      return EJECUCION_BLOQUEADA_INIT_PROC;
+      break;
 
     case DUMP_MEMORY:
-         log_info(logger,"## PID: %d - Ejecutando: DUMP_MEMORY", pcb->pid);
-         pcb->pc++;
-         return EJECUCION_BLOQUEADA_DUMP;
-         break;
+      log_info(logger,"## PID: %d - Ejecutando: DUMP_MEMORY", pcb->pid);
+      pcb->pc++;
+      return EJECUCION_BLOQUEADA_DUMP;
+      break;
 
     case EXIT:
-         log_info(logger, "## PID: %d- Ejecutando: EXIT", pcb->pid);
-         pcb->pc++;
-         return EJECUCION_FINALIZADA;
-         break;
+      log_info(logger, "## PID: %d- Ejecutando: EXIT", pcb->pid);
+      pcb->pc++;
+      return EJECUCION_FINALIZADA;
+      break;
     
     default: 
-    log_warning(logger, "## PID: %d - Instruccion desconocida: %d", pcb->pid, instruccion.tipo);
-     break;
-     return EJECUCION_FINALIZADA;
-   }
-}
+      log_warning(logger, "## PID: %d - Instruccion desconocida: %d", pcb->pid, instruccion.tipo);
+      break;
+      return EJECUCION_FINALIZADA;
+  };
+};
 /*
 //Ejecutar Write y Read
 void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t valor) {

@@ -64,8 +64,12 @@ void* atender_cliente(void* arg)
 {
   int cliente_memoria = *(int*)arg;
   log_debug(logger, "Cliente aceptado con socket FD: %d", cliente_memoria);
+  //free(arg);
   pthread_t hilo_atender;
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
+
+  //int* socket_ptr = malloc(sizeof(int));
+  //*socket_ptr = cliente_memoria;
 
   if (cliente == KERNEL) {
     log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente_memoria);
