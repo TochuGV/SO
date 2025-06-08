@@ -1,5 +1,8 @@
 #include "common.h"
 
+char* NOMBRES_DISPOSITIVOS_IO[] = { "Impresora", "Teclado", "Mouse", "Auriculares", "Parlante" };
+char* NOMBRES_SYSCALLS[] = { "IO", "EXIT", "INIT_PROC", "DUMP_MEMORY" };
+
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   uint32_t longitud_archivo_pseudocodigo;
@@ -18,7 +21,7 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
       return 0;
     } else {
       log_warning(logger, "Memoria rechazó el proceso <%d> debido a falta de espacio u otro motivo", pid);
-      return -1;    
+      return -1;
     }
   } else {
     longitud_archivo_pseudocodigo = 0;
@@ -53,21 +56,6 @@ char* crear_cadena_metricas_estado(t_pcb* pcb){
     free(aux);
   };
   return buffer;
-};
-
-char* NOMBRES_SYSCALLS[] = {
-  "IO",
-  "EXIT"
-  "INIT_PROC",
-  "DUMP_MEMORY",
-};
-
-char* NOMBRES_DISPOSITIVOS_IO[] = {
-  "IMPRESORA",
-  "TECLADO",
-  "MOUSE",
-  "AURICULARES",
-  "PARLANTE"
 };
 
 char* token_io_to_string(int32_t token) {

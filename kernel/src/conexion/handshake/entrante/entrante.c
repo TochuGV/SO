@@ -55,16 +55,15 @@ int recibir_handshake_kernel(int cliente_kernel){
       //log_info(logger, "CPU %d conectada.", id_cpu); //Agregar validación para cuando se conecten Dispatch e Interrupt
       return CPU;
     case IO:
-      log_debug(logger, "Handshake recibido: IO");
+      //log_debug(logger, "Handshake recibido: IO");
       int32_t token_io;
       if(recv(cliente_kernel, &token_io, sizeof(int32_t), MSG_WAITALL) <= 0){
         log_error(logger, "Handshake IO inválido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
-      log_debug(logger, "Token IO recibido: %d", token_io);
+      //log_debug(logger, "Token IO recibido: %d", token_io);
       char* nombre_io = token_io_to_string(token_io);
-      log_debug(logger, "Buscando dispositivo IO con nombre <%s>", nombre_io);
       if(nombre_io == NULL){
         log_warning(logger, "Tipo de IO desconocido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);

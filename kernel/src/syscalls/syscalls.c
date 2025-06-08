@@ -44,14 +44,6 @@ void syscall_exit(t_syscall* syscall){
 void syscall_io(t_syscall* syscall){
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
   if(pcb == NULL) return;
-  /*
-  nombre_dispositivo_io dispositivo = obtener_dispositivo_io(syscall->arg1);
-  if(dispositivo == -1){
-    cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
-    finalizar_proceso(pcb);
-    return;
-  };
-  */
 
   // Obtener el dispositivo directamente, sin chequeo previo
   t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);

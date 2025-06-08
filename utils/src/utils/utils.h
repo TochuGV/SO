@@ -166,7 +166,6 @@ int esperar_cliente(int);
 int recibir_operacion(int);
 int crear_conexion(char*, char*, int);
 int32_t enviar_handshake_desde(int, int);
-int recibir_handshake_de(int,int);
 void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
 int iniciar_conexion(void*);

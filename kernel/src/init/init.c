@@ -28,13 +28,12 @@ int conexion_memoria;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
-  char* nombres[] = {"Impresora", "Teclado", "Mouse", "Auriculares", "Parlante"}; //A modo de ejemplo
   for(int i = 0; i < 5; i++){
     t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
     dispositivo->cola_bloqueados = queue_create();
     dispositivo->ocupado = false;
     dispositivo->socket = -1;
-    dictionary_put(diccionario_dispositivos, nombres[i], dispositivo);
+    dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], dispositivo);
   };
   log_debug(logger, "Dispositivos IO inicializados");
 };
