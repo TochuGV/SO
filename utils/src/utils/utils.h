@@ -43,9 +43,9 @@ typedef enum
 } op_code_comunicacion;
 
 typedef enum {
+  SYSCALL_INIT_PROC,
   SYSCALL_EXIT,
   SYSCALL_IO,
-  SYSCALL_INIT_PROC,
   SYSCALL_DUMP_MEMORY
 } tipo_syscall;
 

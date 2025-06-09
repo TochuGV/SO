@@ -157,16 +157,15 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
     if (list_size(lista_instruccion) == 0) {
       log_warning(logger, "No se recibió ninguna instrucción desde Memoria");
-    }
+    };
     
-    instruccion.tipo = *(int*)list_get(lista_instruccion, 0);
-    instruccion.parametro1 = *(uint32_t*)list_get(lista_instruccion, 1);
-    instruccion.parametro2 = *(uint32_t*)list_get(lista_instruccion, 2);
+    instruccion.tipo = *(int*) list_get(lista_instruccion, 0);
+    instruccion.parametro1 = *(uint32_t*) list_get(lista_instruccion, 1);
+    instruccion.parametro2 = *(uint32_t*) list_get(lista_instruccion, 2);
 
-
-    list_destroy_and_destroy_elements(lista_instruccion,free);
+    list_destroy_and_destroy_elements(lista_instruccion, free);
     // Paso 3: interpretar y ejecutar instrucción
-    estado = trabajar_instruccion(instruccion,pcb);
+    estado = trabajar_instruccion(instruccion, pcb);
     // Paso 4: Chequear interrupción
     if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
       log_info(logger, "PID %d interrumpido", pcb->pid);
@@ -174,7 +173,7 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     }
   }
   // Paso 5: devolver PCB actualizado a Kernel
-  actualizar_kernel(instruccion,estado,pcb,conexion_kernel_dispatch);
+  actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
   // Paso 6: liberar memoria
   free(pcb);
 
@@ -308,22 +307,22 @@ void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
 */
 
 //Retornar a Kernel el PCB actualizado y el motivo de la interrupción
-void actualizar_kernel(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
+void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_pcb* pcb, int conexion_kernel_dispatch){
   switch(estado){
     case EJECUCION_FINALIZADA:
-    enviar_finalizacion(instruccion,estado,pcb,conexion_kernel_dispatch);
+    enviar_finalizacion(instruccion,pcb,conexion_kernel_dispatch);
     break;
 
     case EJECUCION_BLOQUEADA_IO:
-    enviar_bloqueo_IO(instruccion,estado,pcb,conexion_kernel_dispatch);
+    enviar_bloqueo_IO(instruccion,pcb,conexion_kernel_dispatch);
     break;
 
     case EJECUCION_BLOQUEADA_INIT_PROC:
-    enviar_bloqueo_INIT_PROC(instruccion,estado,pcb,conexion_kernel_dispatch);
+    enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
     break;
 
     case EJECUCION_BLOQUEADA_DUMP:
-    enviar_bloqueo_DUMP(instruccion,estado,pcb,conexion_kernel_dispatch);
+    enviar_bloqueo_DUMP(instruccion,pcb,conexion_kernel_dispatch);
     break;
 
     default:
@@ -331,52 +330,78 @@ void actualizar_kernel(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb
   }
 }
 
-//Proceso finalizado
-void enviar_finalizacion(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch) {
-  t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
-  llenar_paquete(paquete,estado,pcb);
+void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
+  agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
+  agregar_a_paquete(paquete, &tipo, sizeof(uint32_t));
 
+  if(arg1 != NULL){
+    uint32_t len = strlen(arg1) + 1;
+    agregar_a_paquete(paquete, &len, sizeof(uint32_t));
+    agregar_a_paquete(paquete, arg1, len);
+  } else {
+    uint32_t len = 0;
+    agregar_a_paquete(paquete, &len, sizeof(uint32_t));
+  };
+  if(arg2 != NULL){
+    uint32_t len = strlen(arg2) + 1;
+    agregar_a_paquete(paquete, &len, sizeof(uint32_t));
+    agregar_a_paquete(paquete, arg2, len);
+  } else {
+    uint32_t len = 0;
+    agregar_a_paquete(paquete, &len, sizeof(uint32_t));
+  };
+  agregar_a_paquete(paquete, &pc, sizeof(uint32_t));
+};
+
+//Bloqueo por INIT_PROC
+void enviar_bloqueo_INIT_PROC(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
+  t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
+  char* archivo = string_from_format("%d", instruccion.parametro1);
+  char* tamanio = string_from_format("%d", instruccion.parametro2);
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, archivo, tamanio, pcb->pc);
+  enviar_paquete(paquete, conexion_kernel_dispatch);
+  eliminar_paquete(paquete);
+  free(archivo);
+  free(tamanio);
+};
+
+//Proceso finalizado
+void enviar_finalizacion(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch) {
+  t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
+    log_debug(logger, "SYSCALL_EXIT -> pid: %d | tipo: %d | arg1: %s | arg2: %s | pc: %d",
+            pcb->pid, SYSCALL_EXIT, "(null)", "(null)", pcb->pc);
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, NULL, NULL, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
   eliminar_paquete(paquete);
 } 
 
 //Bloqueo por IO
-void enviar_bloqueo_IO(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
+void enviar_bloqueo_IO(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch){
   t_paquete* paquete = crear_paquete(SYSCALL_IO);
-  llenar_paquete(paquete,estado,pcb);
-  agregar_a_paquete(paquete, &(instruccion.parametro1), sizeof(int)); // dispositivo
-  agregar_a_paquete(paquete, &(instruccion.parametro2), sizeof(int)); // tiempo
-
+  char* nombre_dispositivo = string_from_format("%d", instruccion.parametro1);
+  char* duracion = string_from_format("%d", instruccion.parametro2);
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, nombre_dispositivo, duracion, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
   eliminar_paquete(paquete);
-}
-
-//Bloqueo por INIT_PROC
-void enviar_bloqueo_INIT_PROC(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
-  llenar_paquete(paquete,estado,pcb);
-  agregar_a_paquete(paquete, &(instruccion.parametro1), sizeof(int)); // archivo
-  agregar_a_paquete(paquete, &(instruccion.parametro2), sizeof(int)); // tamaño
-
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-  eliminar_paquete(paquete);
+  free(nombre_dispositivo);
+  free(duracion);
 }
 
 //Bloqueo por Dump Memory
-void enviar_bloqueo_DUMP(t_instruccion instruccion,t_estado_ejecucion estado,t_pcb* pcb,int conexion_kernel_dispatch){
+void enviar_bloqueo_DUMP(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
   t_paquete* paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
-  llenar_paquete(paquete,estado,pcb);
-
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, NULL, NULL, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
   eliminar_paquete(paquete);
-}
+};
 
 //Funcion auxiliar para empaquetar PID, PC y tipo de interrupción
+/*
 void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t)); //PID del proceso ejecutado
   agregar_a_paquete(paquete, &(pcb->pc), sizeof(uint32_t)); //PC actualizado
-  agregar_a_paquete(paquete,&estado,sizeof(t_estado_ejecucion)); //Tipo de interrupción
-}
+  agregar_a_paquete(paquete, &estado, sizeof(t_estado_ejecucion)); //Tipo de interrupción
+};*/
 
 //funcion que espera el mensaje de kernel
 bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {

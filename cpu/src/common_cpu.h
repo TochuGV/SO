@@ -61,11 +61,12 @@ void ejecutar_write(uint32_t,uint32_t,uint32_t);
 //void ejecutar_init_proc(uint32_t, uint32_t); Por ahora no la estamos usando
 
 //Envío de actualizaciónes a Kernel
-void enviar_finalizacion(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void enviar_bloqueo_IO(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void enviar_bloqueo_INIT_PROC(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void enviar_bloqueo_DUMP(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void llenar_paquete (t_paquete*,t_estado_ejecucion,t_pcb*);
+void agregar_syscall_a_paquete(t_paquete*, uint32_t, uint32_t, char*, char*, uint32_t);
+void enviar_bloqueo_INIT_PROC(t_instruccion,t_pcb*,int);
+void enviar_finalizacion(t_instruccion,t_pcb*,int);
+void enviar_bloqueo_IO(t_instruccion,t_pcb*,int);
+void enviar_bloqueo_DUMP(t_instruccion,t_pcb*,int);
+void llenar_paquete (t_paquete*,t_pcb*);
 
 //Traducción de dirección física
 uint32_t traducir_direccion(uint32_t,uint32_t,uint32_t); 
