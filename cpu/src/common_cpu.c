@@ -159,9 +159,24 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
       log_warning(logger, "No se recibió ninguna instrucción desde Memoria");
     };
     
+    log_debug(logger,"Sali de la funcion recibir_instruccion, tamaño lista: %d",list_size(lista_instruccion));
+    
     instruccion.tipo = *(int*) list_get(lista_instruccion, 0);
-    instruccion.parametro1 = *(uint32_t*) list_get(lista_instruccion, 1);
-    instruccion.parametro2 = *(uint32_t*) list_get(lista_instruccion, 2);
+
+    uint32_t longitud_parametro1 = *(uint32_t*)list_get(lista_instruccion, 1); 
+    char* param1 = malloc(longitud_parametro1);
+    memcpy(param1, list_get(lista_instruccion, 2), longitud_parametro1); 
+
+    uint32_t longitud_parametro2 = *(uint32_t*)list_get(lista_instruccion, 3); 
+    char* param2 = malloc(longitud_parametro2);
+    memcpy(param2, list_get(lista_instruccion, 4), longitud_parametro2); 
+
+    instruccion.parametro1 = param1;
+    instruccion.parametro2 = param2;
+
+    log_debug(logger,"tipo: %d",instruccion.tipo);
+    log_debug(logger,"parametro1: %s",instruccion.parametro1);
+    log_debug(logger,"parametro2: %s",instruccion.parametro2);
 
     list_destroy_and_destroy_elements(lista_instruccion, free);
     // Paso 3: interpretar y ejecutar instrucción
@@ -203,6 +218,7 @@ t_pcb* deserializar_pcb(void* buffer) {
   memcpy(&(pcb->pid), buffer + offset, sizeof(uint32_t));
   offset += sizeof(uint32_t);
 
+
   memcpy(&(pcb->pc), buffer + offset, sizeof(uint32_t));
   offset += sizeof(uint32_t);
   
@@ -240,33 +256,33 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
       break;
     
     case READ:
-      log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %d - tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case WRITE: 
-      log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %d - Valor: %d ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %s - Valor: %s ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case GOTO: 
-      log_info(logger, "## PID: %d - Ejecutando: GOTO - Nuevo PC: %d", pcb->pid, instruccion.parametro1);
-      pcb->pc=instruccion.parametro1;
+      log_info(logger, "## PID: %d - Ejecutando: GOTO - Nuevo PC: %s", pcb->pid, instruccion.parametro1);
+      pcb->pc = atoi(instruccion.parametro1);
       return EJECUCION_CONTINUA;
       break;
     
     case IO: 
-      log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %d - Tiempo: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %s - Tiempo: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_IO;
       break;
     
     case INIT_PROC:
-      log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %d - Tamaño: %d", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_INIT_PROC;
@@ -287,9 +303,10 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
     default: 
       log_warning(logger, "## PID: %d - Instruccion desconocida: %d", pcb->pid, instruccion.tipo);
       break;
-      return EJECUCION_FINALIZADA;
   };
+  return EJECUCION_FINALIZADA;
 };
+
 /*
 //Ejecutar Write y Read
 void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
@@ -356,13 +373,9 @@ void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, 
 //Bloqueo por INIT_PROC
 void enviar_bloqueo_INIT_PROC(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
   t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
-  char* archivo = string_from_format("%d", instruccion.parametro1);
-  char* tamanio = string_from_format("%d", instruccion.parametro2);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, archivo, tamanio, pcb->pc);
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
   eliminar_paquete(paquete);
-  free(archivo);
-  free(tamanio);
 };
 
 //Proceso finalizado
@@ -378,13 +391,9 @@ void enviar_finalizacion(t_instruccion instruccion, t_pcb* pcb, int conexion_ker
 //Bloqueo por IO
 void enviar_bloqueo_IO(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch){
   t_paquete* paquete = crear_paquete(SYSCALL_IO);
-  char* nombre_dispositivo = string_from_format("%d", instruccion.parametro1);
-  char* duracion = string_from_format("%d", instruccion.parametro2);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, nombre_dispositivo, duracion, pcb->pc);
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
   eliminar_paquete(paquete);
-  free(nombre_dispositivo);
-  free(duracion);
 }
 
 //Bloqueo por Dump Memory
@@ -417,9 +426,9 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
             log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
         }
     }
-
     return false;
 }
+
 /*
 //MMU
 uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t parametro) {

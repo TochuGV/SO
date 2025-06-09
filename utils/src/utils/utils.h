@@ -19,19 +19,8 @@
 #include <strings.h>
 
 //// ESTRUCTURAS - ENUMERADORES
-/*
-typedef enum
-{
-	MENSAJE,
-	PAQUETE,
-  PATH,
-  SYSCALL,
-  NOMBRE_IO
-} op_code;
-*/
 
-typedef enum
-{
+typedef enum {
 	MENSAJE,
 	PAQUETE,
   SOLICITUD_MEMORIA,
@@ -50,7 +39,7 @@ typedef enum {
 } tipo_syscall;
 
 typedef enum {
-	MODULO_KERNEL = 100,
+  MODULO_KERNEL = 100,
   MODULO_MEMORIA = 101,
   MODULO_CPU = 102,
   MODULO_IO = 103
@@ -61,14 +50,12 @@ typedef enum {
   CPU_INTERRUPT
 } tipo_conexion_cpu;
 
-typedef struct
-{
+typedef struct {
 	int size;
 	void* stream;
 } t_buffer;
 
-typedef struct
-{
+typedef struct {
 	op_code_comunicacion codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
@@ -102,9 +89,9 @@ typedef enum {
 } nombre_dispositivo_io;
 
 typedef struct {
-    t_tipo_instruccion tipo;
-    uint32_t parametro1;
-    uint32_t parametro2;
+  t_tipo_instruccion tipo;
+  char* parametro1;
+  char* parametro2;
 } t_instruccion;
 
 typedef enum {

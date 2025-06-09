@@ -64,17 +64,23 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
 
       instruccion = list_get(proceso->lista_instrucciones,pc);
 
-      t_tipo_instruccion tipo = instruccion->tipo;
-      uint32_t parametro1 = instruccion->parametro1;
-      uint32_t parametro2 = instruccion->parametro2;
 
-      log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%d  %d>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
+      t_tipo_instruccion tipo = instruccion->tipo;
+      char* parametro1 = instruccion->parametro1;
+      char* parametro2 = instruccion->parametro2;
+
+      log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%s  %s>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
 
       t_paquete* paquete = crear_paquete(INSTRUCCION);
 
+      uint32_t longitud_parametro1 = strlen(parametro1) + 1;
+      uint32_t longitud_parametro2 = strlen(parametro2) + 1;
+
       agregar_a_paquete(paquete, &tipo, sizeof(tipo));
-      agregar_a_paquete(paquete, &parametro1, sizeof(uint32_t));
-      agregar_a_paquete(paquete, &parametro2, sizeof(uint32_t));
+      agregar_a_paquete(paquete, &longitud_parametro1, sizeof(uint32_t));
+      agregar_a_paquete(paquete, parametro1, longitud_parametro1);
+      agregar_a_paquete(paquete, &longitud_parametro2, sizeof(uint32_t));
+      agregar_a_paquete(paquete, parametro2, longitud_parametro2);
 
       enviar_paquete(paquete, cliente_cpu);
 
