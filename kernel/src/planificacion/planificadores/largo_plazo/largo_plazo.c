@@ -12,6 +12,7 @@ void iniciar_planificacion_largo_plazo(){
 
 void inicializar_proceso(t_pcb *pcb){
   queue_push(cola_new, pcb);
+  list_add(lista_pcbs, pcb);
   entrar_estado(pcb, ESTADO_NEW);
   log_creacion_proceso(pcb->pid);
 };

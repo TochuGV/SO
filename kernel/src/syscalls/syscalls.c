@@ -42,8 +42,12 @@ void syscall_exit(t_syscall* syscall){
 };
 
 void syscall_io(t_syscall* syscall){
+  printf("Hola");
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
-  if(pcb == NULL) return;
+  if(pcb == NULL){
+    log_warning(logger, "No existe el PCB");
+    return;
+  }
 
   // Obtener el dispositivo directamente, sin chequeo previo
   t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);

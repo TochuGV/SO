@@ -64,7 +64,6 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
 
       instruccion = list_get(proceso->lista_instrucciones,pc);
 
-
       t_tipo_instruccion tipo = instruccion->tipo;
       char* parametro1 = instruccion->parametro1;
       char* parametro2 = instruccion->parametro2;

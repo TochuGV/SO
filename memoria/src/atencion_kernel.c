@@ -74,14 +74,14 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
     char* param2 = strtok(NULL, " \n");
 
     if (param1 != NULL)
-      instruccion.parametro1 = param1;
+      instruccion.parametro1 = strdup(param1);
     else
-      instruccion.parametro1 = "";
+      instruccion.parametro1 = strdup("");
 
     if (param2 != NULL)
-      instruccion.parametro2 = param2;
+      instruccion.parametro2 = strdup(param2);
     else
-      instruccion.parametro2 = "";
+      instruccion.parametro2 = strdup("");
     
     t_instruccion* nueva_instruccion = malloc(sizeof(t_instruccion));
     *nueva_instruccion = instruccion;

@@ -111,7 +111,7 @@ void* conectar_interrupt(void* arg) {
     }
 
     log_info(logger, "Conexión con Kernel Interrupt exitosa");
-    //conexion_kernel_interrupt = datos->socket;
+    conexion_kernel_interrupt = datos->socket;
     free(datos);
     return NULL;
 }
@@ -147,9 +147,9 @@ void* conectar_memoria(void* arg) {
 void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexion_kernel_interrupt, int conexion_memoria){
   t_list* lista_instruccion;
   t_instruccion instruccion;
-  t_estado_ejecucion estado=EJECUCION_CONTINUA;
+  t_estado_ejecucion estado = EJECUCION_CONTINUA;
 
-  while(estado==EJECUCION_CONTINUA){
+  while(estado == EJECUCION_CONTINUA){
     //Log 1.  Fetch instrucción
     log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid,pcb->pc);
     
@@ -174,9 +174,9 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     instruccion.parametro1 = param1;
     instruccion.parametro2 = param2;
 
-    log_debug(logger,"tipo: %d",instruccion.tipo);
-    log_debug(logger,"parametro1: %s",instruccion.parametro1);
-    log_debug(logger,"parametro2: %s",instruccion.parametro2);
+    log_debug(logger, "tipo: %d", instruccion.tipo);
+    log_debug(logger, "parametro1: %s", instruccion.parametro1);
+    log_debug(logger, "parametro2: %s", instruccion.parametro2);
 
     list_destroy_and_destroy_elements(lista_instruccion, free);
     // Paso 3: interpretar y ejecutar instrucción
@@ -198,8 +198,9 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
 //Recibir información del PCB desde Kernel
 t_pcb* recibir_pcb(int conexion_kernel_dispatch) {
   int cod_op = recibir_operacion(conexion_kernel_dispatch);
+  log_debug(logger, "%d", cod_op);
   if(cod_op != PCB) {
-    log_error(logger, "ERROR");
+    //log_error(logger, "ERROR");
     return NULL;
   };
   
@@ -382,7 +383,7 @@ void enviar_bloqueo_INIT_PROC(t_instruccion instruccion, t_pcb* pcb,int conexion
 void enviar_finalizacion(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch) {
   t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
     log_debug(logger, "SYSCALL_EXIT -> pid: %d | tipo: %d | arg1: %s | arg2: %s | pc: %d",
-            pcb->pid, SYSCALL_EXIT, "(null)", "(null)", pcb->pc);
+              pcb->pid, SYSCALL_EXIT, "(null)", "(null)", pcb->pc);
   agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, NULL, NULL, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
   eliminar_paquete(paquete);
@@ -415,11 +416,13 @@ void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
 //funcion que espera el mensaje de kernel
 bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
     int pid_interrupcion;
-    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
+    log_info(logger, "Socket interrupt: %d", socket_interrupt);
+    log_info(logger, "PID actual: %d", pid_actual);
+    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAI);
 
     if (bytes > 0) {
       //Log 2. Interrupción Recibida
-        log_info(logger, "LLega interrupción al puerto Interrupt %d", pid_interrupcion);
+        log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
         if (pid_interrupcion == pid_actual) {
             return true;
         } else {

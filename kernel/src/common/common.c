@@ -74,7 +74,9 @@ t_pcb* obtener_pcb_por_pid(uint32_t pid){
   bool coincide(void* elem){
     return ((t_pcb*)elem)->pid == pid;
   };
+  log_debug(logger, "%d", list_size(lista_pcbs));
   t_pcb* pcb = list_find(lista_pcbs, coincide);
+  log_debug(logger, "PCB encontrado PID: %d", pcb->pid);
   pthread_mutex_unlock(&mutex_pcbs);
   return pcb;
 };
