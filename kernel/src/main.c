@@ -8,7 +8,7 @@ int main(int argc, char* argv[]){
   
   iniciar_conexiones_entre_modulos();
 
-  conexion_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, KERNEL);
+  conexion_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   
   if (handshake_kernel(conexion_memoria) != 0){
     log_error(logger, "No se pudo conectar a Memoria debido a un fallo en el Handshake");
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
 
   t_pcb* pcb_nuevo = crear_pcb();
   inicializar_proceso(pcb_nuevo);
-  log_info(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
+  log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
   mover_proceso_a_ready(archivo_pseudocodigo, tamanio_proceso);
   
   pthread_create(&hilo_planificacion, NULL, planificador_ciclo_general, NULL);

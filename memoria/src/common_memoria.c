@@ -23,7 +23,7 @@ char* NOMBRES_INSTRUCCIONES[] = {
   "WRITE",
   "READ",
   "GOTO",
-  "INSTRUCCION_IO",
+  "IO",
   "INIT_PROC",
   "DUMP_MEMORY",
   "EXIT"
@@ -71,12 +71,12 @@ void* atender_cliente(void* arg)
   //int* socket_ptr = malloc(sizeof(int));
   //*socket_ptr = cliente_memoria;
 
-  if (cliente == KERNEL) {
+  if (cliente == MODULO_KERNEL) {
     log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente_memoria);
     pthread_create(&hilo_atender, NULL, atender_kernel, arg);
     pthread_detach(hilo_atender);
   }
-  else if (cliente == CPU) {
+  else if (cliente == MODULO_CPU) {
     pthread_create(&hilo_atender, NULL, atender_cpu, arg);
     pthread_join(hilo_atender,NULL);
   }
@@ -101,14 +101,14 @@ int recibir_handshake_memoria(int cliente_memoria)
 
   switch (handshake)
   {
-  case KERNEL:
+  case MODULO_KERNEL:
 
     log_debug(logger, "Kernel conectado.");
     send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
-    return KERNEL;
+    return MODULO_KERNEL;
     break;
 
-  case CPU:
+  case MODULO_CPU:
     int32_t identificador_cpu;
     recv(cliente_memoria,&identificador_cpu,sizeof(int32_t),MSG_WAITALL);
     bool misma_cpu(void* elem)
@@ -125,7 +125,7 @@ int recibir_handshake_memoria(int cliente_memoria)
       
       log_debug(logger, "CPU %d conectada.", identificador_cpu);
       send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
-      return CPU;
+      return MODULO_CPU;
 
     } else {
       log_error(logger,"Error, CPU ID: %d, ya esta conectada.", identificador_cpu);

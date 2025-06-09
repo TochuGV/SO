@@ -25,7 +25,7 @@ void* conectar_io(void* arg){
 void* atender_io(void* arg){
   int socket_io = *(int*)arg;
   free(arg);
-  if (recibir_handshake_kernel(socket_io) != IO){
+  if (recibir_handshake_kernel(socket_io) != MODULO_IO){
     log_error(logger, "Se esperaba un IO, pero se conectó otro tipo");
     close(socket_io);
     pthread_exit(NULL);

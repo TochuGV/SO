@@ -1,7 +1,7 @@
 #include "common.h"
 
 char* NOMBRES_DISPOSITIVOS_IO[] = { "Impresora", "Teclado", "Mouse", "Auriculares", "Parlante" };
-char* NOMBRES_SYSCALLS[] = { "IO", "EXIT", "INIT_PROC", "DUMP_MEMORY" };
+char* NOMBRES_SYSCALLS[] = { "INIT_PROC", "EXIT", "IO", "DUMP_MEMORY" };
 
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);

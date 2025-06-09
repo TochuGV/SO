@@ -2,7 +2,7 @@
 #include <ctype.h>
 
 int32_t handshake_io(char* nombre, int conexion_kernel){
-  int32_t tipo = IO;
+  int32_t tipo = MODULO_IO;
   int32_t token_io;
   int32_t resultado;
 

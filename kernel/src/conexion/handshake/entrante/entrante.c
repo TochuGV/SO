@@ -10,7 +10,7 @@ int recibir_handshake_kernel(int cliente_kernel){
   };
 
   switch(handshake){
-    case CPU:
+    case MODULO_CPU:
       int32_t id_cpu;
       int32_t tipo_conexion;
       if (recv(cliente_kernel, &id_cpu, sizeof(int32_t), MSG_WAITALL) <= 0 || 
@@ -53,8 +53,8 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
       //log_info(logger, "CPU %d conectada.", id_cpu); //Agregar validación para cuando se conecten Dispatch e Interrupt
-      return CPU;
-    case IO:
+      return MODULO_CPU;
+    case MODULO_IO:
       //log_debug(logger, "Handshake recibido: IO");
       int32_t token_io;
       if(recv(cliente_kernel, &token_io, sizeof(int32_t), MSG_WAITALL) <= 0){
@@ -72,7 +72,7 @@ int recibir_handshake_kernel(int cliente_kernel){
       registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
       log_info(logger, "Dispositivo '%s' conectado", nombre_io);
-      return IO;
+      return MODULO_IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);
       log_warning(logger, "Tipo de módulo desconocido en Handshake: %d", handshake);

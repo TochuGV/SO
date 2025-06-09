@@ -50,10 +50,10 @@ typedef enum {
 } tipo_syscall;
 
 typedef enum {
-	KERNEL = 100,
-  MEMORIA = 101,
-  CPU = 102,
-  IO = 103
+	MODULO_KERNEL = 100,
+  MODULO_MEMORIA = 101,
+  MODULO_CPU = 102,
+  MODULO_IO = 103
 } header_modulo;
 
 typedef enum {
@@ -78,7 +78,7 @@ typedef enum {
 	WRITE,
 	READ,
 	GOTO,
-	INSTRUCCION_IO,
+	IO,
 	INIT_PROC,
 	DUMP_MEMORY,
 	EXIT
