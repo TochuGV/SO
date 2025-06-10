@@ -26,14 +26,16 @@ int main(int argc, char* argv[])
 
   bool cpu_disponible=true;
 
-  while (1) {
-    if (cpu_disponible) {
+  while(1){
+    if(cpu_disponible){
         //Paso 1: Recibir el PCB desde Kernel
         t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);
         if (pcb == NULL) {
           //log_info(logger, "No se recibió ningún PCB");
-          continue;
-        }
+          log_debug(logger, "recv devolvió -1. Loop infinito evitado.");
+          log_warning(logger, "Se perdió la conexión con Kernel. Terminando CPU...");
+          break;
+        };
         cpu_disponible = false;
         ciclo_de_instruccion(pcb, conexion_kernel_dispatch, conexion_kernel_interrupt, conexion_memoria);
         cpu_disponible = true;

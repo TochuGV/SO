@@ -2,6 +2,11 @@
 
 t_syscall* recibir_syscall(int socket_cliente){
   t_list* lista = recibir_paquete(socket_cliente);
+  if(!lista || list_size(lista) < 6){
+    log_error(logger, "Error al recibir la llamada al sistema: Lista vacía o incompleta");
+    return NULL;
+  };
+
   t_syscall* syscall = malloc(sizeof(t_syscall));
   int offset = 0;
 

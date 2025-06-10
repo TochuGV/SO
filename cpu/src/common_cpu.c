@@ -285,8 +285,9 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
     case INIT_PROC:
       log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
+      enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
       pcb->pc++;
-      return EJECUCION_BLOQUEADA_INIT_PROC;
+      return EJECUCION_CONTINUA;
       break;
 
     case DUMP_MEMORY:
@@ -376,33 +377,27 @@ void enviar_bloqueo_INIT_PROC(t_instruccion instruccion, t_pcb* pcb,int conexion
   t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
   agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
-  eliminar_paquete(paquete);
 };
 
 //Proceso finalizado
 void enviar_finalizacion(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch) {
   t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
-    log_debug(logger, "SYSCALL_EXIT -> pid: %d | tipo: %d | arg1: %s | arg2: %s | pc: %d",
-              pcb->pid, SYSCALL_EXIT, "(null)", "(null)", pcb->pc);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, NULL, NULL, pcb->pc);
+  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, "", "", pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
-  eliminar_paquete(paquete);
-} 
+};
 
 //Bloqueo por IO
 void enviar_bloqueo_IO(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch){
   t_paquete* paquete = crear_paquete(SYSCALL_IO);
   agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
-  eliminar_paquete(paquete);
-}
+};
 
 //Bloqueo por Dump Memory
 void enviar_bloqueo_DUMP(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
   t_paquete* paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
   agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, NULL, NULL, pcb->pc);
   enviar_paquete(paquete, conexion_kernel_dispatch);
-  eliminar_paquete(paquete);
 };
 
 //Funcion auxiliar para empaquetar PID, PC y tipo de interrupción
@@ -418,7 +413,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
     int pid_interrupcion;
     log_info(logger, "Socket interrupt: %d", socket_interrupt);
     log_info(logger, "PID actual: %d", pid_actual);
-    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAI);
+    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
 
     if (bytes > 0) {
       //Log 2. Interrupción Recibida

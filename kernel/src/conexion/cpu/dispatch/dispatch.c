@@ -37,6 +37,10 @@ void* atender_cpu_dispatch(void* arg){
     log_debug(logger, "Código de operación recibido: %d", cod_op);
     
     t_syscall* syscall = recibir_syscall(socket_cpu_dispatch);
+    if(!syscall){
+      log_error(logger, "Fallo al recibir la llamada al sistema. Cerrando la conexión con CPU Dispatch...");
+      break;
+    }
     log_debug(logger, "PID: %d", syscall->pid);
     log_debug(logger, "TIPO: %d", syscall->tipo);
     log_debug(logger, "ARG1: %s", syscall->arg1);
