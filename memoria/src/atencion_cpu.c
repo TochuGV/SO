@@ -8,12 +8,14 @@ void* atender_cpu(void* arg)
     t_list* lista;
     while (1) {
       int cod_op = recibir_operacion(cliente_cpu);
+      log_debug(logger,"CODOP: %d",cod_op);
       switch (cod_op) {
       case PAQUETE:
         lista = recibir_paquete(cliente_cpu);
         list_iterate(lista, (void*) iterator);
         break;
       case SOLICITUD_INSTRUCCION:
+        log_debug(logger,"Entre al caso SOLICITUD INSTRUCCION");
         recibir_solicitud_instruccion(cliente_cpu);
         break;
       case -1:
@@ -35,13 +37,19 @@ void* atender_cpu(void* arg)
 
 void* recibir_solicitud_instruccion(int cliente_cpu)
 {
-  uint32_t pid;
-  uint32_t pc;
   t_proceso* proceso;
   t_instruccion* instruccion;
 
-  recv(cliente_cpu,&pid,sizeof(int32_t),MSG_WAITALL);
-  recv(cliente_cpu,&pc,sizeof(int32_t),MSG_WAITALL);
+  t_list* solicitud = recibir_paquete(cliente_cpu);
+
+  uint32_t pid = *(uint32_t*)list_get(solicitud, 0);
+  uint32_t pc = *(uint32_t*)list_get(solicitud, 1);
+
+  log_debug(logger,"PID: %d",pid);
+  log_debug(logger,"PC: %d",pc);
+
+  //recv(cliente_cpu,&pid,sizeof(int32_t),MSG_WAITALL);
+  //recv(cliente_cpu,&pc,sizeof(int32_t),MSG_WAITALL);
 
   for(int i = 0; i<list_size(lista_procesos);i++) {
 
@@ -57,16 +65,21 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
       instruccion = list_get(proceso->lista_instrucciones,pc);
 
       t_tipo_instruccion tipo = instruccion->tipo;
-      uint32_t parametro1 = instruccion->parametro1;
-      uint32_t parametro2 = instruccion->parametro2;
+      char* parametro1 = instruccion->parametro1;
+      char* parametro2 = instruccion->parametro2;
 
-      log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%d  %d>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
+      log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%s  %s>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
 
       t_paquete* paquete = crear_paquete(INSTRUCCION);
 
+      uint32_t longitud_parametro1 = strlen(parametro1) + 1;
+      uint32_t longitud_parametro2 = strlen(parametro2) + 1;
+
       agregar_a_paquete(paquete, &tipo, sizeof(tipo));
-      agregar_a_paquete(paquete, &parametro1, sizeof(uint32_t));
-      agregar_a_paquete(paquete, &parametro2, sizeof(uint32_t));
+      agregar_a_paquete(paquete, &longitud_parametro1, sizeof(uint32_t));
+      agregar_a_paquete(paquete, parametro1, longitud_parametro1);
+      agregar_a_paquete(paquete, &longitud_parametro2, sizeof(uint32_t));
+      agregar_a_paquete(paquete, parametro2, longitud_parametro2);
 
       enviar_paquete(paquete, cliente_cpu);
 

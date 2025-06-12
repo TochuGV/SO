@@ -52,6 +52,17 @@ typedef struct
   int socket;
 } t_cpu_id_socket;
 
+typedef struct 
+{
+  uint32_t nivel;
+  t_list* entradas;
+} t_tabla;
+
+typedef struct
+{
+  uint32_t marco;
+  t_tabla* siguiente_tabla;
+} t_entrada;
 
 ////////////////////////////////////////// FUNCIONES //////////////////////////////////////////
 
@@ -63,5 +74,9 @@ int recibir_handshake_memoria(int cliente_memoria);
 void inicializar_memoria(void);
 void obtener_configs(void);
 void terminar_memoria(void);
+
+// PAGINAS
+t_tabla* crear_tabla_multinivel(void);
+t_tabla* crear_tablas_multinivel(uint32_t nivel_actual);
 
 #endif /* COMMON_MEMORIA_H_ */

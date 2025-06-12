@@ -22,7 +22,7 @@ void* conectar_cpu_interrupt(void* arg){
 void* atender_cpu_interrupt(void* arg){
   int socket_cpu_interrupt = *(int*) arg;
   free(arg);
-  if(recibir_handshake_kernel(socket_cpu_interrupt) != CPU){
+  if(recibir_handshake_kernel(socket_cpu_interrupt) != MODULO_CPU){
     log_error(logger, "Se esperaba un CPU, pero se conectó otro tipo");
     close(socket_cpu_interrupt);
     pthread_exit(NULL);

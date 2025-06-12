@@ -1,5 +1,9 @@
 #include "common_memoria.h"
 
+
+
+////// VARIABLES EXTERNAS
+
 void* memoria;
 uint32_t tamanio_memoria;
 uint32_t memoria_usada;
@@ -23,11 +27,15 @@ char* NOMBRES_INSTRUCCIONES[] = {
   "WRITE",
   "READ",
   "GOTO",
-  "INSTRUCCION_IO",
+  "IO",
   "INIT_PROC",
   "DUMP_MEMORY",
   "EXIT"
 };
+
+
+
+////// INICIAR MEMORIA
 
 void inicializar_memoria(void)
 {
@@ -60,19 +68,61 @@ void obtener_configs(void)
   path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
 }
 
+
+
+////// PAGINACION JERARQUICA MULTINIVEL
+
+t_tabla* crear_tablas_multinivel(uint32_t nivel_actual) 
+{
+  t_tabla* tabla = malloc(sizeof(t_tabla));
+  tabla->nivel = nivel_actual;
+  tabla->entradas = list_create();
+
+  for (int i = 0; i < entradas_por_tabla; i++) {
+
+    t_entrada* entrada = malloc(sizeof(t_entrada));
+    entrada->siguiente_tabla = NULL;
+
+    if (nivel_actual < cantidad_niveles) 
+    {
+      entrada->marco = -1;
+      entrada->siguiente_tabla = crear_tablas_multinivel(nivel_actual + 1);
+    }
+    else
+    {
+      entrada->marco = 0;
+      entrada->siguiente_tabla = NULL;
+    }
+
+    list_add(tabla->entradas, entrada);
+  }
+
+  return tabla;
+}
+
+t_tabla* crear_tabla_multinivel(void) 
+{
+  return crear_tablas_multinivel(1);
+}
+
+
+
+////// ATENCION CLIENTES
+
 void* atender_cliente(void* arg)
 {
   int cliente_memoria = *(int*)arg;
   log_debug(logger, "Cliente aceptado con socket FD: %d", cliente_memoria);
+
   pthread_t hilo_atender;
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
 
-  if (cliente == KERNEL) {
+  if (cliente == MODULO_KERNEL) {
     log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente_memoria);
     pthread_create(&hilo_atender, NULL, atender_kernel, arg);
     pthread_detach(hilo_atender);
   }
-  else if (cliente == CPU) {
+  else if (cliente == MODULO_CPU) {
     pthread_create(&hilo_atender, NULL, atender_cpu, arg);
     pthread_join(hilo_atender,NULL);
   }
@@ -97,14 +147,14 @@ int recibir_handshake_memoria(int cliente_memoria)
 
   switch (handshake)
   {
-  case KERNEL:
+  case MODULO_KERNEL:
 
     log_debug(logger, "Kernel conectado.");
     send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
-    return KERNEL;
+    return MODULO_KERNEL;
     break;
 
-  case CPU:
+  case MODULO_CPU:
     int32_t identificador_cpu;
     recv(cliente_memoria,&identificador_cpu,sizeof(int32_t),MSG_WAITALL);
     bool misma_cpu(void* elem)
@@ -121,7 +171,7 @@ int recibir_handshake_memoria(int cliente_memoria)
       
       log_debug(logger, "CPU %d conectada.", identificador_cpu);
       send(cliente_memoria, &resultado_ok, sizeof(int32_t), 0);
-      return CPU;
+      return MODULO_CPU;
 
     } else {
       log_error(logger,"Error, CPU ID: %d, ya esta conectada.", identificador_cpu);
@@ -136,6 +186,10 @@ int recibir_handshake_memoria(int cliente_memoria)
   }
   return -1;
 }
+
+
+
+///// FINALIZAR
 
 void terminar_memoria(void)
 {

@@ -2,7 +2,7 @@
 #include <ctype.h>
 
 int32_t handshake_io(char* nombre, int conexion_kernel){
-  int32_t tipo = IO;
+  int32_t tipo = MODULO_IO;
   int32_t token_io;
   int32_t resultado;
 
@@ -35,6 +35,18 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
     convertir_primera_letra_en_mayuscula(nombre);
     log_info(logger, "%s se ha conectado a Kernel exitosamente!", nombre);
     return 0;
+  };
+};
+
+nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
+  if (strcasecmp(nombre, "impresora") == 0) return IMPRESORA;
+  else if (strcasecmp(nombre, "teclado") == 0) return TECLADO;
+  else if (strcasecmp(nombre, "mouse") == 0) return MOUSE;
+  else if (strcasecmp(nombre, "auriculares") == 0) return AURICULARES;
+  else if (strcasecmp(nombre, "parlante") == 0) return PARLANTE;
+  else {
+    log_error(logger, "Nombre de dispositivo IO desconocido: %s", nombre);
+    return -1;
   };
 };
 

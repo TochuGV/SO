@@ -22,7 +22,7 @@ void* conectar_cpu_dispatch(void* arg){
 void* atender_cpu_dispatch(void* arg){
   int socket_cpu_dispatch = *(int*) arg;
   free(arg);
-  if(recibir_handshake_kernel(socket_cpu_dispatch) != CPU){
+  if(recibir_handshake_kernel(socket_cpu_dispatch) != MODULO_CPU){
     log_error(logger, "Se esperaba un CPU, pero se conectó otro tipo");
     close(socket_cpu_dispatch);
     pthread_exit(NULL);
@@ -37,6 +37,15 @@ void* atender_cpu_dispatch(void* arg){
     log_debug(logger, "Código de operación recibido: %d", cod_op);
     
     t_syscall* syscall = recibir_syscall(socket_cpu_dispatch);
+    if(!syscall){
+      log_error(logger, "Fallo al recibir la llamada al sistema. Cerrando la conexión con CPU Dispatch...");
+      break;
+    }
+    log_debug(logger, "PID: %d", syscall->pid);
+    log_debug(logger, "TIPO: %d", syscall->tipo);
+    log_debug(logger, "ARG1: %s", syscall->arg1);
+    log_debug(logger, "ARG2: %s", syscall->arg2);
+    log_debug(logger, "PC: %d", syscall->pc);
     manejar_syscall(syscall, socket_cpu_dispatch);
     destruir_syscall(syscall);
   };

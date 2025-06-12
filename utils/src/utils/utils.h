@@ -19,40 +19,30 @@
 #include <strings.h>
 
 //// ESTRUCTURAS - ENUMERADORES
-/*
-typedef enum
-{
-	MENSAJE,
-	PAQUETE,
-  PATH,
-  SYSCALL,
-  NOMBRE_IO
-} op_code;
-*/
 
-typedef enum
-{
+typedef enum {
 	MENSAJE,
 	PAQUETE,
   SOLICITUD_MEMORIA,
-  NOMBRE_IO,
+  PETICION_IO,
   SOLICITUD_INSTRUCCION,
   INSTRUCCION,
-  PCB
+  PCB,
+  SOLICITUD_DUMP_MEMORY
 } op_code_comunicacion;
 
 typedef enum {
+  SYSCALL_INIT_PROC,
   SYSCALL_EXIT,
   SYSCALL_IO,
-  SYSCALL_INIT_PROC,
   SYSCALL_DUMP_MEMORY
 } tipo_syscall;
 
 typedef enum {
-	KERNEL = 100,
-  MEMORIA = 101,
-  CPU = 102,
-  IO = 103
+  MODULO_KERNEL = 100,
+  MODULO_MEMORIA = 101,
+  MODULO_CPU = 102,
+  MODULO_IO = 103
 } header_modulo;
 
 typedef enum {
@@ -60,14 +50,12 @@ typedef enum {
   CPU_INTERRUPT
 } tipo_conexion_cpu;
 
-typedef struct
-{
+typedef struct {
 	int size;
 	void* stream;
 } t_buffer;
 
-typedef struct
-{
+typedef struct {
 	op_code_comunicacion codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
@@ -77,7 +65,7 @@ typedef enum {
 	WRITE,
 	READ,
 	GOTO,
-	INSTRUCCION_IO,
+	IO,
 	INIT_PROC,
 	DUMP_MEMORY,
 	EXIT
@@ -101,9 +89,9 @@ typedef enum {
 } nombre_dispositivo_io;
 
 typedef struct {
-    t_tipo_instruccion tipo;
-    uint32_t parametro1;
-    uint32_t parametro2;
+  t_tipo_instruccion tipo;
+  char* parametro1;
+  char* parametro2;
 } t_instruccion;
 
 typedef enum {
@@ -122,6 +110,8 @@ typedef struct {
   uint32_t pc; //contador de programa
   uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
   uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
+  char* dispositivo_actual;
+  uint32_t duracion_io;
 } t_pcb;
 
 //// VARIABLES GLOBALES
@@ -164,7 +154,6 @@ int esperar_cliente(int);
 int recibir_operacion(int);
 int crear_conexion(char*, char*, int);
 int32_t enviar_handshake_desde(int, int);
-int recibir_handshake_de(int,int);
 void* conectar_puertos_a_servidor(void*);
 int conectarse_a(int , int , t_config*);
 int iniciar_conexion(void*);

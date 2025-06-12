@@ -63,9 +63,9 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
   while ((fgets(linea, sizeof(linea), file) != NULL)) {
     char* token = strtok(linea, " \n");
 
-    for(int indice_intruccion = 0; indice_intruccion < CANTIDAD_INSTRUCCIONES; indice_intruccion++) {
-      if (strcmp(token, NOMBRES_INSTRUCCIONES[indice_intruccion]) == 0) {
-        instruccion.tipo = indice_intruccion;
+    for(int indice_instruccion = 0; indice_instruccion < CANTIDAD_INSTRUCCIONES; indice_instruccion++) {
+      if (strcmp(token, NOMBRES_INSTRUCCIONES[indice_instruccion]) == 0) {
+        instruccion.tipo = indice_instruccion;
         break;
       }
     }
@@ -74,19 +74,23 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
     char* param2 = strtok(NULL, " \n");
 
     if (param1 != NULL)
-      instruccion.parametro1 = atoi(param1);
+      instruccion.parametro1 = strdup(param1);
     else
-      instruccion.parametro1 = 0;
+      instruccion.parametro1 = strdup("");
 
     if (param2 != NULL)
-      instruccion.parametro2 = atoi(param2);
+      instruccion.parametro2 = strdup(param2);
     else
-      instruccion.parametro2 = 0;
+      instruccion.parametro2 = strdup("");
     
     t_instruccion* nueva_instruccion = malloc(sizeof(t_instruccion));
     *nueva_instruccion = instruccion;
 
     list_add(lista_instrucciones, nueva_instruccion);
+
+    log_debug(logger, "Tipo: %d", instruccion.tipo);
+    log_debug(logger, "Parametro 1: %s", instruccion.parametro1);
+    log_debug(logger, "Parametro 2: %s", instruccion.parametro2);
   }
 
   return lista_instrucciones;
