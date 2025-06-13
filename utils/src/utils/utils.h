@@ -73,15 +73,6 @@ typedef enum {
 } t_tipo_instruccion;
 
 typedef enum {
-  EJECUCION_CONTINUA,
-  EJECUCION_FINALIZADA,
-  EJECUCION_BLOQUEADA_IO,
-  EJECUCION_BLOQUEADA_INIT_PROC,
-  EJECUCION_BLOQUEADA_DUMP,
-  EJECUCION_BLOQUEADA_SOLICITUD
-} t_estado_ejecucion;
-
-typedef enum {
   IMPRESORA,
   TECLADO,
   MOUSE,

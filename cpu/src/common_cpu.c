@@ -149,8 +149,8 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
   t_instruccion instruccion;
   t_estado_ejecucion estado = EJECUCION_CONTINUA;
 
-  while(estado == EJECUCION_CONTINUA){
-    log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid,pcb->pc);
+  while(estado == EJECUCION_CONTINUA || estado == EJECUCION_CONTINUA_INIT_PROC){
+    log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid, pcb->pc);
     
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
     if (list_size(lista_instruccion) == 0) {
@@ -167,10 +167,13 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     instruccion.parametro2 = malloc(longitud_parametro2);
     memcpy(instruccion.parametro2, list_get(lista_instruccion, 4), longitud_parametro2); 
 
-
     list_destroy_and_destroy_elements(lista_instruccion, free);
     estado = trabajar_instruccion(instruccion, pcb);
-    // Paso 4: Chequear interrupción
+
+    if(estado == EJECUCION_CONTINUA_INIT_PROC){
+      actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
+    };
+
     if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
       log_info(logger, "PID %d interrumpido", pcb->pid);
       estado = EJECUCION_BLOQUEADA_SOLICITUD;
@@ -272,10 +275,10 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
       log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
-      t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
-      agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
-      enviar_paquete(paquete, conexion_kernel_dispatch);
-      return EJECUCION_CONTINUA;
+      //t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
+      //agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+      //enviar_paquete(paquete, conexion_kernel_dispatch);
+      return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
     case DUMP_MEMORY:
@@ -340,7 +343,7 @@ void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, 
 void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_pcb* pcb, int conexion_kernel_dispatch){
   t_paquete* paquete = NULL;
   switch(estado){
-    case EJECUCION_BLOQUEADA_INIT_PROC:
+    case EJECUCION_CONTINUA_INIT_PROC:
       //enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_INIT_PROC);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
@@ -368,27 +371,25 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
       log_warning(logger, "Motivo de interrupción desconocida. Estado: %d", estado);
       return;
   };
-
   enviar_paquete(paquete, conexion_kernel_dispatch);
 };
 
 //funcion que espera el mensaje de kernel
 bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
-    int pid_interrupcion;
-    log_info(logger, "Socket interrupt: %d", socket_interrupt);
-    log_info(logger, "PID actual: %d", pid_actual);
-    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
+  int pid_interrupcion;
+  log_info(logger, "Socket interrupt: %d", socket_interrupt);
+  log_info(logger, "PID actual: %d", pid_actual);
+  int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
 
-    if (bytes > 0) {
-      //Log 2. Interrupción Recibida
-      log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
-      if(pid_interrupcion == pid_actual){
-        return true;
-      }else{
-        log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
-      }
+  if (bytes > 0) {
+    log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
+    if(pid_interrupcion == pid_actual){
+      return true;
+    }else{
+      log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
     }
-    return false;
+  }
+  return false;
 }
 
 /*
