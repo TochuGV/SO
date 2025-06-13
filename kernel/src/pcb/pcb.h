@@ -15,13 +15,6 @@ typedef enum {
   ESTADO_EXIT,
   CANTIDAD_ESTADOS
 } t_estado;
-
-typedef struct {
-	uint32_t pid; //identificador del proceso
-	uint32_t pc; //contador de programa
-	uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
-	uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
-} t_pcb;
 */
 
 uint32_t generar_pid();

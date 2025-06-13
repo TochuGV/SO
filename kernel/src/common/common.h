@@ -6,6 +6,7 @@
 #include "pcb/pcb.h"
 #include <stdint.h>
 #include <commons/collections/queue.h>
+#include <commons/temporal.h>
 
 typedef struct {
   int32_t id_cpu;
@@ -19,6 +20,10 @@ typedef struct {
   bool ocupado;
   int socket;
 } t_dispositivo_io;
+
+typedef struct {
+  t_temporal* cronometros_estado[CANTIDAD_ESTADOS];
+} t_temporizadores_estado;
 
 extern char* NOMBRES_SYSCALLS[4];
 extern char* NOMBRES_DISPOSITIVOS_IO[5];
