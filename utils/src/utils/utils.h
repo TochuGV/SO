@@ -28,7 +28,8 @@ typedef enum {
   SOLICITUD_INSTRUCCION,
   INSTRUCCION,
   PCB,
-  SOLICITUD_DUMP_MEMORY
+  SOLICITUD_DUMP_MEMORY,
+  FINALIZACION_IO
 } op_code_comunicacion;
 
 typedef enum {

@@ -50,29 +50,18 @@ nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
   };
 };
 
-/*atender_interrupcion() recibe solicitudes de IO del Kernel, ejecuta un usleep() para simular la operación y luego notifica al Kernel cuando finaliza. 
-También registra logs para monitorear el inicio y fin de cada IO.*/
-
 void atender_interrupcion(int conexion_kernel) {
-  int32_t pid;
-  int32_t tiempo_io;
 
-  while (1) { // Mantener el módulo IO activo para escuchar solicitudes
-    if (recv(conexion_kernel, &pid, sizeof(int32_t), MSG_WAITALL) <= 0) {
-      log_error(logger, "Error al recibir PID, desconectando...");
-      break;
-    };
-    if (recv(conexion_kernel, &tiempo_io, sizeof(int32_t), MSG_WAITALL) <= 0) {
-      log_error(logger, "Error al recibir tiempo de IO, desconectando...");
-      break;
-    };
-    log_inicio_io(pid, tiempo_io);
-    //log_info(logger, "## PID: %d - Inicio de IO - Tiempo: %d ms", pid, tiempo_io);
-    usleep(tiempo_io * 1000); // Simular la ejecución de la IO
-    log_finalizacion_io(pid);
-    //log_info(logger, "## PID: %d - Fin de IO", pid);
-    send(conexion_kernel, &pid, sizeof(int32_t), 0); // Notificar al Kernel que terminó la IO
-  };
+  t_list* lista = recibir_paquete(conexion_kernel);
+  uint32_t pid = *(uint32_t*)list_get(lista, 0);
+  uint32_t tiempo_io = *(uint32_t*)list_get(lista, 1);
+  
+  log_inicio_io(pid, tiempo_io);
+  usleep(tiempo_io * 1000);
+  log_finalizacion_io(pid);/*
+  t_paquete* paquete = crear_paquete(FINALIZACION_IO);
+  agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
+  enviar_paquete(paquete, conexion_kernel);*/
 };
 
 void convertir_primera_letra_en_mayuscula(char* cadena){

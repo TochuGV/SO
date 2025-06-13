@@ -8,7 +8,7 @@ void manejar_respuesta_io(uint32_t pid){
   };
   
   if(!pcb->dispositivo_actual){
-    log_error(logger, "Proceso <%d> no tiene un dispositivo asignado");
+    log_error(logger, "Proceso <%d> no tiene un dispositivo asignado", pid);
     return;
   };
 
