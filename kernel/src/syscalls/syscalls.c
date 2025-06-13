@@ -53,6 +53,8 @@ void syscall_io(t_syscall* syscall){
     return;
   }
 
+  pcb->pc = syscall->pc;
+
   // Obtener el dispositivo directamente, sin chequeo previo
   t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
     

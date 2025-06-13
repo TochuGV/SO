@@ -372,43 +372,6 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
   enviar_paquete(paquete, conexion_kernel_dispatch);
 };
 
-/*
-//Bloqueo por INIT_PROC
-void enviar_bloqueo_INIT_PROC(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-
-//Proceso finalizado
-void enviar_finalizacion(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch) {
-  t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, "", "", pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-
-//Bloqueo por IO
-void enviar_bloqueo_IO(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_IO);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-
-//Bloqueo por Dump Memory
-void enviar_bloqueo_DUMP(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, NULL, NULL, pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-*/
-//Funcion auxiliar para empaquetar PID, PC y tipo de interrupción
-/*
-void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
-  agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t)); //PID del proceso ejecutado
-  agregar_a_paquete(paquete, &(pcb->pc), sizeof(uint32_t)); //PC actualizado
-  agregar_a_paquete(paquete, &estado, sizeof(t_estado_ejecucion)); //Tipo de interrupción
-};*/
-
 //funcion que espera el mensaje de kernel
 bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
     int pid_interrupcion;
@@ -418,12 +381,12 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
 
     if (bytes > 0) {
       //Log 2. Interrupción Recibida
-        log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
-        if (pid_interrupcion == pid_actual) {
-            return true;
-        } else {
-            log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
-        }
+      log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
+      if(pid_interrupcion == pid_actual){
+        return true;
+      }else{
+        log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
+      }
     }
     return false;
 }

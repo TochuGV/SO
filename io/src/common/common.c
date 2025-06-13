@@ -58,10 +58,11 @@ void atender_interrupcion(int conexion_kernel) {
   
   log_inicio_io(pid, tiempo_io);
   usleep(tiempo_io * 1000);
-  log_finalizacion_io(pid);/*
+  log_finalizacion_io(pid);
+  
   t_paquete* paquete = crear_paquete(FINALIZACION_IO);
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
-  enviar_paquete(paquete, conexion_kernel);*/
+  enviar_paquete(paquete, conexion_kernel);
 };
 
 void convertir_primera_letra_en_mayuscula(char* cadena){

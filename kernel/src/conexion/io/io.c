@@ -38,7 +38,7 @@ void* atender_io(void* arg){
         lista = recibir_paquete(socket_io);
         list_iterate(lista, (void*) iterator);
         list_destroy_and_destroy_elements(lista, free);
-        break;/*
+        break;
       case FINALIZACION_IO:
         lista = recibir_paquete(socket_io);
         if(list_size(lista) == 0){
@@ -47,7 +47,10 @@ void* atender_io(void* arg){
         } else {
           uint32_t pid = *(uint32_t*) list_get(lista, 0);
           log_info(logger, "Operacion IO del proceso: %d, termino.", pid);
-        }*/
+          manejar_respuesta_io(pid);
+          list_destroy_and_destroy_elements(lista, free);
+        };
+        break;
       case -1:
         log_warning(logger, "Dispositivo IO desconectado");
         close(socket_io);

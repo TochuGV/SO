@@ -15,7 +15,7 @@ void* atender_cpu(void* arg)
         list_iterate(lista, (void*) iterator);
         break;
       case SOLICITUD_INSTRUCCION:
-        log_debug(logger,"Entre al caso SOLICITUD INSTRUCCION");
+        //log_debug(logger,"Entre al caso SOLICITUD INSTRUCCION");
         recibir_solicitud_instruccion(cliente_cpu);
         break;
       case -1:
