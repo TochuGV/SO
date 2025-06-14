@@ -1,5 +1,7 @@
 #include "atencion_kernel.h"
 
+
+
 void* atender_kernel(void* arg)
 {
   int cliente_kernel = *(int*)arg;
@@ -78,7 +80,7 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
     //log_debug(logger, "Parametro 1: %s", instruccion.parametro1);
     //log_debug(logger, "Parametro 2: %s", instruccion.parametro2);
   }
-
+  fclose(file);
   return lista_instrucciones;
 }
 
@@ -114,6 +116,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     proceso->pid = pid;
     proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
     proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
+    proceso->marcos_en_uso = cantidad_marcos_proceso;
 
     list_add(lista_procesos,proceso);
 
@@ -139,6 +142,53 @@ void finalizar_proceso(uint32_t pid)
       list_remove(lista_procesos, i);
       free(proceso);
       return;
+    }
+  }
+}
+
+void atender_dump_memory(uint32_t pid)
+{
+  t_proceso* proceso = obtener_proceso(pid);
+
+  if(!proceso)
+    return;
+  
+  time_t timestamp = time(NULL);
+  char path_archivo[256];
+  snprintf(path_archivo, sizeof(path_archivo), "%s<%d>-<%ld>.dmp", path_dump, pid, (long)timestamp);
+  FILE *file = fopen(path_archivo, "wb");
+
+  if (file == NULL) {
+    log_error(logger, "Error: no se pudo crear el archivo DUMP");
+    return;
+  }
+
+  uint32_t tamanio_dump = proceso->marcos_en_uso * tamanio_pagina;
+
+  if (ftruncate(fileno(file), tamanio_dump) == -1) {
+    log_error(logger, "Error: no se pudo truncar el archivo DUMP");
+    fclose(file);
+    return;
+  }
+
+  escribir_dump(proceso->tabla_de_paginas, file);
+  fclose(file);
+}
+
+void escribir_dump(t_tabla* tabla_de_paginas, FILE* file) 
+{
+  if (tabla_de_paginas == NULL) return;
+    
+  for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+    t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+
+    if (entrada->siguiente_tabla != NULL) {
+      escribir_dump(entrada->siguiente_tabla, file);
+    }
+
+    else if (entrada->marco != -1) {
+      uint32_t offset = entrada->marco * tamanio_pagina;
+      fwrite(memoria + offset, 1, tamanio_pagina, file);
     }
   }
 }

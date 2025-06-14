@@ -1,12 +1,12 @@
 #include "common_memoria.h"
-
+#include "atencion_cpu.h"
+#include "atencion_kernel.h"
 
 
 ////// VARIABLES EXTERNAS
 
 void* memoria;
 uint32_t tamanio_memoria;
-uint32_t memoria_usada;
 uint32_t tamanio_pagina;
 uint32_t entradas_por_tabla;
 uint32_t cantidad_niveles;
@@ -49,7 +49,7 @@ void inicializar_memoria(void)
   obtener_configs();
 
   memoria = malloc(tamanio_memoria);
-  memoria_usada = 0;
+  memset(memoria, 0, tamanio_memoria);
 
   cantidad_marcos = tamanio_memoria / tamanio_pagina; // A menos que en las pruebas pongan un tam_pagina no multiplo del tam_memoria esto esta ok
   marcos_libres = cantidad_marcos;
@@ -75,6 +75,24 @@ void obtener_configs(void)
   path_swapfile = config_get_string_value(config, "PATH_SWAPFILE");
   path_dump = config_get_string_value(config, "DUMP_PATH");
   path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+}
+
+
+
+////// PROCESOS
+
+t_proceso* obtener_proceso(uint32_t pid)
+{
+  for (int i = 0; i < list_size(lista_procesos); i++) 
+  {
+    t_proceso* proceso = list_get(lista_procesos, i);
+
+    if (proceso->pid == pid) {
+      return proceso;
+    }
+  }
+  log_warning(logger, "Proceso con PID: %d no encontrado", pid);
+  return NULL;
 }
 
 
@@ -135,9 +153,10 @@ uint32_t asignar_marco_libre(void)
   return -1;
 }
 
-void liberar_marcos(t_tabla* tabla_de_paginas) {
+void liberar_marcos(t_tabla* tabla_de_paginas) 
+{
   if (tabla_de_paginas == NULL) return;
-
+    
   for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
     t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
 
@@ -145,7 +164,7 @@ void liberar_marcos(t_tabla* tabla_de_paginas) {
       liberar_marcos(entrada->siguiente_tabla);
     }
 
-    if (entrada->marco != -1) {
+    else if (entrada->marco != -1) {
       bitmap_marcos[entrada->marco] = 0;
       marcos_libres++;
       memset(memoria + entrada->marco * tamanio_pagina, 0, tamanio_pagina);
@@ -157,6 +176,8 @@ void liberar_marcos(t_tabla* tabla_de_paginas) {
   list_destroy(tabla_de_paginas->entradas);
   free(tabla_de_paginas);
 }
+
+
 
 ////// ATENCION CLIENTES
 
