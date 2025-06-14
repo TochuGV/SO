@@ -37,7 +37,9 @@ typedef enum
   SOLICITUD_MEMORIA,
   NOMBRE_IO,
   SOLICITUD_INSTRUCCION,
-  INSTRUCCION
+  INSTRUCCION,
+  OP_READ,
+  OP_WRITE 
 } op_code_comunicacion;
 
 typedef enum

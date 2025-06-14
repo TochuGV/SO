@@ -286,7 +286,7 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
 }
 
 //Ejecutar Write y Read
-void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
+void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t tam) {
   int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
   //Log 4. Lectura/Escritura Memoria
   log.info("PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
@@ -414,6 +414,20 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
     //Log 5. Obtener Marco
     log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
     return marco * tamaño_pagina + desplazamiento;
+  }
+
+  void pedir_valor_a_memoria(uint32_t direccion_fisica, uint32_t* valor){
+    int codigo = OP_READ;
+    send(conexion_memoria, &codigo, sizeof(int), 0);
+    send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
+    recv(conexcion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
+  }
+
+  void escribir_valor_en_memoria(uint32_t direccion_fisica, uint32_t valor){
+    int codigo = OP_WRITE;
+    send(conexion_memoria, &codigo, sizeof(int), 0);
+    send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
+    send(conexion_memoria, &valor, sizeof(uint32_t), 0);
   }
 
   //Log 7. TLB Miss
