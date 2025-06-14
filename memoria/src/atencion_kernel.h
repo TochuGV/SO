@@ -18,5 +18,6 @@ void* atender_kernel(void*);
 bool verificar_espacio_memoria(uint32_t tamanio_proceso);
 int recibir_y_ubicar_proceso(int);
 t_list* leer_archivo_instrucciones(char* path);
+void finalizar_proceso(uint32_t pid);
 
 #endif /* ATENCION_KERNEL_H_ */

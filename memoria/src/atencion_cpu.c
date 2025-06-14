@@ -8,14 +8,14 @@ void* atender_cpu(void* arg)
     t_list* lista;
     while (1) {
       int cod_op = recibir_operacion(cliente_cpu);
-      log_debug(logger,"CODOP: %d",cod_op);
+      //log_debug(logger,"CODOP: %d",cod_op);
       switch (cod_op) {
       case PAQUETE:
         lista = recibir_paquete(cliente_cpu);
         list_iterate(lista, (void*) iterator);
         break;
       case SOLICITUD_INSTRUCCION:
-        log_debug(logger,"Entre al caso SOLICITUD INSTRUCCION");
+        //log_debug(logger,"Entre al caso SOLICITUD INSTRUCCION");
         recibir_solicitud_instruccion(cliente_cpu);
         break;
       case -1:
@@ -45,11 +45,8 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
   uint32_t pid = *(uint32_t*)list_get(solicitud, 0);
   uint32_t pc = *(uint32_t*)list_get(solicitud, 1);
 
-  log_debug(logger,"PID: %d",pid);
-  log_debug(logger,"PC: %d",pc);
-
-  //recv(cliente_cpu,&pid,sizeof(int32_t),MSG_WAITALL);
-  //recv(cliente_cpu,&pc,sizeof(int32_t),MSG_WAITALL);
+  //log_debug(logger,"PID: %d",pid);
+  //log_debug(logger,"PC: %d",pc);
 
   for(int i = 0; i<list_size(lista_procesos);i++) {
 
@@ -83,7 +80,7 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
 
       enviar_paquete(paquete, cliente_cpu);
 
-      log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
+      //log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
 
       return NULL;
     }

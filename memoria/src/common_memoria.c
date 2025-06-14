@@ -15,6 +15,9 @@ uint32_t retardo_swap;
 char* path_swapfile;
 char* path_dump;
 char* path_instrucciones;
+uint32_t cantidad_marcos;
+uint32_t marcos_libres;
+uint8_t* bitmap_marcos;
 
 int servidor_memoria;
 char* puerto_escucha;
@@ -40,13 +43,19 @@ char* NOMBRES_INSTRUCCIONES[] = {
 void inicializar_memoria(void)
 {
   config = iniciar_config("memoria.config");
-  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_TRACE);
+  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_DEBUG);
   log_debug(logger, "Memoria iniciada!");
 
   obtener_configs();
 
   memoria = malloc(tamanio_memoria);
   memoria_usada = 0;
+
+  cantidad_marcos = tamanio_memoria / tamanio_pagina; // A menos que en las pruebas pongan un tam_pagina no multiplo del tam_memoria esto esta ok
+  marcos_libres = cantidad_marcos;
+
+  bitmap_marcos = malloc(cantidad_marcos * sizeof(uint8_t));
+  memset(bitmap_marcos, 0, cantidad_marcos);
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
@@ -72,26 +81,35 @@ void obtener_configs(void)
 
 ////// PAGINACION JERARQUICA MULTINIVEL
 
-t_tabla* crear_tablas_multinivel(uint32_t nivel_actual) 
-{
+t_tabla* crear_tablas_multinivel(uint32_t nivel_actual, uint32_t* marcos_restantes) {
+  if (*marcos_restantes == 0) return NULL;
+
   t_tabla* tabla = malloc(sizeof(t_tabla));
   tabla->nivel = nivel_actual;
   tabla->entradas = list_create();
 
-  for (int i = 0; i < entradas_por_tabla; i++) {
+  for (int index_entrada = 0; index_entrada < entradas_por_tabla; index_entrada++) {
+    if (*marcos_restantes == 0) break;
 
     t_entrada* entrada = malloc(sizeof(t_entrada));
-    entrada->siguiente_tabla = NULL;
 
-    if (nivel_actual < cantidad_niveles) 
-    {
+    if (nivel_actual < cantidad_niveles) {
       entrada->marco = -1;
-      entrada->siguiente_tabla = crear_tablas_multinivel(nivel_actual + 1);
-    }
-    else
-    {
-      entrada->marco = 0;
-      entrada->siguiente_tabla = NULL;
+      entrada->siguiente_tabla = crear_tablas_multinivel(nivel_actual + 1, marcos_restantes);
+    } else {
+      if (*marcos_restantes > 0) {
+        entrada->marco = asignar_marco_libre(); 
+        log_debug(logger, "Tabla nivel: %d; Entrada: %d; Marco asignado: %d",nivel_actual, index_entrada, entrada->marco);
+        if (entrada->marco == -1) {
+          log_warning(logger,"No se encontro ningun marco libre");
+        } 
+        entrada->siguiente_tabla = NULL;
+        (*marcos_restantes)--;  
+      }
+      else {
+        entrada->marco = -1;
+        entrada->siguiente_tabla = NULL;
+      }
     }
 
     list_add(tabla->entradas, entrada);
@@ -100,19 +118,51 @@ t_tabla* crear_tablas_multinivel(uint32_t nivel_actual)
   return tabla;
 }
 
-t_tabla* crear_tabla_multinivel(void) 
+t_tabla* crear_tabla_multinivel(uint32_t* cantidad_marcos_proceso) 
 {
-  return crear_tablas_multinivel(1);
+  return crear_tablas_multinivel(1, cantidad_marcos_proceso);
 }
 
+uint32_t asignar_marco_libre(void)
+{
+  for(int index_marco = 0; index_marco < cantidad_marcos; index_marco++)
+  {
+    if (bitmap_marcos[index_marco] == 0) {
+      bitmap_marcos[index_marco] = 1;
+      return index_marco;
+    }
+  }
+  return -1;
+}
 
+void liberar_marcos(t_tabla* tabla_de_paginas) {
+  if (tabla_de_paginas == NULL) return;
+
+  for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+    t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+
+    if (entrada->siguiente_tabla != NULL) {
+      liberar_marcos(entrada->siguiente_tabla);
+    }
+
+    if (entrada->marco != -1) {
+      bitmap_marcos[entrada->marco] = 0;
+      marcos_libres++;
+      memset(memoria + entrada->marco * tamanio_pagina, 0, tamanio_pagina);
+    }
+
+    free(entrada);
+  }
+
+  list_destroy(tabla_de_paginas->entradas);
+  free(tabla_de_paginas);
+}
 
 ////// ATENCION CLIENTES
 
 void* atender_cliente(void* arg)
 {
   int cliente_memoria = *(int*)arg;
-  log_debug(logger, "Cliente aceptado con socket FD: %d", cliente_memoria);
 
   pthread_t hilo_atender;
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);

@@ -28,6 +28,9 @@ extern uint32_t retardo_swap;
 extern char* path_swapfile;
 extern char* path_dump;
 extern char* path_instrucciones;
+extern uint32_t cantidad_marcos;
+extern uint32_t marcos_libres;
+extern uint8_t* bitmap_marcos;
 
 
 // LISTAS
@@ -40,10 +43,17 @@ extern char* NOMBRES_INSTRUCCIONES[CANTIDAD_INSTRUCCIONES];
 
 ////////////////////////////////////////// ESTRUCTURAS //////////////////////////////////////////
 
+typedef struct 
+{
+  uint32_t nivel;
+  t_list* entradas;
+} t_tabla;
+
 typedef struct
 {
   uint32_t pid;
   t_list* lista_instrucciones;
+  t_tabla* tabla_de_paginas;
 } t_proceso;
 
 typedef struct
@@ -51,12 +61,6 @@ typedef struct
   int32_t id;
   int socket;
 } t_cpu_id_socket;
-
-typedef struct 
-{
-  uint32_t nivel;
-  t_list* entradas;
-} t_tabla;
 
 typedef struct
 {
@@ -76,7 +80,9 @@ void obtener_configs(void);
 void terminar_memoria(void);
 
 // PAGINAS
-t_tabla* crear_tabla_multinivel(void);
-t_tabla* crear_tablas_multinivel(uint32_t nivel_actual);
+t_tabla* crear_tabla_multinivel(uint32_t*);
+t_tabla* crear_tablas_multinivel(uint32_t, uint32_t*);
+uint32_t asignar_marco_libre(void);
+void liberar_marcos(t_tabla*);
 
 #endif /* COMMON_MEMORIA_H_ */
