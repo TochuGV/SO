@@ -9,6 +9,5 @@
 
 void entrar_estado(t_pcb*, int);
 void cambiar_estado(t_pcb*, t_estado, t_estado);
-void finalizar_proceso(t_pcb*);
 
 #endif

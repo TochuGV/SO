@@ -11,11 +11,9 @@ void entrar_estado(t_pcb* pcb, int estado){
     } 
     dictionary_put(diccionario_cronometros, clave_pid, cronometros_pid);
   };
-
   if(cronometros_pid->cronometros_estado[estado]){
     temporal_destroy(cronometros_pid->cronometros_estado[estado]);
   };
-
   cronometros_pid->cronometros_estado[estado] = temporal_create();
   free(clave_pid);
 };
@@ -32,28 +30,4 @@ void cambiar_estado(t_pcb* pcb, t_estado actual, t_estado siguiente){
   free(clave_pid);
   entrar_estado(pcb, siguiente);
   log_cambio_estado(pcb->pid, obtener_nombre_estado(actual), obtener_nombre_estado(siguiente));
-};
-
-void finalizar_proceso(t_pcb* pcb){
-  char* clave_pid = string_itoa(pcb->pid);
-  t_temporizadores_estado* cronometros_pid = dictionary_get(diccionario_cronometros, clave_pid);
-  if(cronometros_pid){
-    for(int i = 0; i < CANTIDAD_ESTADOS; i++){
-      if(cronometros_pid->cronometros_estado[i]){
-        uint32_t tiempo = temporal_gettime(cronometros_pid->cronometros_estado[i]);
-        pcb->mt[i] += tiempo;
-        temporal_destroy(cronometros_pid->cronometros_estado[i]);
-        cronometros_pid->cronometros_estado[i] = NULL;
-      };
-    };
-    dictionary_remove(diccionario_cronometros, clave_pid);
-    free(cronometros_pid);
-  };
-  dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
-  free(clave_pid);
-  log_fin_proceso(pcb->pid);
-  char* buffer = crear_cadena_metricas_estado(pcb);
-  log_metricas_estado(buffer);
-  free(buffer);
-  destruir_pcb(pcb);
 };

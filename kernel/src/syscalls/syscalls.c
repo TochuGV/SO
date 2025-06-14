@@ -33,8 +33,9 @@ t_syscall* recibir_syscall(int socket_cliente){
 
 void syscall_init_proc(t_syscall* syscall){
   t_pcb* pcb_nuevo = crear_pcb();
-  inicializar_proceso(pcb_nuevo);
-  mover_proceso_a_ready(syscall->arg1, atoi(syscall->arg2)); //En el futuro, intentar_ingresar_procesos_a_ready()
+  uint32_t tamanio = atoi(syscall->arg2);
+  inicializar_proceso(pcb_nuevo, tamanio);
+  mover_proceso_a_ready(syscall->arg1, tamanio); //En el futuro, intentar_ingresar_procesos_a_ready()
 };
 
 void syscall_exit(t_syscall* syscall){

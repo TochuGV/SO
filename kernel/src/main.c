@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
   esperar_enter_para_planificar();
 
   t_pcb* pcb_nuevo = crear_pcb();
-  inicializar_proceso(pcb_nuevo);
+  inicializar_proceso(pcb_nuevo, tamanio_proceso);
   log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
   mover_proceso_a_ready(archivo_pseudocodigo, tamanio_proceso);
   
