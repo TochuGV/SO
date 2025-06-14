@@ -16,6 +16,11 @@ typedef struct {
 } t_cpu;
 
 typedef struct {
+  char* dispositivo_actual;
+  uint32_t duracion_io;
+} t_contexto_io;
+
+typedef struct {
   t_queue* cola_bloqueados;
   bool ocupado;
   int socket;
@@ -34,5 +39,6 @@ char* crear_cadena_metricas_estado(t_pcb*);
 
 char* token_io_to_string(int32_t);
 t_pcb* obtener_pcb_por_pid(uint32_t);
+void destruir_contexto_io(void*);
 
 #endif /* COMMON_H_ */

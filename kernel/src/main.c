@@ -27,12 +27,10 @@ int main(int argc, char* argv[]){
   pthread_join(hilo_conexion_cpu_dispatch, NULL);
   pthread_join(hilo_conexion_cpu_interrupt, NULL);
   pthread_join(hilo_conexion_io, NULL);
-  
-  while(1){ //Se puede eliminar si todos hacen join
-    sleep(1);
-  };
+  pthread_join(hilo_planificacion, NULL);
 
   terminar_programa(conexion_memoria, logger, config);
+  dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);
   //Se pueden destruir logs, configs, conexiones, listas con elementos, semáforos, diccionarios, etc.
 	return EXIT_SUCCESS;
 };

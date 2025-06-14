@@ -288,13 +288,13 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
       break;
 
     case EXIT:
-      log_info(logger, "## PID: %d- Ejecutando: EXIT", pcb->pid);
+      log_info(logger, "## PID: %d - Ejecutando: EXIT", pcb->pid);
       pcb->pc++;
       return EJECUCION_FINALIZADA;
       break;
     
     default: 
-      log_warning(logger, "## PID: %d - Instruccion desconocida: %d", pcb->pid, instruccion.tipo);
+      log_warning(logger, "## PID: %d - Instrucción desconocida: %d", pcb->pid, instruccion.tipo);
       break;
   };
   return EJECUCION_FINALIZADA;

@@ -17,6 +17,7 @@ t_list* lista_pcbs;
 
 t_dictionary* diccionario_dispositivos;
 t_dictionary* diccionario_cronometros;
+t_dictionary* diccionario_contextos_io;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
@@ -47,6 +48,7 @@ void inicializar_kernel(){
   lista_cpus = list_create();
   lista_pcbs = list_create();
   diccionario_cronometros = dictionary_create();
+  diccionario_contextos_io = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();

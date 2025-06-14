@@ -49,6 +49,8 @@ void finalizar_proceso(t_pcb* pcb){
     dictionary_remove(diccionario_cronometros, clave_pid);
     free(cronometros_pid);
   };
+  dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
+  free(clave_pid);
   log_fin_proceso(pcb->pid);
   char* buffer = crear_cadena_metricas_estado(pcb);
   log_metricas_estado(buffer);

@@ -51,14 +51,11 @@ void syscall_io(t_syscall* syscall){
   if(pcb == NULL){
     log_warning(logger, "No existe el PCB");
     return;
-  }
-
+  };
   pcb->pc = syscall->pc;
 
   // Obtener el dispositivo directamente, sin chequeo previo
   t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
-    
-  // Si el dispositivo no existe, finaliza el proceso
   if(!dispositivo){
     log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
@@ -66,9 +63,12 @@ void syscall_io(t_syscall* syscall){
     return;
   }
 
-  // Mover el proceso a bloqueado antes de evaluar disponibilidad
-  pcb->dispositivo_actual = strdup(syscall->arg1);
-  pcb->duracion_io = atoi(syscall->arg2);
+  t_contexto_io* contexto = malloc(sizeof(t_contexto_io));
+  contexto->dispositivo_actual = strdup(syscall->arg1);
+  contexto->duracion_io = atoi(syscall->arg2);
+  char* clave_pid = string_itoa(pcb->pid);
+  dictionary_put(diccionario_contextos_io, clave_pid, contexto);
+  free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
 
   if(dispositivo->ocupado){
@@ -76,7 +76,7 @@ void syscall_io(t_syscall* syscall){
     log_debug(logger, "Dispositivo <%s> ocupado. Proceso <%d> encolado", syscall->arg1, pcb->pid);
   } else {
     dispositivo->ocupado = true;
-    enviar_peticion_io(dispositivo->socket, atoi(syscall->arg2), pcb->pid);
+    enviar_peticion_io(dispositivo->socket, contexto->duracion_io, pcb->pid);
     log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
   };
 
