@@ -6,5 +6,4 @@ void* planificador_ciclo_general(void* arg){
     mover_proceso_a_exec();
     sleep(1);
   };
-  return NULL;
 };

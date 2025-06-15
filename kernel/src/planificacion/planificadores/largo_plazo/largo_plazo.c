@@ -9,22 +9,30 @@ void iniciar_planificacion_largo_plazo(){
   cola_new = queue_create();
   lista_tamanios = list_create();
   sem_init(&hay_procesos_en_new, 0, 0);
-  pthread_mutex_init(&mutex_new, NULL); 
+  pthread_mutex_init(&mutex_new, NULL);
 };
 
 void inicializar_proceso(t_pcb *pcb, uint32_t tamanio){
+  pthread_mutex_lock(&mutex_new);
   queue_push(cola_new, pcb);
   list_add(lista_pcbs, pcb);
-  entrar_estado(pcb, ESTADO_NEW);
-  log_creacion_proceso(pcb->pid);
 
   t_informacion_largo_plazo* info = malloc(sizeof(t_informacion_largo_plazo));
   info->pid = pcb->pid;
   info->tamanio = tamanio;
   list_add(lista_tamanios, info);
+
+  pthread_mutex_unlock(&mutex_new);
+  
+  entrar_estado(pcb, ESTADO_NEW);
+  log_creacion_proceso(pcb->pid);
 };
 
 void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) {
+  if (archivo_pseudocodigo == NULL) {
+    archivo_pseudocodigo = "proceso0.txt"; // archivo genérico para pruebas
+  };
+  
   pthread_mutex_lock(&mutex_new);
   if(queue_is_empty(cola_new)){
     pthread_mutex_unlock(&mutex_new);
@@ -82,3 +90,4 @@ void finalizar_proceso(t_pcb* pcb){
   if(info) free(info);
   destruir_pcb(pcb);
 };
+
