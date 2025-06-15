@@ -287,16 +287,24 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
 
 //Ejecutar Write y Read
 void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t tam) {
-  int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
+  uint32_t direccion_fisica = traducir_direccion(pid,direccion_logica);
+  uint32_t valor;
+
+  pedir_valor_a_memoria(direccion_fisica, &valor);
+
+  //int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
   //Log 4. Lectura/Escritura Memoria
-  log.info("PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
+  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
 }
 
 
-void ejecutar_write(uint32_t pid, uint32_t parametro1, uint32_t parametro2) {
-  int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
+void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
+  uint32_t direccion_fisica = traducir_direccion (pid, direccion_logica);
+
+  escribir_valor_en_memoria (direccion_fisica, valor);
+  //int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
   //Log 4. Lectura/Escritura Memoria
-  log.info("PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
+  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
 }
 
 
@@ -394,12 +402,12 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
   int tamaño_pagina, cant_entradas_tabla, cant_niveles;
 
   //Obtener parametros desde memoria 
-  send(socket_memoria, &TAMANIO_PAGINA, sizeof(int32_t), 0);
-  recv(socket_memoria, &tamaño_pagina, sizeof(int32_t), MSG_WAITALL);
-  send(socket_memoria, &CANT_ENTRADAS, sizeof(int32_t), 0);
-  recv(socket_memoria, &cant_entradas_tabla, sizeof(int32_t), MSG_WAITALL);
-  send(socket_memoria, &CANT_NIVELES, sizeof(int32_t), 0);
-  recv(socket_memoria, &cant_niveles, sizeof(int32_t), MSG_WAITALL);
+  send(conexion_memoria, &TAMANIO_PAGINA, sizeof(int32_t), 0);
+  recv(conexion_memoria, &tamaño_pagina, sizeof(int32_t), MSG_WAITALL);
+  send(conexion_memoria, &CANT_ENTRADAS, sizeof(int32_t), 0);
+  recv(conexion_memoria, &cant_entradas_tabla, sizeof(int32_t), MSG_WAITALL);
+  send(conexion_memoria, &CANT_NIVELES, sizeof(int32_t), 0);
+  recv(conexion_memoria, &cant_niveles, sizeof(int32_t), MSG_WAITALL);
 
   //Calcular numero de pagina y desplazamiento 
   int nro_pagina = floor(direccion_logica / tamaño_pagina);
@@ -410,17 +418,24 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
 
   if (marco != -1) {
     //Log 6. TLB Hit
-    log.info("PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
+    log_info("PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
     //Log 5. Obtener Marco
-    log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+    log_info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
     return marco * tamaño_pagina + desplazamiento;
   }
+
+  log_info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
+
+  actualizar_TLB(pid, nro_pagina, marco);
+  log_info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+  return marco * tamaño_pagina + desplazamiento;
+}
 
   void pedir_valor_a_memoria(uint32_t direccion_fisica, uint32_t* valor){
     int codigo = OP_READ;
     send(conexion_memoria, &codigo, sizeof(int), 0);
     send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
-    recv(conexcion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
+    recv(conexion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
   }
 
   void escribir_valor_en_memoria(uint32_t direccion_fisica, uint32_t valor){
@@ -431,7 +446,7 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
   }
 
   //Log 7. TLB Miss
-  log.info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
+  //log.info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
 
   /*
   Acá tiene que hacer todo el ciclo de revisar las páginas y tablas de memoria hasta tener una coincidencia
@@ -446,17 +461,17 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
     recv(socket_memoria, &tabla_actual, sizeof(int), MSG_WAITALL);
   }*/
   
-  actualizar_TLB(pid, nro_pagina, marco);
+  //actualizar_TLB(pid, nro_pagina, marco);
 
   //Log 5. Obtener Marco
-  log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
-  return marco * tamaño_pagina + desplazamiento;
-}
+  //log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+  //return marco * tamaño_pagina + desplazamiento;
 
 // consultar TLB 
-int consultar_TLB (pid, nro_pagina) {
+int consultar_TLB (uint32_t pid, int nro_pagina) {
   for (int i=0;i<parametros_tlb->cantidad_entradas ;i++) {
     if (tlb[i].pid==pid && tlb[i].pagina==nro_pagina) {
+        tlb [i]. tiempo_transcurrido = 0;
       return tlb[i].marco;
     }
   }
