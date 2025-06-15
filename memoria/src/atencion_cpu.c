@@ -65,6 +65,8 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
 
   log_info(logger, "## PID: <%d> - Obtener instrucción: <%d> - Instrucción: <%s> <%s  %s>",pid,pc,NOMBRES_INSTRUCCIONES[tipo],parametro1,parametro2);
 
+  proceso->metricas[INSTRUCCIONES_SOLICITADAS]++;
+
   t_paquete* paquete = crear_paquete(INSTRUCCION);
 
   uint32_t longitud_parametro1 = strlen(parametro1) + 1;

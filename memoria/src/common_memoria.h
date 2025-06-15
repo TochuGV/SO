@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #define CANTIDAD_INSTRUCCIONES 8
+#define CANTIDAD_METRICAS 6
 
 
 ////////////////////////////////////////// VARIABLES EXTERNAS //////////////////////////////////////////
@@ -52,6 +53,7 @@ typedef struct
   t_list* lista_instrucciones;
   t_tabla* tabla_de_paginas;
   uint32_t marcos_en_uso;
+  uint32_t metricas[CANTIDAD_METRICAS];
 } t_proceso;
 
 typedef struct
@@ -66,7 +68,14 @@ typedef struct
   t_tabla* siguiente_tabla;
 } t_entrada;
 
-
+typedef enum {
+  ACCESOS_TABLA_PAGINAS,
+  INSTRUCCIONES_SOLICITADAS,
+  BAJADAS_A_SWAP,
+  SUBIDAS_A_MP,
+  LECTURAS,
+  ESCRITURAS
+} t_metricas_memoria;
 
 ////////////////////////////////////////// FUNCIONES //////////////////////////////////////////
 

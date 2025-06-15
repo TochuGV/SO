@@ -117,6 +117,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
     proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
     proceso->marcos_en_uso = cantidad_marcos_proceso;
+    memset(proceso->metricas, 0, sizeof(proceso->metricas));
 
     list_add(lista_procesos,proceso);
 
@@ -137,6 +138,19 @@ void finalizar_proceso(uint32_t pid)
     t_proceso* proceso = list_get(lista_procesos, i);
 
     if (proceso->pid == pid) {
+
+      log_info(logger,
+      "## PID: <%d> - Proceso Destruido - Métricas - "
+      "Acc.T.Pag: <%d>; Inst.Sol.: <%d>; SWAP: <%d>; "
+      "Mem.Prin.: <%d>; Lec.Mem.: <%d>; Esc.Mem.: <%d>",
+      pid,
+      proceso->metricas[ACCESOS_TABLA_PAGINAS],
+      proceso->metricas[INSTRUCCIONES_SOLICITADAS],
+      proceso->metricas[BAJADAS_A_SWAP],
+      proceso->metricas[SUBIDAS_A_MP],
+      proceso->metricas[LECTURAS],
+      proceso->metricas[ESCRITURAS]);
+
       liberar_marcos(proceso->tabla_de_paginas);
       list_destroy_and_destroy_elements(proceso->lista_instrucciones, free);
       list_remove(lista_procesos, i);
@@ -153,6 +167,8 @@ void atender_dump_memory(uint32_t pid)
   if(!proceso)
     return;
   
+  log_info(logger, "## PID: <%d> - Memory Dump solicitado", pid);
+
   time_t timestamp = time(NULL);
   char path_archivo[256];
   snprintf(path_archivo, sizeof(path_archivo), "%s<%d>-<%ld>.dmp", path_dump, pid, (long)timestamp);

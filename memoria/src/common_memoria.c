@@ -51,7 +51,7 @@ void inicializar_memoria(void)
   memoria = malloc(tamanio_memoria);
   memset(memoria, 0, tamanio_memoria);
 
-  cantidad_marcos = tamanio_memoria / tamanio_pagina; // A menos que en las pruebas pongan un tam_pagina no multiplo del tam_memoria esto esta ok
+  cantidad_marcos = tamanio_memoria / tamanio_pagina;
   marcos_libres = cantidad_marcos;
 
   bitmap_marcos = malloc(cantidad_marcos * sizeof(uint8_t));
