@@ -44,7 +44,7 @@ void syscall_exit(t_syscall* syscall){
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
   liberar_cpu_por_pid(pcb->pid);
   finalizar_proceso(pcb);
-  mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
+  //mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
 };
 
 void syscall_io(t_syscall* syscall){
@@ -82,7 +82,6 @@ void syscall_io(t_syscall* syscall){
   };
 
   liberar_cpu_por_pid(pcb->pid);
-  mover_proceso_a_exec();
 };
 
 void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.
@@ -100,12 +99,12 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   if(respuesta == 0){ //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
+    sem_post(&semaforo_ready);
   } else { // Si no se puede hacere el dump, el proceso se finaliza.
     log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
     finalizar_proceso(pcb);
   };
-  eliminar_paquete(paquete);
 };
 
 void manejar_syscall(t_syscall* syscall, int socket_cpu_dispatch){

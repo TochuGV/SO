@@ -26,6 +26,7 @@ void manejar_respuesta_io(uint32_t pid){
   pthread_mutex_unlock(&mutex_ready);
 
   cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
+  sem_post(&semaforo_ready);
   log_fin_io(pid);
 
   dictionary_remove(diccionario_contextos_io, clave_pid_actual);

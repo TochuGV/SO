@@ -5,9 +5,8 @@ int main(int argc, char* argv[]){
 
   char* archivo_pseudocodigo = argv[1];
   int32_t tamanio_proceso = atoi(argv[2]);
-  
-  iniciar_conexiones_entre_modulos();
 
+  iniciar_conexiones_entre_modulos();
   conexion_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   
   if (handshake_kernel(conexion_memoria) != 0){
@@ -16,13 +15,14 @@ int main(int argc, char* argv[]){
   };
 
   esperar_enter_para_planificar();
-  /*
+
+
   t_pcb* pcb_nuevo = crear_pcb();
   inicializar_proceso(pcb_nuevo, tamanio_proceso);
   log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
   mover_proceso_a_ready(archivo_pseudocodigo, tamanio_proceso);
-  */
-
+  
+  /*
   t_pcb* pcb0 = crear_pcb();
   t_pcb* pcb1 = crear_pcb();
   t_pcb* pcb2 = crear_pcb();
@@ -34,6 +34,7 @@ int main(int argc, char* argv[]){
   inicializar_proceso(pcb2, 128);
   inicializar_proceso(pcb3, 32);
   inicializar_proceso(pcb4, 64);
+  */
 
   pthread_create(&hilo_planificacion, NULL, planificador_ciclo_general, NULL);
 

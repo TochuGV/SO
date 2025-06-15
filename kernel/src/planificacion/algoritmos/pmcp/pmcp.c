@@ -37,10 +37,7 @@ t_pcb* elegir_proceso_mas_chico(t_queue* cola_new, t_list* lista_tamanios){
       break;
     };
   };
-
   //list_remove_element(lista_tamanios, candidato);
   //free(candidato);
-
-
   return pcb_seleccionado;
 };

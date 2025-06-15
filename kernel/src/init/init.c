@@ -21,9 +21,12 @@ t_dictionary* diccionario_contextos_io;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
+sem_t semaforo_cpu_libre;
+
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
+pthread_t hilo_planificador_largo_plazo;
 pthread_t hilo_planificacion;
 
 int conexion_memoria;
@@ -50,6 +53,7 @@ void inicializar_kernel(){
   diccionario_cronometros = dictionary_create();
   diccionario_contextos_io = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
+  sem_init(&semaforo_cpu_libre, 0, 0);
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
