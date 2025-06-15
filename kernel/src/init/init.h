@@ -2,7 +2,12 @@
 #define INIT_H_
 
 #include "./utils/utils.h"
-//#include "./common/common.h"
+#include "planificacion/planificacion.h"
+#include "./common/common.h"
+#include "conexion/cpu/dispatch/dispatch.h"
+#include "conexion/cpu/interrupt/interrupt.h"
+#include "conexion/io/io.h"
+#include "conexion/handshake/entrante/entrante.h"
 
 extern char* IP_MEMORIA;
 extern char* PUERTO_MEMORIA;
@@ -17,14 +22,22 @@ extern char* TIEMPO_SUSPENSION;
 extern char* LOG_LEVEL;
 
 extern t_list* lista_cpus;
+extern t_list* lista_pcbs;
+
+extern t_dictionary* diccionario_dispositivos;
+
+extern pthread_mutex_t mutex_pcbs;
 
 extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
+extern pthread_t hilo_planificacion;
+
+extern int conexion_memoria;
 
 void inicializar_kernel();
 void extraer_datos_config();
-//void crear_hilos();
+void iniciar_conexiones_entre_modulos();
 //void unir_hilos();
 
 #endif /* INIT_H_ */

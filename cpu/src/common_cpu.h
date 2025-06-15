@@ -4,24 +4,33 @@
 #include "./utils/utils.h"
 
 typedef struct {
-    char* ip;
-    char* puerto;
-    int32_t id_cpu;
-    int socket;
+  char* ip;
+  char* puerto;
+  int32_t id_cpu;
+  int socket;
 } datos_conexion_t;
 
+typedef enum {
+  EJECUCION_CONTINUA,
+  EJECUCION_CONTINUA_INIT_PROC,
+  EJECUCION_FINALIZADA,
+  EJECUCION_BLOQUEADA_IO,
+  EJECUCION_BLOQUEADA_DUMP,
+  EJECUCION_BLOQUEADA_SOLICITUD
+} t_estado_ejecucion;
+
 typedef struct {
-    uint32_t pid;
-    int pagina;
-    int marco;
-    uint32_t tiempo_transcurrido; //Para LRU
+  uint32_t pid;
+  int pagina;
+  int marco;
+  uint32_t tiempo_transcurrido; //Para LRU
 } estructura_tlb;
 
 typedef struct {
-    estructura_tlb* entradas;
-    int cantidad_entradas;
-    char* algoritmo_reemplazo;
-    int reemplazo_actual; //Para FIFO
+  estructura_tlb* entradas;
+  int cantidad_entradas;
+  char* algoritmo_reemplazo;
+  int reemplazo_actual; //Para FIFO
 } tlb_t;
 
 extern char* ip_kernel;
@@ -61,18 +70,19 @@ void ejecutar_write(uint32_t,uint32_t,uint32_t);
 //void ejecutar_init_proc(uint32_t, uint32_t); Por ahora no la estamos usando
 
 //Envío de actualizaciónes a Kernel
-void enviar_finalizacion(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void enviar_bloqueo_IO(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void enviar_bloqueo_INIT_PROC(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void enviar_bloqueo_DUMP(t_instruccion,t_estado_ejecucion,t_pcb*,int);
-void llenar_paquete (t_paquete*,t_estado_ejecucion,t_pcb*);
+void agregar_syscall_a_paquete(t_paquete*, uint32_t, uint32_t, char*, char*, uint32_t);
+void enviar_bloqueo_INIT_PROC(t_instruccion,t_pcb*,int);
+void enviar_finalizacion(t_instruccion,t_pcb*,int);
+void enviar_bloqueo_IO(t_instruccion,t_pcb*,int);
+void enviar_bloqueo_DUMP(t_instruccion,t_pcb*,int);
+void llenar_paquete (t_paquete*,t_pcb*);
 
 //Traducción de dirección física
 uint32_t traducir_direccion(uint32_t,uint32_t,uint32_t); 
 
 //Manejo de TLB
 int consultar_TLB (uint32_t,int);
-void actualizar_TLB (uint32_t,int, int);
+//void actualizar_TLB (uint32_t,int, int);
 
 
 #endif /* COMMON_CPU_H_ */
