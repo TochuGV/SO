@@ -33,6 +33,7 @@ typedef enum {
   SOLICITUD_MARCO,
   ESCRITURA,
   LECTURA
+  FINALIZACION_IO
 } op_code_comunicacion;
 
 typedef enum {
@@ -74,15 +75,6 @@ typedef enum {
 	DUMP_MEMORY,
 	EXIT
 } t_tipo_instruccion;
-
-typedef enum {
-  EJECUCION_CONTINUA,
-  EJECUCION_FINALIZADA,
-  EJECUCION_BLOQUEADA_IO,
-  EJECUCION_BLOQUEADA_INIT_PROC,
-  EJECUCION_BLOQUEADA_DUMP,
-  EJECUCION_BLOQUEADA_SOLICITUD
-} t_estado_ejecucion;
 
 typedef enum {
   IMPRESORA,

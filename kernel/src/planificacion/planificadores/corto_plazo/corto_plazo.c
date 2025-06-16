@@ -71,7 +71,7 @@ void liberar_cpu_por_pid(uint32_t pid){
     t_cpu* cpu = list_get(lista_cpus, i);
     if(!cpu->disponible){
       cpu->disponible = true;
-      log_debug(logger, "Se liberó la CPU %d, ya que el proceso <%d> finalizó", cpu->id_cpu, pid);
+      log_debug(logger, "Se liberó la CPU %d, ya que el proceso <%d> dejó de utilizar este recurso", cpu->id_cpu, pid);
       break;
     };
   };

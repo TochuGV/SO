@@ -1,7 +1,5 @@
 #include "atencion_cpu.h"
 
-
-
 void* atender_cpu(void* arg)
 {
   int cliente_cpu = *(int*)arg;

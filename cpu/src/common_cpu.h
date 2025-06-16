@@ -4,24 +4,33 @@
 #include "./utils/utils.h"
 
 typedef struct {
-    char* ip;
-    char* puerto;
-    int32_t id_cpu;
-    int socket;
+  char* ip;
+  char* puerto;
+  int32_t id_cpu;
+  int socket;
 } datos_conexion_t;
 
+typedef enum {
+  EJECUCION_CONTINUA,
+  EJECUCION_CONTINUA_INIT_PROC,
+  EJECUCION_FINALIZADA,
+  EJECUCION_BLOQUEADA_IO,
+  EJECUCION_BLOQUEADA_DUMP,
+  EJECUCION_BLOQUEADA_SOLICITUD
+} t_estado_ejecucion;
+
 typedef struct {
-    uint32_t pid;
-    int pagina;
-    int marco;
-    uint32_t tiempo_transcurrido; //Para LRU
+  uint32_t pid;
+  int pagina;
+  int marco;
+  uint32_t tiempo_transcurrido; //Para LRU
 } estructura_tlb;
 
 typedef struct {
-    estructura_tlb* entradas;
-    int cantidad_entradas;
-    char* algoritmo_reemplazo;
-    int reemplazo_actual; //Para FIFO
+  estructura_tlb* entradas;
+  int cantidad_entradas;
+  char* algoritmo_reemplazo;
+  int reemplazo_actual; //Para FIFO
 } tlb_t;
 
 extern char* ip_kernel;

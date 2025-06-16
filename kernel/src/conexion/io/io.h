@@ -3,6 +3,7 @@
 
 #include "./common/common.h"
 #include "./conexion/handshake/entrante/entrante.h"
+#include "./planificacion/bloqueo_io/bloqueo_io.h"
 
 void* conectar_io(void*);
 void* atender_io(void*);

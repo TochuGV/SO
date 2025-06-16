@@ -149,39 +149,31 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
   t_instruccion instruccion;
   t_estado_ejecucion estado = EJECUCION_CONTINUA;
 
-  while(estado == EJECUCION_CONTINUA){
-    //Log 1.  Fetch instrucción
-    log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid,pcb->pc);
+  while(estado == EJECUCION_CONTINUA || estado == EJECUCION_CONTINUA_INIT_PROC){
+    log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid, pcb->pc);
     
-    // Paso 2: obtener la instrucción desde Memoria
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
     if (list_size(lista_instruccion) == 0) {
       log_warning(logger, "No se recibió ninguna instrucción desde Memoria");
     };
     
-    log_debug(logger,"Sali de la funcion recibir_instruccion, tamaño lista: %d",list_size(lista_instruccion));
-    
     instruccion.tipo = *(int*) list_get(lista_instruccion, 0);
 
     uint32_t longitud_parametro1 = *(uint32_t*)list_get(lista_instruccion, 1); 
-    char* param1 = malloc(longitud_parametro1);
-    memcpy(param1, list_get(lista_instruccion, 2), longitud_parametro1); 
+    instruccion.parametro1 = malloc(longitud_parametro1);
+    memcpy(instruccion.parametro1, list_get(lista_instruccion, 2), longitud_parametro1); 
 
     uint32_t longitud_parametro2 = *(uint32_t*)list_get(lista_instruccion, 3); 
-    char* param2 = malloc(longitud_parametro2);
-    memcpy(param2, list_get(lista_instruccion, 4), longitud_parametro2); 
-
-    instruccion.parametro1 = param1;
-    instruccion.parametro2 = param2;
-
-    log_debug(logger, "tipo: %d", instruccion.tipo);
-    log_debug(logger, "parametro1: %s", instruccion.parametro1);
-    log_debug(logger, "parametro2: %s", instruccion.parametro2);
+    instruccion.parametro2 = malloc(longitud_parametro2);
+    memcpy(instruccion.parametro2, list_get(lista_instruccion, 4), longitud_parametro2); 
 
     list_destroy_and_destroy_elements(lista_instruccion, free);
-    // Paso 3: interpretar y ejecutar instrucción
     estado = trabajar_instruccion(instruccion, pcb);
-    // Paso 4: Chequear interrupción
+
+    if(estado == EJECUCION_CONTINUA_INIT_PROC){
+      actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
+    };
+
     if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
       log_info(logger, "PID %d interrumpido", pcb->pid);
       estado = EJECUCION_BLOQUEADA_SOLICITUD;
@@ -189,9 +181,7 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
   }
   // Paso 5: devolver PCB actualizado a Kernel
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
-  // Paso 6: liberar memoria
   free(pcb);
-
   return NULL;
 }
 
@@ -226,7 +216,6 @@ t_pcb* deserializar_pcb(void* buffer) {
   return pcb;
 }
 
-
 //Solicitar instrucción a Memoria
 t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 
@@ -246,7 +235,7 @@ t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 }
 
 //Decode y Execute Instrucción
-t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) {
+t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
   switch (instruccion.tipo) {
   //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
@@ -285,9 +274,11 @@ t_estado_ejecucion trabajar_instruccion (t_instruccion instruccion, t_pcb* pcb) 
     case INIT_PROC:
       log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
-      enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
       pcb->pc++;
-      return EJECUCION_CONTINUA;
+      //t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
+      //agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+      //enviar_paquete(paquete, conexion_kernel_dispatch);
+      return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
     case DUMP_MEMORY:
@@ -325,30 +316,6 @@ void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
 }
 */
 
-//Retornar a Kernel el PCB actualizado y el motivo de la interrupción
-void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_pcb* pcb, int conexion_kernel_dispatch){
-  switch(estado){
-    case EJECUCION_FINALIZADA:
-    enviar_finalizacion(instruccion,pcb,conexion_kernel_dispatch);
-    break;
-
-    case EJECUCION_BLOQUEADA_IO:
-    enviar_bloqueo_IO(instruccion,pcb,conexion_kernel_dispatch);
-    break;
-
-    case EJECUCION_BLOQUEADA_INIT_PROC:
-    enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
-    break;
-
-    case EJECUCION_BLOQUEADA_DUMP:
-    enviar_bloqueo_DUMP(instruccion,pcb,conexion_kernel_dispatch);
-    break;
-
-    default:
-    log_warning(logger, "Motivo de interrupción desconocida");
-  }
-}
-
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
   agregar_a_paquete(paquete, &tipo, sizeof(uint32_t));
@@ -372,59 +339,57 @@ void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, 
   agregar_a_paquete(paquete, &pc, sizeof(uint32_t));
 };
 
-//Bloqueo por INIT_PROC
-void enviar_bloqueo_INIT_PROC(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+//Retornar a Kernel el PCB actualizado y el motivo de la interrupción
+void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_pcb* pcb, int conexion_kernel_dispatch){
+  t_paquete* paquete = NULL;
+  switch(estado){
+    case EJECUCION_CONTINUA_INIT_PROC:
+      //enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
+      paquete = crear_paquete(SYSCALL_INIT_PROC);
+      agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+      break;
+    
+    case EJECUCION_FINALIZADA:
+      //enviar_finalizacion(instruccion,pcb,conexion_kernel_dispatch);
+      paquete = crear_paquete(SYSCALL_EXIT);
+      agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, "", "", pcb->pc);
+      break;
+
+    case EJECUCION_BLOQUEADA_IO:
+      //enviar_bloqueo_IO(instruccion,pcb,conexion_kernel_dispatch);
+      paquete = crear_paquete(SYSCALL_IO);
+      agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+      break;
+
+    case EJECUCION_BLOQUEADA_DUMP:
+      //enviar_bloqueo_DUMP(instruccion,pcb,conexion_kernel_dispatch);
+      paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
+      agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, "", "", pcb->pc);
+      break;
+
+    default:
+      log_warning(logger, "Motivo de interrupción desconocida. Estado: %d", estado);
+      return;
+  };
   enviar_paquete(paquete, conexion_kernel_dispatch);
 };
-
-//Proceso finalizado
-void enviar_finalizacion(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch) {
-  t_paquete* paquete = crear_paquete(SYSCALL_EXIT);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, "", "", pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-
-//Bloqueo por IO
-void enviar_bloqueo_IO(t_instruccion instruccion, t_pcb* pcb, int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_IO);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-
-//Bloqueo por Dump Memory
-void enviar_bloqueo_DUMP(t_instruccion instruccion, t_pcb* pcb,int conexion_kernel_dispatch){
-  t_paquete* paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
-  agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, NULL, NULL, pcb->pc);
-  enviar_paquete(paquete, conexion_kernel_dispatch);
-};
-
-//Funcion auxiliar para empaquetar PID, PC y tipo de interrupción
-/*
-void llenar_paquete (t_paquete*paquete, t_estado_ejecucion estado,t_pcb* pcb){
-  agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t)); //PID del proceso ejecutado
-  agregar_a_paquete(paquete, &(pcb->pc), sizeof(uint32_t)); //PC actualizado
-  agregar_a_paquete(paquete, &estado, sizeof(t_estado_ejecucion)); //Tipo de interrupción
-};*/
 
 //funcion que espera el mensaje de kernel
 bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
-    int pid_interrupcion;
-    log_info(logger, "Socket interrupt: %d", socket_interrupt);
-    log_info(logger, "PID actual: %d", pid_actual);
-    int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
+  int pid_interrupcion;
+  log_info(logger, "Socket interrupt: %d", socket_interrupt);
+  log_info(logger, "PID actual: %d", pid_actual);
+  int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
 
-    if (bytes > 0) {
-      //Log 2. Interrupción Recibida
-        log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
-        if (pid_interrupcion == pid_actual) {
-            return true;
-        } else {
-            log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
-        }
+  if (bytes > 0) {
+    log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
+    if(pid_interrupcion == pid_actual){
+      return true;
+    }else{
+      log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
     }
-    return false;
+  }
+  return false;
 }
 
 /*

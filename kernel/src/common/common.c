@@ -1,6 +1,6 @@
 #include "common.h"
 
-char* NOMBRES_DISPOSITIVOS_IO[] = { "Impresora", "Teclado", "Mouse", "Auriculares", "Parlante" };
+char* NOMBRES_DISPOSITIVOS_IO[] = { "IMPRESORA", "TECLADO", "MOUSE", "AURICULARES", "PARLANTE" };
 char* NOMBRES_SYSCALLS[] = { "INIT_PROC", "EXIT", "IO", "DUMP_MEMORY" };
 
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid, int socket_cliente){
@@ -60,11 +60,11 @@ char* crear_cadena_metricas_estado(t_pcb* pcb){
 
 char* token_io_to_string(int32_t token) {
   switch (token) {
-    case IMPRESORA: return "Impresora";
-    case TECLADO: return "Teclado";
-    case MOUSE: return "Mouse";
-    case AURICULARES: return "Auriculares";
-    case PARLANTE: return "Parlante";
+    case IMPRESORA: return "IMPRESORA";
+    case TECLADO: return "TECLADO";
+    case MOUSE: return "MOUSE";
+    case AURICULARES: return "AURICULARES";
+    case PARLANTE: return "PARLANTE";
     default: return NULL;
   };
 };

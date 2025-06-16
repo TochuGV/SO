@@ -1,5 +1,5 @@
-#ifndef IO_H_
-#define IO_H_
+#ifndef BLOQUEO_IO_H_
+#define BLOQUEO_IO_H_
 
 #include "pcb/pcb.h"
 #include "logger/logger.h"
@@ -11,4 +11,4 @@
 
 void manejar_respuesta_io(uint32_t);
 
-#endif /* IO_H_ */
+#endif /* BLOQUEO_IO_H_ */
