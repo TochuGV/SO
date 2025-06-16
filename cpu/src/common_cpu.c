@@ -13,6 +13,9 @@
   datos_conexion_t* datos_memoria;
   estructura_tlb* tlb;
   tlb_t* parametros_tlb;
+  uint32_t tamaño_pagina;
+  uint32_t cant_entradas_tabla;
+  uint32_t cant_niveles;
   
 void iniciar_cpu(int32_t identificador_cpu) {
 
@@ -161,6 +164,7 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
   t_estado_ejecucion estado = EJECUCION_CONTINUA;
 
   while(estado == EJECUCION_CONTINUA || estado == EJECUCION_CONTINUA_INIT_PROC){
+    //Log.1 Fetch Instrucción
     log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid, pcb->pc);
     
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
@@ -201,7 +205,6 @@ t_pcb* recibir_pcb(int conexion_kernel_dispatch) {
   int cod_op = recibir_operacion(conexion_kernel_dispatch);
   log_debug(logger, "%d", cod_op);
   if(cod_op != PCB) {
-    //log_error(logger, "ERROR");
     return NULL;
   };
   
@@ -286,9 +289,6 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
       log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
-      //t_paquete* paquete = crear_paquete(SYSCALL_INIT_PROC);
-      //agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
-      //enviar_paquete(paquete, conexion_kernel_dispatch);
       return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
@@ -401,6 +401,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
   int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
 
   if (bytes > 0) {
+    //Log 2. Interrupción recibida
     log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
     if(pid_interrupcion == pid_actual){
       return true;
