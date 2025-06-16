@@ -55,9 +55,6 @@ void mover_proceso_a_ready(char* archivo_pseudocodigo, int32_t tamanio_proceso) 
     pthread_mutex_unlock(&mutex_ready); 
     cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
     sem_post(&semaforo_ready);
-  } else {
-    cambiar_estado(pcb, ESTADO_NEW, ESTADO_EXIT);
-    finalizar_proceso(pcb);
   };
 };
 
@@ -78,7 +75,7 @@ void finalizar_proceso(t_pcb* pcb){
   };
   dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
   free(clave_pid);
-  log_fin_proceso(pcb->pid);
+  log_fin_proceso(pcb->pid); //Agregar en todos los que se vaya a EXIT
   char* buffer = crear_cadena_metricas_estado(pcb);
   log_metricas_estado(buffer);
   free(buffer);
@@ -89,6 +86,9 @@ void finalizar_proceso(t_pcb* pcb){
 
   t_informacion_largo_plazo* info = list_remove_by_condition(lista_tamanios, es_pid);
   if(info) free(info);
+
+  t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
+  enviar_paquete(paquete, conexion_memoria);
   destruir_pcb(pcb);
 };
-

@@ -1,21 +1,22 @@
 #include "common_cpu.h"
+#include <math.h>
 
-  char* ip_kernel;
-  char* ip_memoria;
-  char* puerto_kernel_dispatch;
-  char* puerto_kernel_interrupt;
-  char* puerto_memoria;
-  int conexion_kernel_dispatch;
-  int conexion_kernel_interrupt;
-  int conexion_memoria;
-  datos_conexion_t* datos_dispatch;
-  datos_conexion_t* datos_interrupt;
-  datos_conexion_t* datos_memoria;
-  estructura_tlb* tlb;
-  tlb_t* parametros_tlb;
-  uint32_t tamaño_pagina;
-  uint32_t cant_entradas_tabla;
-  uint32_t cant_niveles;
+char* ip_kernel;
+char* ip_memoria;
+char* puerto_kernel_dispatch;
+char* puerto_kernel_interrupt;
+char* puerto_memoria;
+int conexion_kernel_dispatch;
+int conexion_kernel_interrupt;
+int conexion_memoria;
+datos_conexion_t* datos_dispatch;
+datos_conexion_t* datos_interrupt;
+datos_conexion_t* datos_memoria;
+estructura_tlb* tlb;
+tlb_t* parametros_tlb;
+uint32_t tamanio_pagina;
+uint32_t cant_entradas_tabla;
+uint32_t cant_niveles;
   
 void iniciar_cpu(int32_t identificador_cpu) {
 
@@ -148,13 +149,18 @@ void* conectar_memoria(void* arg) {
 
 void recibir_datos_memoria() {
 
-  int cod_op= DATOS_MEMORIA;
-  send(conexion_memoria, &DATOS_MEMORIA, sizeof(int), 0);
-  
-  t_list* datos_memoria = recibir_paquete(conexion_memoria);
-  tamaño_pagina = list_get(datos_memoria, 0);
-  cant_entradas_tabla = list_get(datos_memoria, 1);
-  cant_niveles = list_get(datos_memoria, 2);
+  int cod_op = DATOS_MEMORIA;
+  send(conexion_memoria, &cod_op, sizeof(int), 0);
+
+  cod_op = recibir_operacion(conexion_memoria);
+
+  if (cod_op == DATOS_MEMORIA) {
+    t_list* datos_memoria = recibir_paquete(conexion_memoria);
+
+    tamanio_pagina = *(uint32_t*) list_get(datos_memoria, 0);
+    cant_entradas_tabla = *(uint32_t*) list_get(datos_memoria, 1);
+    cant_niveles = *(uint32_t*) list_get(datos_memoria, 2);
+  }
 }
 
 //Realizar todo el ciclo de cada instrucción
@@ -164,7 +170,6 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
   t_estado_ejecucion estado = EJECUCION_CONTINUA;
 
   while(estado == EJECUCION_CONTINUA || estado == EJECUCION_CONTINUA_INIT_PROC){
-    //Log.1 Fetch Instrucción
     log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid, pcb->pc);
     
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
@@ -194,7 +199,6 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
       estado = EJECUCION_BLOQUEADA_SOLICITUD;
     }
   }
-  // Paso 5: devolver PCB actualizado a Kernel
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
   free(pcb);
   return NULL;
@@ -322,8 +326,7 @@ void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t tam) {
   //int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
   //Log 4. Lectura/Escritura Memoria
   log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
-}
-
+};
 
 void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
   uint32_t direccion_fisica = traducir_direccion (pid, direccion_logica);
@@ -332,9 +335,8 @@ void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
   //int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
   //Log 4. Lectura/Escritura Memoria
   log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
-}
+};
 */
-
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
   agregar_a_paquete(paquete, &tipo, sizeof(uint32_t));
@@ -413,39 +415,38 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
 }
 
 //MMU
-uint32_t traducir_direccion (uint32_t direccion_logica, uint32_t parametro) {
+uint32_t traducir_direccion(uint32_t pid, uint32_t direccion_logica, uint32_t parametro) {
   
   //Calcular numero de pagina y desplazamiento 
-  uint32_t nro_pagina = floor(direccion_logica / tamaño_pagina);
-  uint32_t desplazamiento = direccion_logica % tamaño_pagina;
-  uint32_t tabla_actual;
+  uint32_t nro_pagina = floor(direccion_logica / tamanio_pagina);
+  uint32_t desplazamiento = direccion_logica % tamanio_pagina;
+  //uint32_t tabla_actual;
 
-  uint32_t marco = consultar_cache(nro_pagina);
+  uint32_t marco = consultar_cache(pid, nro_pagina);
 
-  if (marco==-1) {
-    marco=consultar_TLB(nro_pagina);
+  if(marco==-1){
+    marco = consultar_TLB(pid, nro_pagina);
 
-    if (marco ==-1) {
-      marco=consultar_memoria(nro_pagina);
+    if(marco ==-1){
+      marco = consultar_memoria(pid, nro_pagina);
 
-      if (marco == -1) {
-        log_error("No se pudo obtener el marco para la página %d del PID %d", nro_pagina, pid);
+      if(marco == -1){
+        log_error(logger, "No se pudo obtener el marco para la página %d del PID %d", nro_pagina, pid);
         return -1;
-      }
+      };
       
-      actualizar_TLB(nro_pagina, marco);
+      //actualizar_TLB(nro_pagina, marco);
     }
   }
   //Log 5. Obtener Marco
-  log_info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
-  return marco * tamaño_pagina + desplazamiento;
-}
-
+  log_info(logger, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+  return marco * tamanio_pagina + desplazamiento;
+};
 
 //Consultar Caché
 uint32_t consultar_cache (uint32_t pid, uint32_t nro_pagina) {
   return -1; //Por ahora manda siempre a TLB
-  } 
+}; 
 
 //Consultar TLB si falló en Caché
 uint32_t consultar_TLB (uint32_t pid, uint32_t nro_pagina) {
@@ -453,12 +454,12 @@ uint32_t consultar_TLB (uint32_t pid, uint32_t nro_pagina) {
     if (tlb[i].pid==pid && tlb[i].pagina==nro_pagina) {
         tlb [i]. tiempo_transcurrido = 0;
         //Log 6. TLB Hit
-        log_info("PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
+        log_info(logger, "PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
         return tlb[i].marco;
     }
   } 
   //Log 7. TLB Miss
-  log_info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
+  log_info(logger, "PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
   return -1;
 }
 
@@ -470,13 +471,13 @@ uint32_t consultar_memoria(uint32_t pid, uint32_t nro_pagina) {
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t)); 
 
   for (int nivel=1; nivel <= cant_niveles; nivel++) {
-    uint32_t entrada_nivel = floor(nro_pagina / pow(cant_entradas_tabla,cant_niveles - nivel)) % cant_entradas_tabla;
+    uint32_t entrada_nivel = (uint32_t) floor(nro_pagina / pow(cant_entradas_tabla,cant_niveles - nivel)) % cant_entradas_tabla;
     agregar_a_paquete(paquete, &entrada_nivel, sizeof(uint32_t)); 
   }
 
   enviar_paquete(paquete, conexion_memoria);
   recv(conexion_memoria, &marco, sizeof(uint32_t), MSG_WAITALL);
-  return (marco);
+  return marco;
 }
 
 /*
@@ -492,18 +493,19 @@ void actualizar_TLB (uint32_t pid, int pagina, int marco) {
     //Se fija cual es el que entró hace más tiempo y lo reemplaza
     break;
   }
-}*/
+}
+*/
 
 void pedir_valor_a_memoria(uint32_t direccion_fisica, uint32_t* valor){
   t_paquete* paquete = crear_paquete(OP_READ);
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
   enviar_paquete(paquete, conexion_memoria);
   recv(conexion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
-}
+};
 
 void escribir_valor_en_memoria(uint32_t direccion_fisica, uint32_t valor){
   t_paquete* paquete = crear_paquete(OP_WRITE);
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
   agregar_a_paquete(paquete, &valor, sizeof(uint32_t));
   enviar_paquete(paquete, conexion_memoria);
-}
+};

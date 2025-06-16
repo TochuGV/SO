@@ -28,14 +28,15 @@ typedef enum {
   SOLICITUD_INSTRUCCION,
   INSTRUCCION,
   OP_READ,
-  OP_WRITE 
+  OP_WRITE,
   PCB,
   SOLICITUD_DUMP_MEMORY,
   DATOS_MEMORIA,
   SOLICITUD_MARCO,
   ESCRITURA,
-  LECTURA
-  FINALIZACION_IO
+  LECTURA,
+  FINALIZACION_IO,
+  FINALIZAR_PROCESO
 } op_code_comunicacion;
 
 typedef enum {
@@ -66,7 +67,6 @@ typedef struct {
 	op_code_comunicacion codigo_operacion;
 	t_buffer* buffer;
 } t_paquete;
-
 typedef enum {
 	NOOP,
 	WRITE,

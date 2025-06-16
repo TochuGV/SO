@@ -44,6 +44,9 @@ extern int conexion_memoria;
 extern datos_conexion_t* datos_dispatch;
 extern datos_conexion_t* datos_interrupt;
 extern datos_conexion_t* datos_memoria;
+extern uint32_t tamanio_pagina;
+extern uint32_t cant_entradas_tabla;
+extern uint32_t cant_niveles;
 
 //Configuraciones iniciales
 void iniciar_cpu(int32_t);
@@ -72,19 +75,15 @@ void ejecutar_write(uint32_t,uint32_t,uint32_t);
 
 //Envío de actualizaciónes a Kernel
 void agregar_syscall_a_paquete(t_paquete*, uint32_t, uint32_t, char*, char*, uint32_t);
-void enviar_bloqueo_INIT_PROC(t_instruccion,t_pcb*,int);
-void enviar_finalizacion(t_instruccion,t_pcb*,int);
-void enviar_bloqueo_IO(t_instruccion,t_pcb*,int);
-void enviar_bloqueo_DUMP(t_instruccion,t_pcb*,int);
 void llenar_paquete (t_paquete*,t_pcb*);
 
 //Traducción de dirección física
-uint32_t traducir_direccion(uint32_t,uint32_t,uint32_t); 
+uint32_t traducir_direccion(uint32_t, uint32_t, uint32_t); 
 
 //Manejo de traducciones
-int consultar_cache (uint32_t, uint32_t);
-int consultar_TLB (uint32_t,uint32_t);
-int consultar_memoria (uint32_t, uint32_t);
+uint32_t consultar_cache (uint32_t, uint32_t);
+uint32_t consultar_TLB (uint32_t, uint32_t);
+uint32_t consultar_memoria (uint32_t, uint32_t);
 //void actualizar_TLB (uint32_t,int, int); Todavía no implementada
 
 #endif /* COMMON_CPU_H_ */

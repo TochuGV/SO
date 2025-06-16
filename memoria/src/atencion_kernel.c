@@ -22,6 +22,13 @@ void* atender_kernel(void* arg)
       else
         send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
       break;
+    
+    case FINALIZAR_PROCESO:
+      t_list* valores = recibir_paquete(cliente_kernel);
+      uint32_t pid = *(uint32_t*) list_get(valores, 0);
+
+      finalizar_proceso(pid);
+      break;
         
     case -1:
       log_error(logger, "Kernel se desconectó. Terminando servidor...");
