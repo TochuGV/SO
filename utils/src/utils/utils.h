@@ -29,6 +29,13 @@ typedef enum {
   INSTRUCCION,
   OP_READ,
   OP_WRITE 
+  PCB,
+  SOLICITUD_DUMP_MEMORY,
+  DATOS_MEMORIA,
+  SOLICITUD_MARCO,
+  ESCRITURA,
+  LECTURA
+  FINALIZACION_IO
 } op_code_comunicacion;
 
 typedef enum {
