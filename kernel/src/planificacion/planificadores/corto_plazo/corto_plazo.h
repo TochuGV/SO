@@ -6,8 +6,10 @@
 #include "common/common.h"
 #include "utils/utils.h" // Revisar después
 #include <commons/collections/queue.h>
+#include <semaphore.h>
 
 extern t_queue* cola_ready;
+extern sem_t semaforo_ready;
 extern pthread_mutex_t mutex_ready;   
 extern pthread_mutex_t mutex_cpus;
 

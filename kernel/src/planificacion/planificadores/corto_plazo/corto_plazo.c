@@ -1,11 +1,13 @@
 #include "corto_plazo.h"
 
 t_queue* cola_ready;
+sem_t semaforo_ready;
 pthread_mutex_t mutex_ready = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_cpus = PTHREAD_MUTEX_INITIALIZER;
 
 void iniciar_planificacion_corto_plazo() {
   cola_ready = queue_create();
+  sem_init(&semaforo_ready, 0, 0);
   pthread_mutex_init(&mutex_ready, NULL);
   pthread_mutex_init(&mutex_cpus, NULL);
 };
@@ -71,6 +73,7 @@ void liberar_cpu_por_pid(uint32_t pid){
     t_cpu* cpu = list_get(lista_cpus, i);
     if(!cpu->disponible){
       cpu->disponible = true;
+      sem_post(&semaforo_cpu_libre);
       log_debug(logger, "Se liberó la CPU %d, ya que el proceso <%d> dejó de utilizar este recurso", cpu->id_cpu, pid);
       break;
     };

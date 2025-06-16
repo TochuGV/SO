@@ -80,3 +80,9 @@ t_pcb* obtener_pcb_por_pid(uint32_t pid){
   pthread_mutex_unlock(&mutex_pcbs);
   return pcb;
 };
+
+void destruir_contexto_io(void* contexto){
+  t_contexto_io* ctx = (t_contexto_io*) contexto;
+  if(ctx->dispositivo_actual) free(ctx->dispositivo_actual);
+  free(ctx);
+}

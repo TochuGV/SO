@@ -8,6 +8,7 @@
 #include "conexion/cpu/interrupt/interrupt.h"
 #include "conexion/io/io.h"
 #include "conexion/handshake/entrante/entrante.h"
+#include <semaphore.h>
 
 extern char* IP_MEMORIA;
 extern char* PUERTO_MEMORIA;
@@ -25,12 +26,17 @@ extern t_list* lista_cpus;
 extern t_list* lista_pcbs;
 
 extern t_dictionary* diccionario_dispositivos;
+extern t_dictionary* diccionario_cronometros;
+extern t_dictionary* diccionario_contextos_io;
 
 extern pthread_mutex_t mutex_pcbs;
+
+extern sem_t semaforo_cpu_libre;
 
 extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
+extern pthread_t hilo_planificador_largo_plazo;
 extern pthread_t hilo_planificacion;
 
 extern int conexion_memoria;

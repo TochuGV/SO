@@ -33,8 +33,9 @@ t_syscall* recibir_syscall(int socket_cliente){
 
 void syscall_init_proc(t_syscall* syscall){
   t_pcb* pcb_nuevo = crear_pcb();
-  inicializar_proceso(pcb_nuevo);
-  mover_proceso_a_ready(syscall->arg1, atoi(syscall->arg2)); //En el futuro, intentar_ingresar_procesos_a_ready()
+  uint32_t tamanio = atoi(syscall->arg2);
+  inicializar_proceso(pcb_nuevo, tamanio);
+  mover_proceso_a_ready(syscall->arg1, tamanio); //En el futuro, intentar_ingresar_procesos_a_ready()
 };
 
 void syscall_exit(t_syscall* syscall){
@@ -43,7 +44,7 @@ void syscall_exit(t_syscall* syscall){
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
   liberar_cpu_por_pid(pcb->pid);
   finalizar_proceso(pcb);
-  mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
+  //mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
 };
 
 void syscall_io(t_syscall* syscall){
@@ -51,14 +52,11 @@ void syscall_io(t_syscall* syscall){
   if(pcb == NULL){
     log_warning(logger, "No existe el PCB");
     return;
-  }
-
+  };
   pcb->pc = syscall->pc;
 
   // Obtener el dispositivo directamente, sin chequeo previo
   t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
-    
-  // Si el dispositivo no existe, finaliza el proceso
   if(!dispositivo){
     log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
@@ -66,9 +64,12 @@ void syscall_io(t_syscall* syscall){
     return;
   }
 
-  // Mover el proceso a bloqueado antes de evaluar disponibilidad
-  pcb->dispositivo_actual = strdup(syscall->arg1);
-  pcb->duracion_io = atoi(syscall->arg2);
+  t_contexto_io* contexto = malloc(sizeof(t_contexto_io));
+  contexto->dispositivo_actual = strdup(syscall->arg1);
+  contexto->duracion_io = atoi(syscall->arg2);
+  char* clave_pid = string_itoa(pcb->pid);
+  dictionary_put(diccionario_contextos_io, clave_pid, contexto);
+  free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
 
   if(dispositivo->ocupado){
@@ -76,12 +77,11 @@ void syscall_io(t_syscall* syscall){
     log_debug(logger, "Dispositivo <%s> ocupado. Proceso <%d> encolado", syscall->arg1, pcb->pid);
   } else {
     dispositivo->ocupado = true;
-    enviar_peticion_io(dispositivo->socket, atoi(syscall->arg2), pcb->pid);
+    enviar_peticion_io(dispositivo->socket, contexto->duracion_io, pcb->pid);
     log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
   };
 
   liberar_cpu_por_pid(pcb->pid);
-  mover_proceso_a_exec();
 };
 
 void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.
@@ -99,12 +99,12 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   if(respuesta == 0){ //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
+    sem_post(&semaforo_ready);
   } else { // Si no se puede hacere el dump, el proceso se finaliza.
     log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
     finalizar_proceso(pcb);
   };
-  eliminar_paquete(paquete);
 };
 
 void manejar_syscall(t_syscall* syscall, int socket_cpu_dispatch){

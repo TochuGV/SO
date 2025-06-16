@@ -104,12 +104,10 @@ typedef enum {
 } t_estado;
 
 typedef struct {
-  uint32_t pid; //identificador del proceso
-  uint32_t pc; //contador de programa
-  uint32_t me[CANTIDAD_ESTADOS]; //cantidad de veces en un estado
-  uint32_t mt[CANTIDAD_ESTADOS]; //tiempo que permanecio en ese estado en milisegundos
-  char* dispositivo_actual;
-  uint32_t duracion_io;
+  uint32_t pid;
+  uint32_t pc;
+  uint32_t me[CANTIDAD_ESTADOS];
+  uint32_t mt[CANTIDAD_ESTADOS];
 } t_pcb;
 
 //// VARIABLES GLOBALES

@@ -52,6 +52,16 @@ int recibir_handshake_kernel(int cliente_kernel){
         log_info(logger, "CPU %d conectó Interrupt", id_cpu);
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
+
+      bool cpu_completa(t_cpu* cpu){
+        return cpu->socket_dispatch != -1 && cpu->socket_interrupt != -1;
+      };
+
+      if(cpu_completa(cpu)){
+        sem_post(&semaforo_cpu_libre);
+        log_debug(logger, "CPU %d está completamente conectada. Se habilita para planificación", id_cpu);
+      };
+
       //log_info(logger, "CPU %d conectada.", id_cpu); //Agregar validación para cuando se conecten Dispatch e Interrupt
       return MODULO_CPU;
     case MODULO_IO:
