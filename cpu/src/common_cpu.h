@@ -50,6 +50,7 @@ void iniciar_cpu(int32_t);
 void* conectar_dispatch(void*);
 void* conectar_interrupt(void*);
 void* conectar_memoria(void*);
+void recibir_datos_memoria();
 
 //Ciclo completo de instrucción
 void* ciclo_de_instruccion(t_pcb*, int, int,int);
@@ -81,9 +82,9 @@ void llenar_paquete (t_paquete*,t_pcb*);
 uint32_t traducir_direccion(uint32_t,uint32_t,uint32_t); 
 
 //Manejo de traducciones
-int consultar_cache (uint32_t, int);
-int consultar_TLB (uint32_t,int);
-int consultar_cache (uint32_t, int);
+int consultar_cache (uint32_t, uint32_t);
+int consultar_TLB (uint32_t,uint32_t);
+int consultar_memoria (uint32_t, uint32_t);
 //void actualizar_TLB (uint32_t,int, int); Todavía no implementada
 
 #endif /* COMMON_CPU_H_ */
