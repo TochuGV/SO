@@ -1,8 +1,12 @@
 #include "common_memoria.h"
+#include "atencion_cpu.h"
+#include "atencion_kernel.h"
+
+
+////// VARIABLES EXTERNAS
 
 void* memoria;
 uint32_t tamanio_memoria;
-uint32_t memoria_usada;
 uint32_t tamanio_pagina;
 uint32_t entradas_por_tabla;
 uint32_t cantidad_niveles;
@@ -11,6 +15,9 @@ uint32_t retardo_swap;
 char* path_swapfile;
 char* path_dump;
 char* path_instrucciones;
+uint32_t cantidad_marcos;
+uint32_t marcos_libres;
+uint8_t* bitmap_marcos;
 
 int servidor_memoria;
 char* puerto_escucha;
@@ -29,16 +36,26 @@ char* NOMBRES_INSTRUCCIONES[] = {
   "EXIT"
 };
 
+
+
+////// INICIAR MEMORIA
+
 void inicializar_memoria(void)
 {
   config = iniciar_config("memoria.config");
-  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_TRACE);
+  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_DEBUG);
   log_debug(logger, "Memoria iniciada!");
 
   obtener_configs();
 
   memoria = malloc(tamanio_memoria);
-  memoria_usada = 0;
+  memset(memoria, 0, tamanio_memoria);
+
+  cantidad_marcos = tamanio_memoria / tamanio_pagina;
+  marcos_libres = cantidad_marcos;
+
+  bitmap_marcos = malloc(cantidad_marcos * sizeof(uint8_t));
+  memset(bitmap_marcos, 0, cantidad_marcos);
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
@@ -60,16 +77,116 @@ void obtener_configs(void)
   path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
 }
 
+
+
+////// PROCESOS
+
+t_proceso* obtener_proceso(uint32_t pid)
+{
+  for (int i = 0; i < list_size(lista_procesos); i++) 
+  {
+    t_proceso* proceso = list_get(lista_procesos, i);
+
+    if (proceso->pid == pid) {
+      return proceso;
+    }
+  }
+  log_warning(logger, "Proceso con PID: %d no encontrado", pid);
+  return NULL;
+}
+
+
+
+////// PAGINACION JERARQUICA MULTINIVEL
+
+t_tabla* crear_tablas_multinivel(uint32_t nivel_actual, uint32_t* marcos_restantes) {
+  if (*marcos_restantes == 0) return NULL;
+
+  t_tabla* tabla = malloc(sizeof(t_tabla));
+  tabla->nivel = nivel_actual;
+  tabla->entradas = list_create();
+
+  for (int index_entrada = 0; index_entrada < entradas_por_tabla; index_entrada++) {
+    if (*marcos_restantes == 0) break;
+
+    t_entrada* entrada = malloc(sizeof(t_entrada));
+
+    if (nivel_actual < cantidad_niveles) {
+      entrada->marco = -1;
+      entrada->siguiente_tabla = crear_tablas_multinivel(nivel_actual + 1, marcos_restantes);
+    } else {
+      if (*marcos_restantes > 0) {
+        entrada->marco = asignar_marco_libre(); 
+        log_debug(logger, "Tabla nivel: %d; Entrada: %d; Marco asignado: %d",nivel_actual, index_entrada, entrada->marco);
+        if (entrada->marco == -1) {
+          log_warning(logger,"No se encontro ningun marco libre");
+        } 
+        entrada->siguiente_tabla = NULL;
+        (*marcos_restantes)--;  
+      }
+      else {
+        entrada->marco = -1;
+        entrada->siguiente_tabla = NULL;
+      }
+    }
+
+    list_add(tabla->entradas, entrada);
+  }
+
+  return tabla;
+}
+
+t_tabla* crear_tabla_multinivel(uint32_t* cantidad_marcos_proceso) 
+{
+  return crear_tablas_multinivel(1, cantidad_marcos_proceso);
+}
+
+uint32_t asignar_marco_libre(void)
+{
+  for(int index_marco = 0; index_marco < cantidad_marcos; index_marco++)
+  {
+    if (bitmap_marcos[index_marco] == 0) {
+      bitmap_marcos[index_marco] = 1;
+      return index_marco;
+    }
+  }
+  return -1;
+}
+
+void liberar_marcos(t_tabla* tabla_de_paginas) 
+{
+  if (tabla_de_paginas == NULL) return;
+    
+  for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+    t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+
+    if (entrada->siguiente_tabla != NULL) {
+      liberar_marcos(entrada->siguiente_tabla);
+    }
+
+    else if (entrada->marco != -1) {
+      bitmap_marcos[entrada->marco] = 0;
+      marcos_libres++;
+      memset(memoria + entrada->marco * tamanio_pagina, 0, tamanio_pagina);
+    }
+
+    free(entrada);
+  }
+
+  list_destroy(tabla_de_paginas->entradas);
+  free(tabla_de_paginas);
+}
+
+
+
+////// ATENCION CLIENTES
+
 void* atender_cliente(void* arg)
 {
   int cliente_memoria = *(int*)arg;
-  log_debug(logger, "Cliente aceptado con socket FD: %d", cliente_memoria);
-  //free(arg);
+
   pthread_t hilo_atender;
   int32_t cliente = recibir_handshake_memoria(cliente_memoria);
-
-  //int* socket_ptr = malloc(sizeof(int));
-  //*socket_ptr = cliente_memoria;
 
   if (cliente == MODULO_KERNEL) {
     log_info(logger, "## Kernel Conectado - FD del socket: <%d>",cliente_memoria);
@@ -140,6 +257,10 @@ int recibir_handshake_memoria(int cliente_memoria)
   }
   return -1;
 }
+
+
+
+///// FINALIZAR
 
 void terminar_memoria(void)
 {

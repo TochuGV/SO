@@ -19,5 +19,6 @@
 
 void* atender_cpu(void*);
 void* recibir_solicitud_instruccion(int cliente_cpu);
+void recibir_solicitud_marco(int cliente_cpu);
 
 #endif /* ATENCION_CPU_H_ */
