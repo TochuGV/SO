@@ -400,7 +400,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
   return false;
 }
 
-/*
+
 //MMU
 uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t parametro) {
   int tamaño_pagina, cant_entradas_tabla, cant_niveles;
@@ -418,67 +418,55 @@ uint32_t traducir_direccion (uint32_t pid, uint32_t direccion_logica, uint32_t p
   int desplazamiento = direccion_logica % tamaño_pagina;
   int tabla_actual;
 
-  int marco = consultar_TLB(nro_pagina);
+  int marco = consultar_cache(pid,nro_pagina);
 
-  if (marco != -1) {
-    //Log 6. TLB Hit
-    log_info("PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
-    //Log 5. Obtener Marco
-    log_info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
-    return marco * tamaño_pagina + desplazamiento;
+  if (marco==-1) {
+    marco=consultar_TLB(pid, nro_pagina);
+
+    if (marco ==-1) {
+      marco=consultar_memoria(pid, nro_pagina);
+      actualizar_TLB(pid, nro_pagina, marco);
+    }
   }
-
-  log_info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
-
-  actualizar_TLB(pid, nro_pagina, marco);
+  //Log 5. Obtener Marco
   log_info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
   return marco * tamaño_pagina + desplazamiento;
 }
 
-  void pedir_valor_a_memoria(uint32_t direccion_fisica, uint32_t* valor){
-    int codigo = OP_READ;
-    send(conexion_memoria, &codigo, sizeof(int), 0);
-    send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
-    recv(conexion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
-  }
 
-  void escribir_valor_en_memoria(uint32_t direccion_fisica, uint32_t valor){
-    int codigo = OP_WRITE;
-    send(conexion_memoria, &codigo, sizeof(int), 0);
-    send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
-    send(conexion_memoria, &valor, sizeof(uint32_t), 0);
-  }
+//Consultar Caché
+int consultar_cache (uint32_t pid, int nro_pagina) {
+  return -1; //Por ahora manda siempre a TLB
+  } 
 
-  //Log 7. TLB Miss
-  //log.info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
-
-  Acá tiene que hacer todo el ciclo de revisar las páginas y tablas de memoria hasta tener una coincidencia
-  Si no hay coincidencia, tiene que devolver Page Fault
-    for (int nivel=0; nivel < cant_niveles; nivel++) {
-    int entrada_nivel_X = floor(nro_pagina / pow(cant_entradas_tabla,cant_niveles - nivel - 1)) % cant_entradas_tabla;
-    //Con la entrada del nivel actual, le pido a memoria el marco 
-  
-    send(socket_memoria, &tabla_actual, sizeof(int), 0);
-    send(socket_memoria, &entrada_nivel, sizeof(int), 0);
-
-    recv(socket_memoria, &tabla_actual, sizeof(int), MSG_WAITALL);
-  }
-  
-  //actualizar_TLB(pid, nro_pagina, marco);
-
-  //Log 5. Obtener Marco
-  //log.info("PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
-  //return marco * tamaño_pagina + desplazamiento;
-
-// consultar TLB 
+//Consultar TLB si falló en Caché
 int consultar_TLB (uint32_t pid, int nro_pagina) {
   for (int i=0;i<parametros_tlb->cantidad_entradas ;i++) {
     if (tlb[i].pid==pid && tlb[i].pagina==nro_pagina) {
         tlb [i]. tiempo_transcurrido = 0;
-      return tlb[i].marco;
+        //Log 6. TLB Hit
+        log_info("PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
+        return tlb[i].marco;
     }
-  }
+  } 
+  //Log 7. TLB Miss
+  log_info("PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
   return -1;
+}
+
+//Consultar memoria si falló en TLB
+int consultar_memoria(uint32_t pid, int nro_pagina) {
+  for (int nivel=0; nivel < cant_niveles; nivel++) {
+    //Acá tiene que hacer todo el ciclo de revisar las páginas y tablas de memoria hasta tener una coincidencia
+    int entrada_nivel_X = floor(nro_pagina / pow(cant_entradas_tabla,cant_niveles - nivel - 1)) % cant_entradas_tabla;
+    
+    //Con la entrada del nivel actual, le pido a memoria el marco 
+    send(socket_memoria, &tabla_actual, sizeof(int), 0);
+    send(socket_memoria, &entrada_nivel, sizeof(int), 0);
+
+    recv(socket_memoria, &tabla_actual, sizeof(int), MSG_WAITALL);
+    //Si no hay coincidencia, tiene que devolver Page Fault
+  }
 }
 
 /*
@@ -494,9 +482,22 @@ void actualizar_TLB (uint32_t pid, int pagina, int marco) {
     //Se fija cual es el que entró hace más tiempo y lo reemplaza
     break;
   }
-}
-*/
+}*/
 
+
+  void pedir_valor_a_memoria(uint32_t direccion_fisica, uint32_t* valor){
+    int codigo = OP_READ;
+    send(conexion_memoria, &codigo, sizeof(int), 0);
+    send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
+    recv(conexion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
+  }
+
+  void escribir_valor_en_memoria(uint32_t direccion_fisica, uint32_t valor){
+    int codigo = OP_WRITE;
+    send(conexion_memoria, &codigo, sizeof(int), 0);
+    send(conexion_memoria, &direccion_fisica, sizeof(uint32_t), 0);
+    send(conexion_memoria, &valor, sizeof(uint32_t), 0);
+  }
 
 /*
 Por ahora no es necesario manejarnos con semáforos y esta versión no chequea el PID

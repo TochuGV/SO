@@ -80,9 +80,10 @@ void llenar_paquete (t_paquete*,t_pcb*);
 //Traducción de dirección física
 uint32_t traducir_direccion(uint32_t,uint32_t,uint32_t); 
 
-//Manejo de TLB
+//Manejo de traducciones
+int consultar_cache (uint32_t, int);
 int consultar_TLB (uint32_t,int);
-//void actualizar_TLB (uint32_t,int, int);
-
+int consultar_cache (uint32_t, int);
+//void actualizar_TLB (uint32_t,int, int); Todavía no implementada
 
 #endif /* COMMON_CPU_H_ */
