@@ -17,8 +17,8 @@ extern char* PUERTO_ESCUCHA_INTERRUPT;
 extern char* PUERTO_ESCUCHA_IO;
 extern char* ALGORITMO_CORTO_PLAZO;
 extern char* ALGORITMO_INGRESO_A_READY;
-extern char* ALFA;
-extern char* ESTIMACION_INICIAL;
+extern double ALFA;
+extern double ESTIMACION_INICIAL;
 extern char* TIEMPO_SUSPENSION;
 extern char* LOG_LEVEL;
 

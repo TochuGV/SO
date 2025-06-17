@@ -7,8 +7,8 @@ char* PUERTO_ESCUCHA_INTERRUPT;
 char* PUERTO_ESCUCHA_IO;
 char* ALGORITMO_CORTO_PLAZO;
 char* ALGORITMO_INGRESO_A_READY;
-char* ALFA;
-char* ESTIMACION_INICIAL;
+double ALFA;
+double ESTIMACION_INICIAL;
 char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
@@ -67,8 +67,10 @@ void extraer_datos_config(){
   PUERTO_ESCUCHA_IO = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
   ALGORITMO_CORTO_PLAZO = config_get_string_value(config, "ALGORITMO_CORTO_PLAZO");
   ALGORITMO_INGRESO_A_READY = config_get_string_value(config, "ALGORITMO_INGRESO_A_READY");
-  ALFA = config_get_string_value(config, "ALFA");
-  ESTIMACION_INICIAL = config_get_string_value(config, "ESTIMACION_INICIAL");
+
+  ALFA = config_get_double_value(config, "ALFA");
+  ESTIMACION_INICIAL = config_get_double_value(config, "ESTIMACION_INICIAL");
+  
   TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
   //LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
   log_debug(logger, "Datos extraídos del archivo de configuración");
