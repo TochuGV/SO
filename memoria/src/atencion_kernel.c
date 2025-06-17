@@ -8,6 +8,8 @@ void* atender_kernel(void* arg)
 
   while (1) {
     int cod_op = recibir_operacion(cliente_kernel);
+    uint32_t pid;
+    t_list* valores;
       
     switch (cod_op) {
 
@@ -24,10 +26,25 @@ void* atender_kernel(void* arg)
       break;
     
     case FINALIZAR_PROCESO:
-      t_list* valores = recibir_paquete(cliente_kernel);
-      uint32_t pid = *(uint32_t*) list_get(valores, 0);
+      valores = recibir_paquete(cliente_kernel);
+      pid = *(uint32_t*) list_get(valores, 0);
 
-      finalizar_proceso(pid);
+      if (finalizar_proceso(pid) == 0) {
+        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
+      }
+      else
+        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+      break;
+    
+    case SOLICITUD_DUMP_MEMORY:
+      valores = recibir_paquete(cliente_kernel);
+      pid = *(uint32_t*) list_get(valores, 0);
+
+      if (atender_dump_memory(pid) == 0) {
+        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
+      }
+      else
+        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
       break;
         
     case -1:
@@ -137,7 +154,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
   return -1;
 }
 
-void finalizar_proceso(uint32_t pid) 
+int finalizar_proceso(uint32_t pid) 
 {
 
   for (int i = 0; i < list_size(lista_procesos); i++) 
@@ -162,17 +179,18 @@ void finalizar_proceso(uint32_t pid)
       list_destroy_and_destroy_elements(proceso->lista_instrucciones, free);
       list_remove(lista_procesos, i);
       free(proceso);
-      return;
+      return 0;
     }
   }
+  return -1;
 }
 
-void atender_dump_memory(uint32_t pid)
+int atender_dump_memory(uint32_t pid)
 {
   t_proceso* proceso = obtener_proceso(pid);
 
   if(!proceso)
-    return;
+    return -1;
   
   log_info(logger, "## PID: <%d> - Memory Dump solicitado", pid);
 
@@ -183,7 +201,7 @@ void atender_dump_memory(uint32_t pid)
 
   if (file == NULL) {
     log_error(logger, "Error: no se pudo crear el archivo DUMP");
-    return;
+    return -1;
   }
 
   uint32_t tamanio_dump = proceso->marcos_en_uso * tamanio_pagina;
@@ -191,11 +209,12 @@ void atender_dump_memory(uint32_t pid)
   if (ftruncate(fileno(file), tamanio_dump) == -1) {
     log_error(logger, "Error: no se pudo truncar el archivo DUMP");
     fclose(file);
-    return;
+    return -1;
   }
 
   escribir_dump(proceso->tabla_de_paginas, file);
   fclose(file);
+  return 0;
 }
 
 void escribir_dump(t_tabla* tabla_de_paginas, FILE* file) 
