@@ -7,11 +7,11 @@ uint32_t cant_entradas_tabla;
 uint32_t cant_niveles;
 
 //MMU
-uint32_t traducir_direccion(uint32_t pid, uint32_t direccion_logica, uint32_t parametro) {
-  
+uint32_t traducir_direccion(uint32_t pid, char* direccion_logica) {
+  int direccion = atoi(direccion_logica);
   //Calcular numero de pagina y desplazamiento 
-  uint32_t nro_pagina = floor(direccion_logica / tamanio_pagina);
-  uint32_t desplazamiento = direccion_logica % tamanio_pagina;
+  uint32_t nro_pagina = floor(direccion / tamanio_pagina);
+  uint32_t desplazamiento = direccion % tamanio_pagina;
   //uint32_t tabla_actual;
 
   uint32_t marco = consultar_cache(pid, nro_pagina);
@@ -88,17 +88,27 @@ void actualizar_TLB (uint32_t pid, int pagina, int marco) {
 }
 */
 
-void pedir_valor_a_memoria(uint32_t direccion_fisica, uint32_t* valor){
-  t_paquete* paquete = crear_paquete(OP_READ);
+char* pedir_valor_a_memoria(uint32_t direccion_fisica, char* tamaño){
+  t_paquete* paquete = crear_paquete(LECTURA);
+
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
+  agregar_a_paquete(paquete, &tamaño, sizeof(char*));
+
   enviar_paquete(paquete, conexion_memoria);
-  recv(conexion_memoria, valor, sizeof(uint32_t), MSG_WAITALL);
+
+  char* valor;
+
+  recv(conexion_memoria, &valor, sizeof(char*), MSG_WAITALL);
+
+  return valor;
 }
 
-void escribir_valor_en_memoria(uint32_t direccion_fisica, uint32_t valor){
-  t_paquete* paquete = crear_paquete(OP_WRITE);
+void escribir_valor_en_memoria(uint32_t direccion_fisica, char* valor){
+  t_paquete* paquete = crear_paquete(ESCRITURA);
+
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
-  agregar_a_paquete(paquete, &valor, sizeof(uint32_t));
+  agregar_a_paquete(paquete, &valor, sizeof(char*));
+
   enviar_paquete(paquete, conexion_memoria);
 }
 

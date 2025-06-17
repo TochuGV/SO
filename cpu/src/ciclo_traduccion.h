@@ -26,7 +26,7 @@ extern uint32_t cant_entradas_tabla;
 extern uint32_t cant_niveles;
 
 //Traducción de dirección física
-uint32_t traducir_direccion(uint32_t, uint32_t, uint32_t); 
+uint32_t traducir_direccion(uint32_t, char*); 
 
 //Manejo de traducciones
 uint32_t consultar_cache (uint32_t, uint32_t);
@@ -35,7 +35,7 @@ uint32_t consultar_memoria (uint32_t, uint32_t);
 //void actualizar_TLB (uint32_t,int, int); Todavía no implementada
 
 //Auxiliares para ejecutar Write y Read
-void pedir_valor_a_memoria(uint32_t, uint32_t*);
-void escribir_valor_en_memoria(uint32_t, uint32_t);
+char* pedir_valor_a_memoria(uint32_t, char*);
+void escribir_valor_en_memoria(uint32_t, char*);
 
 #endif

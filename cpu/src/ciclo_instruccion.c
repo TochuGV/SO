@@ -102,14 +102,14 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
     
     case READ:
       log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      //ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+      ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case WRITE: 
       log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %s - Valor: %s ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      //ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+      ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
@@ -152,28 +152,25 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
   return EJECUCION_FINALIZADA;
 };
 
-/*
 //Ejecutar Write y Read
-void ejecutar_read (uint32_t pid, uint32_t direccion_logica, uint32_t tam) {
+void ejecutar_read (uint32_t pid, char* direccion_logica, char* tamaño) {
   uint32_t direccion_fisica = traducir_direccion(pid,direccion_logica);
-  uint32_t valor;
-
-  pedir_valor_a_memoria(direccion_fisica, &valor);
-
-  //int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
+  
+  char* valor=pedir_valor_a_memoria(direccion_fisica, tamaño);
+  
   //Log 4. Lectura/Escritura Memoria
-  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
+  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor);
 };
 
-void ejecutar_write(uint32_t pid, uint32_t direccion_logica, uint32_t valor) {
+void ejecutar_write(uint32_t pid, char* direccion_logica, char* valor) {
   uint32_t direccion_fisica = traducir_direccion (pid, direccion_logica);
 
   escribir_valor_en_memoria (direccion_fisica, valor);
-  //int direccion_fisica = traducir_direccion (pid, parametro1, parametro2);
+  
   //Log 4. Lectura/Escritura Memoria
-  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pid, direccion_fisica, valor);
+  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor);
 };
-*/
+
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
   agregar_a_paquete(paquete, &tipo, sizeof(uint32_t));

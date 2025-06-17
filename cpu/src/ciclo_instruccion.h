@@ -28,9 +28,8 @@ void actualizar_kernel(t_instruccion,t_estado_ejecucion, t_pcb*,int);
 bool chequear_interrupcion(int, uint32_t);
 
 //Ejecución de instrucción;
-void ejecutar_read(uint32_t,uint32_t,uint32_t);
-void ejecutar_write(uint32_t,uint32_t,uint32_t); 
-//void ejecutar_init_proc(uint32_t, uint32_t); Por ahora no la estamos usando
+void ejecutar_read(uint32_t,char*,char*);
+void ejecutar_write(uint32_t,char*,char*); 
 
 //Envío de actualizaciónes a Kernel
 void agregar_syscall_a_paquete(t_paquete*, uint32_t, uint32_t, char*, char*, uint32_t);
