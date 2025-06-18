@@ -62,7 +62,7 @@ void mover_proceso_a_ready(void){
     return;
   };
 
-  if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid, conexion_memoria) == 0) {
+  if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0) {
     pthread_mutex_lock(&mutex_ready);
     queue_push(cola_ready, pcb);
     pthread_mutex_unlock(&mutex_ready); 
@@ -99,12 +99,24 @@ void finalizar_proceso(t_pcb* pcb){
     free(cronometros_pid);
   };
 
+  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+  if (handshake_kernel(socket_memoria) != 0) {
+    log_error(logger, "No se pudo conectar a Memoria para finalizar el proceso <%d>", pcb->pid);
+    return;
+  };
+
   t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
   agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
-  enviar_paquete(paquete, conexion_memoria);
+  enviar_paquete(paquete, socket_memoria);
 
   int32_t resultado;
-  recv(conexion_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
+  if (recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL) <= 0) {
+    log_error(logger, "Error al recibir confirmación de finalización de Memoria");
+    close(socket_memoria);
+    return;
+  };
+
+  close(socket_memoria);
 
   if (resultado == 0) {
     dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
@@ -124,7 +136,7 @@ void finalizar_proceso(t_pcb* pcb){
     destruir_pcb(pcb);
     sem_post(&semaforo_revisar_largo_plazo);
     return;
-  }
+  };
   log_error(logger, "Error al eliminar el proceso");
   return;
 };

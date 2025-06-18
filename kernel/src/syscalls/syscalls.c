@@ -94,13 +94,21 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   pcb->pc = syscall->pc;
   log_debug(logger, "Solicitando un volcado de información para el proceso <%d>", pcb->pid);
 
+  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+  if(handshake_kernel(socket_memoria) != 0){
+    log_error(logger, "No se pudo conectar a Memoria para solicitar DUMP_MEMORY");
+    return;
+  };
+
   t_paquete* paquete = crear_paquete(SOLICITUD_DUMP_MEMORY);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
-  enviar_paquete(paquete, conexion_memoria);
+  enviar_paquete(paquete, socket_memoria);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
   liberar_cpu_por_pid(pcb->pid);
 
-  int respuesta = recibir_operacion(conexion_memoria);
+  int respuesta = recibir_operacion(socket_memoria);
+  close(socket_memoria);
+  
   if(respuesta == 0){
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
     pthread_mutex_lock(&mutex_ready);

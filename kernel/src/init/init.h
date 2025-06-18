@@ -39,7 +39,7 @@ extern pthread_t hilo_conexion_io;
 extern pthread_t hilo_planificador_largo_plazo;
 extern pthread_t hilo_planificador_corto_plazo;
 
-extern int conexion_memoria;
+//extern int conexion_memoria;
 
 void inicializar_kernel();
 void extraer_datos_config();

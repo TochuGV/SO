@@ -11,13 +11,12 @@ void* atender_kernel(void* arg)
     uint32_t pid;
     t_list* valores;
 
+    int32_t resultado_ok = 0;
+    int32_t resultado_error = -1;
+    
     switch (cod_op) {
-
+    
     case SOLICITUD_MEMORIA:
-
-      int32_t resultado_ok = 0;
-      int32_t resultado_error = -1;
-
       if (recibir_y_ubicar_proceso(cliente_kernel) == 0) {
         send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
       }

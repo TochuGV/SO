@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <commons/collections/queue.h>
 #include <commons/temporal.h>
+#include "conexion/handshake/saliente/saliente.h"
 
 typedef struct {
   int32_t id_cpu;
@@ -33,7 +34,7 @@ typedef struct {
 extern char* NOMBRES_SYSCALLS[4];
 extern char* NOMBRES_DISPOSITIVOS_IO[5];
 
-uint32_t enviar_proceso_a_memoria(char*, uint32_t, uint32_t, int);
+uint32_t enviar_proceso_a_memoria(char*, uint32_t, uint32_t);
 void esperar_enter_para_planificar();
 char* crear_cadena_metricas_estado(t_pcb*);
 

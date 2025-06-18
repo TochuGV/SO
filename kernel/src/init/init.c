@@ -29,7 +29,7 @@ pthread_t hilo_conexion_io;
 pthread_t hilo_planificador_largo_plazo;
 pthread_t hilo_planificador_corto_plazo;
 
-int conexion_memoria;
+//int conexion_memoria;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
