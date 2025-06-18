@@ -144,10 +144,11 @@ void asignar_lugar_en_TLB(int ubicacion, uint32_t pid, uint32_t marco, uint32_t 
 }
 
 char* pedir_valor_a_memoria(uint32_t direccion_fisica, char* tamaño){
+  uint32_t tamaño_a_leer = (uint32_t) atoi(tamaño);
   t_paquete* paquete = crear_paquete(LECTURA);
 
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
-  agregar_a_paquete(paquete, &tamaño, sizeof(char*));
+  agregar_a_paquete(paquete, &tamaño_a_leer, sizeof(uint32_t));
 
   enviar_paquete(paquete, conexion_memoria);
 
@@ -159,21 +160,11 @@ char* pedir_valor_a_memoria(uint32_t direccion_fisica, char* tamaño){
 }
 
 void escribir_valor_en_memoria(uint32_t direccion_fisica, char* valor){
-  uint32_t valor_a_escribir = convertir_a_uint32_t(valor);
-
   t_paquete* paquete = crear_paquete(ESCRITURA);
 
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
-  agregar_a_paquete(paquete, &valor_a_escribir, sizeof(uint32_t));
+  agregar_a_paquete(paquete, &valor, sizeof(¿?*));
+  agregar_a_paquete(paquete,sizeof(valor),¿?);
 
   enviar_paquete(paquete, conexion_memoria);
 };
-
-//Función auxiliar para pasar de Char* a uint32_t
-uint32_t convertir_a_uint32_t (char* valor) {
-    char* endptr;
-    
-    unsigned long temp = strtoul(valor, &endptr, 10);
-
-    return (uint32_t)temp;
-}
