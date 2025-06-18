@@ -2,9 +2,8 @@
 
 void* planificador_largo_plazo(void* arg){
   while(1){
-    if (ingreso_a_memoria)
-      mover_proceso_a_ready();
-    sleep(1);
+    sem_wait(&semaforo_revisar_largo_plazo);
+    mover_proceso_a_ready();
   };
 };
 

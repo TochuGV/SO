@@ -20,7 +20,6 @@ void mover_proceso_a_exec(){
     return;
   };
   t_pcb* pcb_elegido = queue_pop(cola_ready);
-  printf("%d", pcb_elegido->pid);
   pthread_mutex_unlock(&mutex_ready);
   pthread_mutex_lock(&mutex_cpus);
   t_cpu* cpu_seleccionada = NULL;
@@ -52,9 +51,9 @@ void enviar_a_cpu(t_pcb* pcb, int socket_cpu_dispatch){
   void* stream = serializar_pcb_para_cpu(pcb, &bytes);
   t_paquete* paquete = crear_paquete(PCB);
   agregar_a_paquete(paquete, stream, bytes);
-  log_debug(logger, "Enviando PCB del Proceso <%d> al socket CPU Dispatch: %d", pcb->pid, socket_cpu_dispatch);
+  //log_debug(logger, "Enviando PCB del Proceso <%d> al socket CPU Dispatch: %d", pcb->pid, socket_cpu_dispatch);
   enviar_paquete(paquete, socket_cpu_dispatch);
-  log_debug(logger, "PCB del Proceso <%d> enviado a CPU", pcb->pid);
+  //log_debug(logger, "PCB del Proceso <%d> enviado a CPU", pcb->pid);
   free(stream);
 };
 

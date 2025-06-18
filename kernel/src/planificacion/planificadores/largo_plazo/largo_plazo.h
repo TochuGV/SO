@@ -18,8 +18,8 @@ typedef struct {
 extern t_queue* cola_new;
 extern t_list* lista_info_procesos;
 extern pthread_mutex_t mutex_new;  
-extern sem_t hay_procesos_en_new;
-extern bool ingreso_a_memoria;
+//extern sem_t hay_procesos_en_new;
+extern sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo();
 void inicializar_proceso(t_pcb*, char*, uint32_t);

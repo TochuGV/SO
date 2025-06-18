@@ -3,14 +3,14 @@
 t_queue* cola_new;
 t_list* lista_info_procesos;
 pthread_mutex_t mutex_new = PTHREAD_MUTEX_INITIALIZER;
-sem_t hay_procesos_en_new;
-bool ingreso_a_memoria = true;
-
+//sem_t hay_procesos_en_new;
+sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo(){
   cola_new = queue_create();
   lista_info_procesos = list_create();
-  sem_init(&hay_procesos_en_new, 0, 0);
+  //sem_init(&hay_procesos_en_new, 0, 0);
+  sem_init(&semaforo_revisar_largo_plazo, 0, 0);
   pthread_mutex_init(&mutex_new, NULL);
 };
 
@@ -28,57 +28,59 @@ void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamani
   
   entrar_estado(pcb, ESTADO_NEW);
   log_creacion_proceso(pcb->pid);
+  sem_post(&semaforo_revisar_largo_plazo);
 };
 
-bool es_PMCP(void)
-{
+bool es_PMCP(void){
   return strcmp(ALGORITMO_INGRESO_A_READY, "PMCP") == 0;
-}
+};
 
-void mover_proceso_a_ready(void){  
+void mover_proceso_a_ready(void){
   pthread_mutex_lock(&mutex_new);
   if(queue_is_empty(cola_new)){
     pthread_mutex_unlock(&mutex_new);
     return;
   };
 
-  t_pcb* pcb = NULL;
-  if(es_PMCP()){
-    pcb = elegir_proceso_mas_chico(cola_new, lista_info_procesos);
-  } else {
-    pcb = queue_peek(cola_new);
+  t_pcb* pcb = es_PMCP() ? elegir_proceso_mas_chico(cola_new, lista_info_procesos) : queue_peek(cola_new);
+  if(!pcb){
+    pthread_mutex_unlock(&mutex_new);
+    return;
   };
+
+  uint32_t pid_buscado = pcb->pid;
+  bool tiene_pid_igual(void* elem){
+    return((t_informacion_largo_plazo*) elem)->pid == pid_buscado;
+  };
+
+  t_informacion_largo_plazo* info = list_find(lista_info_procesos, tiene_pid_igual);
 
   pthread_mutex_unlock(&mutex_new);
-  if(!pcb) return;
 
-  t_informacion_largo_plazo* info = NULL;
-
-  for(int i = 0; i < list_size(lista_info_procesos); i++){
-    info = list_get(lista_info_procesos, i);
-    if(info->pid == pcb->pid)
-      break;
+  if(!info){
+    log_error(logger, "No se encontró información del proceso <%d>", pcb->pid);
+    return;
   };
 
-  if (!info)
-    log_error(logger, "Error, informacion del proceso del PID: %d", pcb->pid);
-
-  log_debug(logger, "ARCHIVO A ENVIAR: %s, TAMAÑO: %d", info->archivo_pseudocodigo, info->tamanio);
-
   if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid, conexion_memoria) == 0) {
-    
     pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb); 
+    queue_push(cola_ready, pcb);
     pthread_mutex_unlock(&mutex_ready); 
     cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
     sem_post(&semaforo_ready);
-    if(!es_PMCP()) {
-      t_pcb* eliminado = queue_pop(cola_new);
-    };
-  } else {
-    ingreso_a_memoria = false;
-  }
 
+    bool es_pid(void* elem){ return ((t_pcb*)elem)->pid == pcb->pid; };
+
+    pthread_mutex_lock(&mutex_new);
+    if(es_PMCP()){
+      list_remove_by_condition(cola_new->elements, es_pid); //--> Revisar de crear una función para remover el elemento de la cola sin acceder directamente al campo 'elements'
+    } else {
+      queue_pop(cola_new);
+    }
+    pthread_mutex_unlock(&mutex_new);
+  } else {
+    log_info(logger, "Proceso <%d> no pudo entrar a memoria. Sigue en NEW", pcb->pid);
+  };
 };
 
 void finalizar_proceso(t_pcb* pcb){
@@ -120,9 +122,7 @@ void finalizar_proceso(t_pcb* pcb){
     if(info) free(info);
 
     destruir_pcb(pcb);
-
-    ingreso_a_memoria = true;
-
+    sem_post(&semaforo_revisar_largo_plazo);
     return;
   }
   log_error(logger, "Error al eliminar el proceso");
