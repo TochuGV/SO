@@ -86,21 +86,28 @@ void syscall_io(t_syscall* syscall){
 
 void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.
   t_pcb* pcb = obtener_pcb_por_pid(syscall->pid);
-  if(!pcb) return;
-  log_debug(logger, "Solicitando volcado de información para el proceso <%d>", pcb->pid);
+  if(pcb == NULL){
+    log_warning(logger, "No existe el PCB");
+    return;
+  };
+  pcb->pc = syscall->pc;
+  log_debug(logger, "Solicitando un volcado de información para el proceso <%d>", pcb->pid);
 
   t_paquete* paquete = crear_paquete(SOLICITUD_DUMP_MEMORY);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
   enviar_paquete(paquete, conexion_memoria);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
+  liberar_cpu_por_pid(pcb->pid);
 
-  // Recibir la respuesta de Memoria
   int respuesta = recibir_operacion(conexion_memoria);
-  if(respuesta == 0){ //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
+  if(respuesta == 0){
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
+    pthread_mutex_lock(&mutex_ready);
+    queue_push(cola_ready, pcb);
+    pthread_mutex_unlock(&mutex_ready);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
     sem_post(&semaforo_ready);
-  } else { // Si no se puede hacere el dump, el proceso se finaliza.
+  } else {
     log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
     finalizar_proceso(pcb);
