@@ -20,6 +20,7 @@ void mover_proceso_a_exec(){
     return;
   };
   t_pcb* pcb_elegido = queue_pop(cola_ready);
+  printf("%d", pcb_elegido->pid);
   pthread_mutex_unlock(&mutex_ready);
   pthread_mutex_lock(&mutex_cpus);
   t_cpu* cpu_seleccionada = NULL;

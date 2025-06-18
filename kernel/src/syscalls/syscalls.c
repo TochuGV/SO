@@ -33,9 +33,9 @@ t_syscall* recibir_syscall(int socket_cliente){
 
 void syscall_init_proc(t_syscall* syscall){
   t_pcb* pcb_nuevo = crear_pcb();
+  char* archivo_pseudocodigo = strdup(syscall->arg1);
   uint32_t tamanio = atoi(syscall->arg2);
-  inicializar_proceso(pcb_nuevo, tamanio);
-  mover_proceso_a_ready(syscall->arg1, tamanio); //En el futuro, intentar_ingresar_procesos_a_ready()
+  inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
 };
 
 void syscall_exit(t_syscall* syscall){
@@ -44,7 +44,6 @@ void syscall_exit(t_syscall* syscall){
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
   liberar_cpu_por_pid(pcb->pid);
   finalizar_proceso(pcb);
-  //mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
 };
 
 void syscall_io(t_syscall* syscall){
@@ -60,6 +59,8 @@ void syscall_io(t_syscall* syscall){
   if(!dispositivo){
     log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
+    liberar_cpu_por_pid(pcb->pid);
+    finalizar_proceso(pcb);
     //finalizar_proceso_por_syscall(pcb);
     return;
   }

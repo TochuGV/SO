@@ -37,7 +37,7 @@ extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
 extern pthread_t hilo_planificador_largo_plazo;
-extern pthread_t hilo_planificacion;
+extern pthread_t hilo_planificador_corto_plazo;
 
 extern int conexion_memoria;
 

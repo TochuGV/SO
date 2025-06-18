@@ -82,7 +82,6 @@ void enviar_paquete(t_paquete* paquete, int socket_cliente){
 	int bytes = paquete->buffer->size + 2*sizeof(int);
 
 	void* a_enviar = serializar_paquete(paquete, bytes);
-  log_debug(logger, "Enviando paquete. Cod op: %d, Size: %d", paquete->codigo_operacion, paquete->buffer->size);
 	send(socket_cliente, a_enviar, bytes, 0);
   eliminar_paquete(paquete);
 	free(a_enviar);

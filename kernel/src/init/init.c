@@ -27,7 +27,7 @@ pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 pthread_t hilo_planificador_largo_plazo;
-pthread_t hilo_planificacion;
+pthread_t hilo_planificador_corto_plazo;
 
 int conexion_memoria;
 
