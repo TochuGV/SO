@@ -31,4 +31,8 @@ void* conectar_interrupt(void*);
 void* conectar_memoria(void*);
 void recibir_datos_memoria();
 
+//auxiares para TLB y caché
+t_algoritmo_cache convertir_cache(char*);
+t_algoritmo_tlb convertir_tlb(char*);
+
 #endif /* CONEXIONES_H */

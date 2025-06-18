@@ -128,7 +128,6 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
     
     case INIT_PROC:
       log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      //ejecutar_init_proc(instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA_INIT_PROC;
       break;
@@ -153,23 +152,74 @@ t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
 };
 
 //Ejecutar Write y Read
-void ejecutar_read (uint32_t pid, char* direccion_logica, char* tamaño) {
-  uint32_t direccion_fisica = traducir_direccion(pid,direccion_logica);
-  
-  char* valor=pedir_valor_a_memoria(direccion_fisica, tamaño);
-  
-  //Log 4. Lectura/Escritura Memoria
-  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor);
-};
+void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
+  int direccion = atoi(direccion_logica);
+  //Calcular numero de pagina y desplazamiento 
+  uint32_t nro_pagina = floor(direccion / tamanio_pagina);
+  uint32_t desplazamiento = direccion % tamanio_pagina;
+  char* valor_a_leer=NULL;
+  uint32_t direccion_fisica;
 
-void ejecutar_write(uint32_t pid, char* direccion_logica, char* valor) {
-  uint32_t direccion_fisica = traducir_direccion (pid, direccion_logica);
-
-  escribir_valor_en_memoria (direccion_fisica, valor);
+  if (parametros_cache->cantidad_entradas > 0) {
+    valor_a_leer = consultar_cache(pid,nro_pagina);
+  }
   
-  //Log 4. Lectura/Escritura Memoria
-  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor);
-};
+  if (valor_a_leer != NULL) {
+    //Al haber habido Caché Hit, no contamos con la dirección lógica
+    log_info(logger, "PID: %d - Acción: LEER - Valor: %s", pid, valor_a_leer);
+    return; 
+  }  
+
+  direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
+
+  valor_a_leer=pedir_valor_a_memoria(direccion_fisica, parametro2);
+
+  if (valor_a_leer == NULL) {
+      log_error(logger, "No se pudo leer de memoria");
+      return;
+  }
+    
+  //Log 4. Lectura Memoria
+  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_leer);
+
+  actualizar_cache(pid,nro_pagina,valor_a_leer);
+
+  return;
+}
+
+void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribir){
+  int direccion = atoi(direccion_logica);
+  //Calcular numero de pagina y desplazamiento 
+  uint32_t nro_pagina = floor(direccion / tamanio_pagina);
+  uint32_t desplazamiento = direccion % tamanio_pagina;
+
+  if (parametros_cache->cantidad_entradas > 0) {
+    if (pagina_esta_en_cache(pid,nro_pagina)) {
+      //Log 8. Página encontrada en Caché
+      log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
+      //Al haber habido Caché Hit, no contamos con la dirección lógica
+      log_info(logger, "PID: %d - Acción: ESCRIBIR - Valor: %s", pid, valor_a_escribir);
+
+      actualizar_cache(pid,nro_pagina,valor_a_escribir);
+      return;
+    }
+  }
+  //Log 9. Página faltante en Caché
+  log_info(logger,"PID: %d - Cache Miss - Pagina: %d", pid, nro_pagina);
+
+  uint32_t direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
+
+  if (direccion_fisica==-1){
+    log_error(logger,"No se pudo obtener la dirección física, pid: %d",pid);
+  }
+    
+  //Log 4. Lectura Memoria
+  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_escribir);
+
+  escribir_valor_en_memoria(direccion_fisica, valor_a_escribir);
+
+  actualizar_cache(pid, nro_pagina,valor_a_escribir);
+}
 
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));

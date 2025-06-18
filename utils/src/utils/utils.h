@@ -56,6 +56,16 @@ typedef enum {
   CPU_INTERRUPT
 } tipo_conexion_cpu;
 
+typedef enum {
+  LRU,
+  FIFO
+} t_algoritmo_tlb;
+
+typedef enum {
+  CLOCK,
+  CLOCK_M
+} t_algoritmo_cache;
+
 typedef struct {
 	int size;
 	void* stream;
