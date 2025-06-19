@@ -2,27 +2,11 @@
 
 int main(int argc, char* argv[]){
   inicializar_kernel();
-
-  char* archivo_pseudocodigo = argv[1];
-  int32_t tamanio_proceso = atoi(argv[2]);
-
-  iniciar_conexiones_entre_modulos();
+  iniciar_conexiones_constantes_entre_modulos();
   esperar_enter_para_planificar();
-
-  t_pcb* pcb_nuevo = crear_pcb();
-  inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio_proceso);
-  log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
-  mover_proceso_a_ready();
-
-  pthread_create(&hilo_planificador_largo_plazo, NULL, planificador_largo_plazo, NULL);
-  pthread_create(&hilo_planificador_corto_plazo, NULL, planificador_corto_plazo, NULL);
-  //pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
-
-  pthread_join(hilo_conexion_cpu_dispatch, NULL);
-  pthread_join(hilo_conexion_cpu_interrupt, NULL);
-  pthread_join(hilo_conexion_io, NULL);
-  pthread_join(hilo_planificador_largo_plazo, NULL);
-  pthread_join(hilo_planificador_corto_plazo, NULL);
+  crear_proceso_inicial(argv[1], atoi(argv[2]));
+  iniciar_planificadores();
+  unir_hilos();
 
   //terminar_programa(conexion_memoria, logger, config); --> 'conexion_memoria' ya no existe más.
   dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);

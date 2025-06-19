@@ -38,12 +38,12 @@ extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
 extern pthread_t hilo_planificador_largo_plazo;
 extern pthread_t hilo_planificador_corto_plazo;
-
-//extern int conexion_memoria;
+//extern pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_kernel();
-void extraer_datos_config();
-void iniciar_conexiones_entre_modulos();
-//void unir_hilos();
+void crear_proceso_inicial(char*, uint32_t);
+void iniciar_conexiones_constantes_entre_modulos();
+void iniciar_planificadores();
+void unir_hilos();
 
 #endif /* INIT_H_ */

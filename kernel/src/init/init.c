@@ -28,8 +28,7 @@ pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 pthread_t hilo_planificador_largo_plazo;
 pthread_t hilo_planificador_corto_plazo;
-
-//int conexion_memoria;
+//pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
@@ -41,22 +40,6 @@ void inicializar_dispositivos_io(){
     dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], dispositivo);
   };
   log_debug(logger, "Dispositivos IO inicializados");
-};
-
-void inicializar_kernel(){
-  logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
-  log_debug(logger, "Log de Kernel iniciado");
-  config = iniciar_config("kernel.config");
-  extraer_datos_config();
-  lista_cpus = list_create();
-  lista_pcbs = list_create();
-  diccionario_cronometros = dictionary_create();
-  diccionario_contextos_io = dictionary_create();
-  pthread_mutex_init(&mutex_pcbs, NULL);
-  sem_init(&semaforo_cpu_libre, 0, 0);
-  inicializar_dispositivos_io();
-  iniciar_planificacion_largo_plazo();
-  iniciar_planificacion_corto_plazo();
 };
 
 void extraer_datos_config(){
@@ -76,18 +59,47 @@ void extraer_datos_config(){
   log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
-void iniciar_conexiones_entre_modulos(){  
+void inicializar_kernel(){
+  logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
+  log_debug(logger, "Log de Kernel iniciado");
+  config = iniciar_config("kernel.config");
+  extraer_datos_config();
+  lista_cpus = list_create();
+  lista_pcbs = list_create();
+  diccionario_cronometros = dictionary_create();
+  diccionario_contextos_io = dictionary_create();
+  pthread_mutex_init(&mutex_pcbs, NULL);
+  sem_init(&semaforo_cpu_libre, 0, 0);
+  inicializar_dispositivos_io();
+  iniciar_planificacion_largo_plazo();
+  iniciar_planificacion_corto_plazo();
+};
+
+void crear_proceso_inicial(char* archivo_pseudocodigo, uint32_t tamanio){
+  t_pcb* pcb_nuevo = crear_pcb();
+  inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
+  log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
+  //mover_proceso_a_ready();
+  sem_post(&semaforo_revisar_largo_plazo);
+};
+
+void iniciar_conexiones_constantes_entre_modulos(){  
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
   pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
 };
 
-/*
-void unir_hilos(){
-  log_info(logger, "Unión de hilos a punto de realizar");
-  pthread_join(hilo_conexion_cpu_dispatch, NULL);
-  log_info(logger, "---");
-  pthread_join(hilo_conexion_io, NULL);
-  log_info(logger, "Unión de hilos realizada");
+void iniciar_planificadores(){
+  pthread_create(&hilo_planificador_largo_plazo, NULL, planificador_largo_plazo, NULL);
+  pthread_create(&hilo_planificador_corto_plazo, NULL, planificador_corto_plazo, NULL);
+  //pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
 };
-*/
+
+void unir_hilos(){
+  pthread_join(hilo_conexion_cpu_dispatch, NULL);
+  pthread_join(hilo_conexion_cpu_interrupt, NULL);
+  pthread_join(hilo_conexion_io, NULL);
+  pthread_join(hilo_planificador_largo_plazo, NULL);
+  pthread_join(hilo_planificador_corto_plazo, NULL);
+  //pthread_join(hilo_planificador_mediano_plazo, NULL);
+};
