@@ -37,6 +37,7 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     }
   }
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
+  finalizar_proceso_en_cache(pcb->pid,estado);
   free(pcb);
   return NULL;
 }

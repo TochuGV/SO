@@ -5,15 +5,6 @@
 #include "conexiones.h"
 #include "ciclo_traduccion.h"
 
-typedef enum {
-  EJECUCION_CONTINUA,
-  EJECUCION_CONTINUA_INIT_PROC,
-  EJECUCION_FINALIZADA,
-  EJECUCION_BLOQUEADA_IO,
-  EJECUCION_BLOQUEADA_DUMP,
-  EJECUCION_BLOQUEADA_SOLICITUD
-} t_estado_ejecucion;
-
 //Ciclo completo de instrucción
 void* ciclo_de_instruccion(t_pcb*, int, int,int);
 

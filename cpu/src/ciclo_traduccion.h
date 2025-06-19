@@ -46,6 +46,7 @@ extern uint32_t cant_niveles;
 char* consultar_contenido_cache(uint32_t, uint32_t);
 int consultar_pagina_cache(uint32_t, uint32_t);
 void actualizar_cache(uint32_t,uint32_t,char*,bool);
+void finalizar_proceso_en_cache(uint32_t,t_estado_ejecucion);
 
 //Traducción de dirección física
 uint32_t traducir_direccion(uint32_t, uint32_t, uint32_t); 

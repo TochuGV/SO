@@ -99,6 +99,25 @@ void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir, b
   }
 }
 
+//Finaliza un proceso en caché actualizando memoria, si finalizó el proceso, libera la entrada
+void finalizar_proceso_en_cache(uint32_t pid,t_estado_ejecucion estado) {
+    for (int i = 0; i < parametros_cache->cantidad_entradas; i++) {
+        if (cache[i].pid == pid) {
+            if (cache[i].bit_modificado == 1) {
+                uint32_t direccion_fisica = traducir_direccion(pid, cache[i].pagina, 0);
+                escribir_valor_en_memoria(direccion_fisica, cache[i].contenido);
+            }
+            if (estado==EJECUCION_FINALIZADA){
+            cache[i].pid = -1;
+            cache[i].pagina = -1;
+            cache[i].contenido = NULL;
+            cache[i].bit_uso = 0;
+            cache[i].bit_modificado = 0;
+            }
+        }
+    }
+}
+
 //MMU
 uint32_t traducir_direccion(uint32_t pid, uint32_t nro_pagina,uint32_t desplazamiento) {
 
@@ -196,8 +215,13 @@ void actualizar_TLB (uint32_t pid, uint32_t pagina, uint32_t marco) {
   }
 } 
 
-//Auxiliar para hacer los reemplazos y asignaciones en aché y TLB
+//Auxiliar para hacer los reemplazos y asignaciones en caché (y actualizar memoria si corresponde)
 void asignar_lugar_en_cache(int ubicacion, uint32_t pid, uint32_t pagina,char* valor, bool es_escritura){
+   if (cache[ubicacion].bit_modificado==1) {
+    uint32_t direccion_fisica=traducir_direccion(pid,cache[ubicacion].pagina,0);
+    escribir_valor_en_memoria(direccion_fisica,cache[ubicacion].contenido);
+  }
+  
   cache[ubicacion].pid=pid;
   cache[ubicacion].pagina=pagina;
   cache[ubicacion].contenido=valor;
@@ -205,6 +229,7 @@ void asignar_lugar_en_cache(int ubicacion, uint32_t pid, uint32_t pagina,char* v
   cache[ubicacion].bit_modificado = es_escritura? 1 : 0;
 }
 
+//Auxiliar para hacer los reemplazos y asignaciones en TLB
 void asignar_lugar_en_TLB(int ubicacion, uint32_t pid, uint32_t marco, uint32_t pagina, int ultimo_agregado) {
   tlb[ubicacion].pid = pid;
   tlb[ubicacion].pagina = pagina;
