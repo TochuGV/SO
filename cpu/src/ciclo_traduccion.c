@@ -9,13 +9,14 @@ uint32_t cant_entradas_tabla;
 uint32_t cant_niveles;
 
 //Caché de páginas
-//verificar si tengo el valor que necesito leer
-char* consultar_cache (uint32_t pid, uint32_t nro_pagina) {
+//verificar si tengo el valor que necesito leer y la página que necesito escribir
+char* consultar_contenido_cache (uint32_t pid, uint32_t nro_pagina) {
   for (int i=0;i<parametros_cache->cantidad_entradas ;i++) {
     if (cache[i].pid==pid && cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
         log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
-        return cache[i].contenido;
+        
+        return cache[i].contenido;  
     }
   }
   //Log 7. Página faltante en Caché
@@ -23,13 +24,13 @@ char* consultar_cache (uint32_t pid, uint32_t nro_pagina) {
   return NULL;
 }
 
-//Verificar si ya tengo la página que busco escribir 
-bool pagina_esta_en_cache(uint32_t pid, uint32_t nro_pagina) {
-    for (int i=0;i<parametros_cache->cantidad_entradas ;i++) {
+int consultar_pagina_cache (uint32_t pid, uint32_t nro_pagina) {
+  for (int i=0;i<parametros_cache->cantidad_entradas ;i++) {
     if (cache[i].pid==pid && cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
         log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
-        return 1;
+        
+        return i;  
     }
   }
   //Log 7. Página faltante en Caché
@@ -39,7 +40,35 @@ bool pagina_esta_en_cache(uint32_t pid, uint32_t nro_pagina) {
 
 //
 void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir) {
-  return;
+  int reemplazo=0;
+  
+  //busco entrada libre
+  for(int i= 0; i < parametros_tlb -> cantidad_entradas; i++){
+    if(tlb[i].pid == -1){
+      asignar_lugar_en_cache(reemplazo,pid,nro_pagina,valor_a_escribir);
+    return;
+    }
+  }
+
+  switch (parametros_cache->algoritmo_reemplazo){
+    case CLOCK:
+    for (int i=0; i < parametros_cache -> cantidad_entradas; i++){
+      if(cache[i].bit_uso == 0) {
+        reemplazo = i;
+      }
+      asignar_lugar_en_cache(reemplazo,pid,nro_pagina,valor_a_escribir);
+    }
+    break;
+
+    case CLOCK_M:
+    for (int i=0;i <= parametros_tlb->cantidad_entradas;i++) {
+      if (cache[i].bit_uso == 0 && cache[i].bit_uso == 0) {
+        reemplazo = i;
+      }
+    }
+    asignar_lugar_en_cache(reemplazo,pid,nro_pagina,valor_a_escribir);
+    break;
+  }
 }
 
 //MMU
@@ -64,7 +93,7 @@ uint32_t traducir_direccion(uint32_t pid, uint32_t nro_pagina,uint32_t desplazam
   //Log 5. Obtener Marco
   log_info(logger, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
   return marco * tamanio_pagina + desplazamiento;
-};
+}
 
 //Consultar TLB si falló en Caché
 uint32_t consultar_TLB (uint32_t pid, uint32_t nro_pagina) {
@@ -104,13 +133,16 @@ uint32_t consultar_memoria(uint32_t pid, uint32_t nro_pagina) {
 void actualizar_TLB (uint32_t pid, uint32_t pagina, uint32_t marco) {
   int index_orden = 10000;
   int index_tiempo = -1;
+  int ultimo_agregado = 0;
   int reemplazo;
   
   //busco entrada libre
   for(int i= 0; i < parametros_tlb -> cantidad_entradas; i++){
     if(tlb[i].pid == -1){
-      asignar_lugar_en_TLB(i,pid,marco,pagina);
+      ultimo_agregado = i;
+      asignar_lugar_en_TLB(i,pid,marco,pagina,ultimo_agregado);
     return;
+    }
   }
 
   switch (parametros_tlb->algoritmo_reemplazo){
@@ -119,8 +151,9 @@ void actualizar_TLB (uint32_t pid, uint32_t pagina, uint32_t marco) {
       if(tlb[i].tiempo_transcurrido > index_tiempo) {
         reemplazo = i;
       }
-      asignar_lugar_en_TLB(reemplazo,pid,marco,pagina);
     }
+    ultimo_agregado +=1;
+    asignar_lugar_en_TLB(reemplazo,pid,marco,pagina,ultimo_agregado);
     break;
 
     case FIFO:
@@ -129,17 +162,26 @@ void actualizar_TLB (uint32_t pid, uint32_t pagina, uint32_t marco) {
         reemplazo = i;
       }
     }
-    asignar_lugar_en_TLB(reemplazo,pid,marco,pagina);
+    ultimo_agregado +=1;
+    asignar_lugar_en_TLB(reemplazo,pid,marco,pagina,ultimo_agregado);
     break;
-    }
   }
+} 
+
+//Auxiliar para hacer los reemplazos y asignaciones en aché y TLB
+void asignar_lugar_en_cache(int ubicacion, uint32_t pid, uint32_t pagina,char* valor){
+  cache[ubicacion].pid=pid;
+  cache[ubicacion].pagina=pagina;
+  cache[ubicacion].contenido=valor;
+  cache[ubicacion].bit_uso=1;
+  cache[ubicacion].bit_modificado=1;
 }
-//Auxiliar para hacer los reemplazos y asignaciones en el TLB
-void asignar_lugar_en_TLB(int ubicacion, uint32_t pid, uint32_t marco, uint32_t pagina) {
+
+void asignar_lugar_en_TLB(int ubicacion, uint32_t pid, uint32_t marco, uint32_t pagina, int ultimo_agregado) {
   tlb[ubicacion].pid = pid;
   tlb[ubicacion].pagina = pagina;
   tlb[ubicacion].marco = marco;
-  tlb[ubicacion].nro_orden = ubicacion;
+  tlb[ubicacion].nro_orden = ultimo_agregado;
   tlb[ubicacion].tiempo_transcurrido = 0;
 }
 
@@ -160,11 +202,13 @@ char* pedir_valor_a_memoria(uint32_t direccion_fisica, char* tamaño){
 }
 
 void escribir_valor_en_memoria(uint32_t direccion_fisica, char* valor){
+  uint32_t longitud_valor = (uint32_t) sizeof(valor);
+  
   t_paquete* paquete = crear_paquete(ESCRITURA);
 
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
-  agregar_a_paquete(paquete, &valor, sizeof(¿?*));
-  agregar_a_paquete(paquete,sizeof(valor),¿?);
+  agregar_a_paquete(paquete, &valor, sizeof(char*));
+  agregar_a_paquete(paquete,&longitud_valor,sizeof(uint32_t));
 
   enviar_paquete(paquete, conexion_memoria);
 };

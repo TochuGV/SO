@@ -161,7 +161,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   uint32_t direccion_fisica;
 
   if (parametros_cache->cantidad_entradas > 0) {
-    valor_a_leer = consultar_cache(pid,nro_pagina);
+    valor_a_leer = consultar_contenido_cache(pid,nro_pagina);
   }
   
   if (valor_a_leer != NULL) {
@@ -183,8 +183,6 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_leer);
 
   actualizar_cache(pid,nro_pagina,valor_a_leer);
-
-  return;
 }
 
 void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribir){
@@ -194,18 +192,14 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   uint32_t desplazamiento = direccion % tamanio_pagina;
 
   if (parametros_cache->cantidad_entradas > 0) {
-    if (pagina_esta_en_cache(pid,nro_pagina)) {
-      //Log 8. Página encontrada en Caché
-      log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
-      //Al haber habido Caché Hit, no contamos con la dirección lógica
-      log_info(logger, "PID: %d - Acción: ESCRIBIR - Valor: %s", pid, valor_a_escribir);
-
-      actualizar_cache(pid,nro_pagina,valor_a_escribir);
-      return;
+    int pagina = consultar_pagina_cache(pid,nro_pagina);
+    if (pagina != 0) {
+      free (cache[pagina].contenido);
+      strcpy(cache[pagina].contenido, valor_a_escribir);
+      cache[pagina].bit_modificado = 1;
+      cache[pagina].bit_uso = 1;
     }
   }
-  //Log 9. Página faltante en Caché
-  log_info(logger,"PID: %d - Cache Miss - Pagina: %d", pid, nro_pagina);
 
   uint32_t direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
 
