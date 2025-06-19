@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 
   bool cpu_disponible=true;
 
-  while(1){
+  while(1){   
     if(cpu_disponible){
         //Paso 1: Recibir el PCB desde Kernel
         t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);

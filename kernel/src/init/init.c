@@ -7,8 +7,8 @@ char* PUERTO_ESCUCHA_INTERRUPT;
 char* PUERTO_ESCUCHA_IO;
 char* ALGORITMO_CORTO_PLAZO;
 char* ALGORITMO_INGRESO_A_READY;
-char* ALFA;
-char* ESTIMACION_INICIAL;
+double ALFA;
+double ESTIMACION_INICIAL;
 char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
@@ -28,8 +28,7 @@ pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 pthread_t hilo_planificador_largo_plazo;
 pthread_t hilo_planificador_corto_plazo;
-
-//int conexion_memoria;
+//pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
@@ -41,6 +40,21 @@ void inicializar_dispositivos_io(){
     dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], dispositivo);
   };
   log_debug(logger, "Dispositivos IO inicializados");
+};
+
+void extraer_datos_config(){
+  IP_MEMORIA = config_get_string_value(config, "IP_MEMORIA");
+  PUERTO_MEMORIA = config_get_string_value(config, "PUERTO_MEMORIA");
+  PUERTO_ESCUCHA_DISPATCH = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
+  PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
+  PUERTO_ESCUCHA_IO = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
+  ALGORITMO_CORTO_PLAZO = config_get_string_value(config, "ALGORITMO_CORTO_PLAZO");
+  ALGORITMO_INGRESO_A_READY = config_get_string_value(config, "ALGORITMO_INGRESO_A_READY");
+  ALFA = config_get_double_value(config, "ALFA");
+  ESTIMACION_INICIAL = config_get_double_value(config, "ESTIMACION_INICIAL");
+  TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
+  //LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
+  log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
 void inicializar_kernel(){
@@ -59,33 +73,31 @@ void inicializar_kernel(){
   iniciar_planificacion_corto_plazo();
 };
 
-void extraer_datos_config(){
-  IP_MEMORIA = config_get_string_value(config, "IP_MEMORIA");
-  PUERTO_MEMORIA = config_get_string_value(config, "PUERTO_MEMORIA");
-  PUERTO_ESCUCHA_DISPATCH = config_get_string_value(config, "PUERTO_ESCUCHA_DISPATCH");
-  PUERTO_ESCUCHA_INTERRUPT = config_get_string_value(config, "PUERTO_ESCUCHA_INTERRUPT");
-  PUERTO_ESCUCHA_IO = config_get_string_value(config, "PUERTO_ESCUCHA_IO");
-  ALGORITMO_CORTO_PLAZO = config_get_string_value(config, "ALGORITMO_CORTO_PLAZO");
-  ALGORITMO_INGRESO_A_READY = config_get_string_value(config, "ALGORITMO_INGRESO_A_READY");
-  ALFA = config_get_string_value(config, "ALFA");
-  ESTIMACION_INICIAL = config_get_string_value(config, "ESTIMACION_INICIAL");
-  TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
-  //LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
-  log_debug(logger, "Datos extraídos del archivo de configuración");
+void crear_proceso_inicial(char* archivo_pseudocodigo, uint32_t tamanio){
+  t_pcb* pcb_nuevo = crear_pcb();
+  inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
+  log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
+  //mover_proceso_a_ready();
+  sem_post(&semaforo_revisar_largo_plazo);
 };
 
-void iniciar_conexiones_entre_modulos(){  
+void iniciar_conexiones_constantes_entre_modulos(){  
   pthread_create(&hilo_conexion_io, NULL, conectar_io, PUERTO_ESCUCHA_IO);
   pthread_create(&hilo_conexion_cpu_dispatch, NULL, conectar_cpu_dispatch, PUERTO_ESCUCHA_DISPATCH);
   pthread_create(&hilo_conexion_cpu_interrupt, NULL, conectar_cpu_interrupt, PUERTO_ESCUCHA_INTERRUPT);
 };
 
-/*
-void unir_hilos(){
-  log_info(logger, "Unión de hilos a punto de realizar");
-  pthread_join(hilo_conexion_cpu_dispatch, NULL);
-  log_info(logger, "---");
-  pthread_join(hilo_conexion_io, NULL);
-  log_info(logger, "Unión de hilos realizada");
+void iniciar_planificadores(){
+  pthread_create(&hilo_planificador_largo_plazo, NULL, planificador_largo_plazo, NULL);
+  pthread_create(&hilo_planificador_corto_plazo, NULL, planificador_corto_plazo, NULL);
+  //pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
 };
-*/
+
+void unir_hilos(){
+  pthread_join(hilo_conexion_cpu_dispatch, NULL);
+  pthread_join(hilo_conexion_cpu_interrupt, NULL);
+  pthread_join(hilo_conexion_io, NULL);
+  pthread_join(hilo_planificador_largo_plazo, NULL);
+  pthread_join(hilo_planificador_corto_plazo, NULL);
+  //pthread_join(hilo_planificador_mediano_plazo, NULL);
+};
