@@ -1,18 +1,20 @@
 #include "largo_plazo.h"
 
 t_queue* cola_new;
-t_list* lista_tamanios;
+t_list* lista_info_procesos;
 pthread_mutex_t mutex_new = PTHREAD_MUTEX_INITIALIZER;
-sem_t hay_procesos_en_new;
+//sem_t hay_procesos_en_new;
+sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo(){
   cola_new = queue_create();
-  lista_tamanios = list_create();
-  sem_init(&hay_procesos_en_new, 0, 0);
+  lista_info_procesos = list_create();
+  //sem_init(&hay_procesos_en_new, 0, 0);
+  sem_init(&semaforo_revisar_largo_plazo, 0, 0);
   pthread_mutex_init(&mutex_new, NULL);
 };
 
-void inicializar_proceso(t_pcb *pcb, char* archivo_pseudocodigo, uint32_t tamanio){
+void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamanio){
   pthread_mutex_lock(&mutex_new);
   queue_push(cola_new, pcb);
   list_add(lista_pcbs, pcb);
@@ -21,59 +23,91 @@ void inicializar_proceso(t_pcb *pcb, char* archivo_pseudocodigo, uint32_t tamani
   info->pid = pcb->pid;
   info->archivo_pseudocodigo = archivo_pseudocodigo;
   info->tamanio = tamanio;
-  list_add(lista_tamanios, info);
-
+  list_add(lista_info_procesos, info);
   pthread_mutex_unlock(&mutex_new);
   
   entrar_estado(pcb, ESTADO_NEW);
   log_creacion_proceso(pcb->pid);
+  sem_post(&semaforo_revisar_largo_plazo);
 };
 
-void mover_proceso_a_ready(void) {  
+bool es_PMCP(void){
+  return strcmp(ALGORITMO_INGRESO_A_READY, "PMCP") == 0;
+};
+
+void mover_proceso_a_ready(void){
   pthread_mutex_lock(&mutex_new);
   if(queue_is_empty(cola_new)){
     pthread_mutex_unlock(&mutex_new);
     return;
   };
 
-  t_pcb* pcb = NULL;
-  if(strcmp(ALGORITMO_INGRESO_A_READY, "PMCP") == 0){
-    pcb = elegir_proceso_mas_chico(cola_new, lista_tamanios);
-  } else {
-    pcb = queue_pop(cola_new);
+  if(es_PMCP()){
+    while(!queue_is_empty(cola_new)){
+      t_pcb* pcb = elegir_proceso_mas_chico(cola_new, lista_info_procesos);
+      if(!pcb) break;
+
+      uint32_t pid_buscado = pcb->pid;
+      bool tiene_pid_igual(void* elem){
+        return((t_informacion_largo_plazo*) elem)->pid == pid_buscado;
+      };
+
+      t_informacion_largo_plazo* info = list_find(lista_info_procesos, tiene_pid_igual);
+      if(!info) break;
+      pthread_mutex_unlock(&mutex_new);
+
+      if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
+        pthread_mutex_lock(&mutex_ready);
+        queue_push(cola_ready, pcb);
+        pthread_mutex_unlock(&mutex_ready); 
+
+        cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+        sem_post(&semaforo_ready);
+
+        pthread_mutex_lock(&mutex_new);
+        list_remove_by_condition(lista_info_procesos, tiene_pid_igual); //--> Revisar de crear una función para remover el elemento de la cola sin acceder directamente al campo 'elements'
+      } else {
+        pthread_mutex_lock(&mutex_new);
+        queue_push(cola_new, pcb);
+        break;
+      };
+    };
+    pthread_mutex_unlock(&mutex_new);
+    return;
   };
 
-  pthread_mutex_unlock(&mutex_new);
-  if(!pcb) return;
+  while(1){
+    if(queue_is_empty(cola_new)) return;
+    t_pcb* pcb = queue_peek(cola_new);
+    uint32_t pid_buscado = pcb->pid;
+    bool tiene_pid_igual(void* elem){
+      return ((t_informacion_largo_plazo*) elem)->pid == pid_buscado;
+    };
 
-  t_informacion_largo_plazo* info;
-  char* archivo_pseudocodigo;
-  uint32_t tamanio_proceso;
-  bool proceso_encontrado = false;
+    t_informacion_largo_plazo* info = list_find(lista_info_procesos, tiene_pid_igual);
+    if(!info) return;
+    pthread_mutex_unlock(&mutex_new);
 
-  for (int i = 0; i < list_size(lista_tamanios); i++) {
-    info = list_get(lista_tamanios, i);
+    if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
+      pthread_mutex_lock(&mutex_ready);
+      queue_push(cola_ready, pcb);
+      pthread_mutex_unlock(&mutex_ready); 
 
-    if (info->pid == pcb->pid) {
-      archivo_pseudocodigo = info->archivo_pseudocodigo;
-      tamanio_proceso = info->tamanio;
-      proceso_encontrado = true;
-      list_remove_and_destroy_element(lista_tamanios, i, free);
+      cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+      sem_post(&semaforo_ready);
+
+      pthread_mutex_lock(&mutex_new);
+      list_remove_by_condition(lista_info_procesos, tiene_pid_igual); //--> Revisar de crear una función para remover el elemento de la cola sin acceder directamente al campo 'elements'
+      queue_pop(cola_new);
+      pthread_mutex_unlock(&mutex_new);
+      continue;
+    } else {
+      log_info(logger, "Proceso <%d> no pudo entrar a memoria. Sigue en NEW...", pcb->pid);
+      pthread_mutex_lock(&mutex_new);
       break;
-    };    
+    };
   };
-
-  if (!proceso_encontrado) {
-    log_error(logger, "Error, no se encontro la informacion del proceso de PID: %d", pcb->pid);
-  };
-
-  if(enviar_proceso_a_memoria(archivo_pseudocodigo, tamanio_proceso, pcb->pid, conexion_memoria) == 0) {
-    pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb); 
-    pthread_mutex_unlock(&mutex_ready); 
-    cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
-    sem_post(&semaforo_ready);
-  };
+  pthread_mutex_unlock(&mutex_new);
 };
 
 void finalizar_proceso(t_pcb* pcb){
@@ -92,30 +126,44 @@ void finalizar_proceso(t_pcb* pcb){
     free(cronometros_pid);
   };
 
-  t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
-  agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
-  enviar_paquete(paquete, conexion_memoria);
-
-  int32_t respuesta;
-  recv(conexion_memoria, &respuesta, sizeof(int32_t), MSG_WAITALL);
-
-  if(respuesta < 0){
-    log_error(logger, "No se pudo liberar la memoria reservada para el proceso finalizado - PID <%d>", pcb->pid);
+  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+  if (handshake_kernel(socket_memoria) != 0) {
+    log_error(logger, "No se pudo conectar a Memoria para finalizar el proceso <%d>", pcb->pid);
     return;
   };
 
-  dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
-  free(clave_pid);
-  log_fin_proceso(pcb->pid); //Agregar en todos los que se vaya a EXIT
-  char* buffer = crear_cadena_metricas_estado(pcb);
-  log_metricas_estado(buffer);
-  free(buffer);
+  t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
+  enviar_paquete(paquete, socket_memoria);
 
-  bool es_pid(void* elem){
-    return ((t_informacion_largo_plazo*)elem)->pid == pcb->pid;
+  int32_t resultado;
+  if (recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL) <= 0) {
+    log_error(logger, "Error al recibir confirmación de finalización de Memoria");
+    close(socket_memoria);
+    return;
   };
 
-  t_informacion_largo_plazo* info = list_remove_by_condition(lista_tamanios, es_pid);
-  if(info) free(info);
-  destruir_pcb(pcb);
+  close(socket_memoria);
+
+  if (resultado == 0) {
+    dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
+    free(clave_pid);
+    log_fin_proceso(pcb->pid); //Agregar en todos los que se vaya a EXIT
+    char* buffer = crear_cadena_metricas_estado(pcb);
+    log_metricas_estado(buffer);
+    free(buffer);
+
+    bool es_pid(void* elem){
+      return ((t_informacion_largo_plazo*)elem)->pid == pcb->pid;
+    };
+
+    t_informacion_largo_plazo* info = list_remove_by_condition(lista_info_procesos, es_pid);
+    if(info) free(info);
+
+    destruir_pcb(pcb);
+    sem_post(&semaforo_revisar_largo_plazo); //SOSPECHOSO DE QUE INTENTE INGRESAR A READY CUANDO SE BLOQUEA.
+    return;
+  };
+  log_error(logger, "Error al eliminar el proceso");
+  return;
 };

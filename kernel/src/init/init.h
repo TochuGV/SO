@@ -17,8 +17,8 @@ extern char* PUERTO_ESCUCHA_INTERRUPT;
 extern char* PUERTO_ESCUCHA_IO;
 extern char* ALGORITMO_CORTO_PLAZO;
 extern char* ALGORITMO_INGRESO_A_READY;
-extern char* ALFA;
-extern char* ESTIMACION_INICIAL;
+extern double ALFA;
+extern double ESTIMACION_INICIAL;
 extern char* TIEMPO_SUSPENSION;
 extern char* LOG_LEVEL;
 
@@ -37,13 +37,13 @@ extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;
 extern pthread_t hilo_conexion_io;
 extern pthread_t hilo_planificador_largo_plazo;
-extern pthread_t hilo_planificacion;
-
-extern int conexion_memoria;
+extern pthread_t hilo_planificador_corto_plazo;
+//extern pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_kernel();
-void extraer_datos_config();
-void iniciar_conexiones_entre_modulos();
-//void unir_hilos();
+void crear_proceso_inicial(char*, uint32_t);
+void iniciar_conexiones_constantes_entre_modulos();
+void iniciar_planificadores();
+void unir_hilos();
 
 #endif /* INIT_H_ */

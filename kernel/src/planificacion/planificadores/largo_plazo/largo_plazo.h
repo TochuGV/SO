@@ -16,13 +16,14 @@ typedef struct {
 } t_informacion_largo_plazo;
 
 extern t_queue* cola_new;
-extern t_list* lista_tamanios;
+extern t_list* lista_info_procesos;
 extern pthread_mutex_t mutex_new;  
-extern sem_t semaforo_procesos_en_new;
+//extern sem_t hay_procesos_en_new;
+extern sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo();
 void inicializar_proceso(t_pcb*, char*, uint32_t);
-void mover_proceso_a_ready();
+void mover_proceso_a_ready(void);
 void finalizar_proceso(t_pcb*);
 
 #endif

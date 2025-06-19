@@ -1,11 +1,11 @@
 #include "pmcp.h"
 
-t_pcb* elegir_proceso_mas_chico(t_queue* cola_new, t_list* lista_tamanios){
-  if(queue_is_empty(cola_new) || list_is_empty(lista_tamanios)) return NULL;
+t_pcb* elegir_proceso_mas_chico(t_queue* cola_new, t_list* lista_info_procesos){
+  if(queue_is_empty(cola_new) || list_is_empty(lista_info_procesos)) return NULL;
   t_informacion_largo_plazo* candidato = NULL;
 
-  for(int i = 0; i < list_size(lista_tamanios); i++){
-    t_informacion_largo_plazo* info = list_get(lista_tamanios, i);
+  for(int i = 0; i < list_size(lista_info_procesos); i++){
+    t_informacion_largo_plazo* info = list_get(lista_info_procesos, i);
     if(candidato == NULL || info->tamanio < candidato->tamanio){
       candidato = info;
     };

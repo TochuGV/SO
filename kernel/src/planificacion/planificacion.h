@@ -5,6 +5,7 @@
 #include "planificadores/corto_plazo/corto_plazo.h"
 #include "estados/estados.h"
 
-void* planificador_ciclo_general(void*);
+void* planificador_largo_plazo(void*);
+void* planificador_corto_plazo(void*);
 
 #endif

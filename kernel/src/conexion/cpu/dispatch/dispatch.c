@@ -34,7 +34,7 @@ void* atender_cpu_dispatch(void* arg){
       log_warning(logger, "CPU Dispatch desconectada");
       break;
     };
-    log_debug(logger, "Código de operación recibido: %d", cod_op);
+    //log_debug(logger, "Código de operación recibido: %d", cod_op);
     
     t_syscall* syscall = recibir_syscall(socket_cpu_dispatch);
     if(!syscall){

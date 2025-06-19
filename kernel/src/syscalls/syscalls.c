@@ -33,10 +33,9 @@ t_syscall* recibir_syscall(int socket_cliente){
 
 void syscall_init_proc(t_syscall* syscall){
   t_pcb* pcb_nuevo = crear_pcb();
-  char* archivo_pseudocodigo = syscall->arg1;
+  char* archivo_pseudocodigo = strdup(syscall->arg1);
   uint32_t tamanio = atoi(syscall->arg2);
-  inicializar_proceso(pcb_nuevo, syscall->arg1, atoi(syscall->arg2));
-  //mover_proceso_a_ready();
+  inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
 };
 
 void syscall_exit(t_syscall* syscall){
@@ -45,7 +44,6 @@ void syscall_exit(t_syscall* syscall){
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
   liberar_cpu_por_pid(pcb->pid);
   finalizar_proceso(pcb);
-  //mover_proceso_a_exec(); //REVISAR - Justo después de que se libere la CPU, tendría que entrar otro
 };
 
 void syscall_io(t_syscall* syscall){
@@ -61,8 +59,9 @@ void syscall_io(t_syscall* syscall){
   if(!dispositivo){
     log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
-    liberar_cpu_por_pid(pcb->pid);  
+    liberar_cpu_por_pid(pcb->pid);
     finalizar_proceso(pcb);
+    //finalizar_proceso_por_syscall(pcb);
     return;
   }
 
@@ -93,24 +92,31 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
     return;
   };
   pcb->pc = syscall->pc;
-  log_debug(logger, "Solicitando volcado de información para el proceso <%d>", pcb->pid);
+  log_debug(logger, "Solicitando un volcado de información para el proceso <%d>", pcb->pid);
+
+  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+  if(handshake_kernel(socket_memoria) != 0){
+    log_error(logger, "No se pudo conectar a Memoria para solicitar DUMP_MEMORY");
+    return;
+  };
 
   t_paquete* paquete = crear_paquete(SOLICITUD_DUMP_MEMORY);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
-  enviar_paquete(paquete, conexion_memoria);
+  enviar_paquete(paquete, socket_memoria);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
   liberar_cpu_por_pid(pcb->pid);
 
-  // Recibir la respuesta de Memoria
-  int respuesta = recibir_operacion(conexion_memoria);
-  if(respuesta == 0){ //Supongamos que recibís OK, pasa el estado a READY despues de hacer el dump
+  int respuesta = recibir_operacion(socket_memoria);
+  close(socket_memoria);
+  
+  if(respuesta == 0){
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
     pthread_mutex_lock(&mutex_ready);
     queue_push(cola_ready, pcb);
     pthread_mutex_unlock(&mutex_ready);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
     sem_post(&semaforo_ready);
-  } else { // Si no se puede hacere el dump, el proceso se finaliza.
+  } else {
     log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
     finalizar_proceso(pcb);

@@ -21,7 +21,6 @@ void* atender_cpu(void* arg)
         break;
 
       case SOLICITUD_INSTRUCCION:
-        //log_debug(logger,"Entre al caso SOLICITUD INSTRUCCION");
         recibir_solicitud_instruccion(cliente_cpu);
         break;
       
@@ -30,11 +29,11 @@ void* atender_cpu(void* arg)
         break;
 
       case ESCRITURA:
-        // Escribir los datos que indique cpu en la direccion fisica que reciba de cpu
+        recibir_solicitud_escritura(cliente_cpu);
         break;
 
       case LECTURA:
-        // Leer el tamaño de memoria indicado por cpu en la direccion fisica que reciba de cpu
+        recibir_solicitud_lectura(cliente_cpu);
         break;
 
       case -1:
@@ -149,4 +148,66 @@ void recibir_solicitud_marco(int cliente_cpu)
   send(cliente_cpu, &marco, sizeof(uint32_t), 0);
 
   list_destroy_and_destroy_elements(valores, free);
+}
+
+void recibir_solicitud_escritura(int cliente_cpu)
+{
+  t_list* valores = recibir_paquete(cliente_cpu);
+
+  uint32_t pid = *(uint32_t*) list_get(valores, 0);
+  uint32_t direccion_fisica = *(uint32_t*) list_get(valores, 1);
+  uint32_t longitud_valor = *(uint32_t*)list_get(valores, 2); 
+
+  char* valor = malloc(longitud_valor);
+  memcpy(valor, list_get(valores, 3), longitud_valor); 
+
+  memcpy(memoria + direccion_fisica, valor, longitud_valor);
+
+  char* destino = (char*)(memoria + direccion_fisica);
+
+  if (strcmp(destino, valor) == 0) {
+    log_info(logger, "## PID: <%d> - <Escritura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, longitud_valor);
+    t_proceso* proceso = obtener_proceso(pid);
+    if (!proceso) {
+      log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
+      return;
+    }
+    proceso->metricas[ESCRITURAS]++;
+  } else {
+    log_error(logger, "Error, fallo la operacion WRITE");
+  }
+}
+
+void recibir_solicitud_lectura(int cliente_cpu)
+{
+  t_list* valores = recibir_paquete(cliente_cpu);
+
+  uint32_t pid = *(uint32_t*) list_get(valores, 0);
+  uint32_t direccion_fisica = *(uint32_t*) list_get(valores, 1);
+  uint32_t tamanio = *(uint32_t*)list_get(valores, 2); 
+
+  if (direccion_fisica + tamanio > tamanio_memoria) {
+    log_error(logger, "Lectura fuera de los límites de memoria. PID: %d", pid);
+    return;
+  }
+
+  char* valor = malloc(tamanio);
+  memcpy(valor, memoria + direccion_fisica, tamanio);
+
+  log_info(logger, "## PID: <%d> - <Lectura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, tamanio);
+  t_proceso* proceso = obtener_proceso(pid);
+
+  if (!proceso) {
+    log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
+    return;
+  }
+  proceso->metricas[LECTURAS]++;
+
+  uint32_t longitud_valor = strlen(valor) + 1;
+  t_paquete* paquete = crear_paquete(LECTURA);
+  agregar_a_paquete(paquete, &longitud_valor, sizeof(uint32_t));
+  agregar_a_paquete(paquete, valor, longitud_valor);
+  enviar_paquete(paquete, cliente_cpu);
+  log_debug(logger, "El valor leido: %s, acaba de ser enviado a CPU", valor);
+
 }
