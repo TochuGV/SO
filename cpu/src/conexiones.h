@@ -23,6 +23,9 @@ extern int conexion_memoria;
 extern datos_conexion_t* datos_dispatch;
 extern datos_conexion_t* datos_interrupt;
 extern datos_conexion_t* datos_memoria;
+extern uint32_t tamanio_pagina;
+extern uint32_t cant_entradas_tabla;
+extern uint32_t cant_niveles;
 
 //Configuraciones iniciales
 void iniciar_cpu(int32_t);

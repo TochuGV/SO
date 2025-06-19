@@ -12,6 +12,10 @@ datos_conexion_t* datos_dispatch;
 datos_conexion_t* datos_interrupt;
 datos_conexion_t* datos_memoria;
 
+uint32_t tamanio_pagina;
+uint32_t cant_entradas_tabla;
+uint32_t cant_niveles;
+
 void iniciar_cpu(int32_t identificador_cpu) {
 
   ip_kernel = config_get_string_value(config, "IP_KERNEL");

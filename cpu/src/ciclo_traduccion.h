@@ -38,9 +38,6 @@ extern entrada_cache* cache;
 extern cache_paginas_t* parametros_cache;
 extern entrada_tlb* tlb;
 extern tlb_t* parametros_tlb;
-extern uint32_t tamanio_pagina;
-extern uint32_t cant_entradas_tabla;
-extern uint32_t cant_niveles;
 
 //Manejo de caché de Páginas
 char* consultar_contenido_cache(uint32_t, uint32_t);
@@ -61,8 +58,8 @@ void asignar_lugar_en_cache(int, uint32_t,uint32_t,char*,bool);
 void asignar_lugar_en_TLB(int,uint32_t,uint32_t,uint32_t,int);
 
 //Auxiliares para ejecutar Write y Read
-char* pedir_valor_a_memoria(uint32_t, char*);
-void escribir_valor_en_memoria(uint32_t, char*);
+char* pedir_valor_a_memoria(uint32_t, uint32_t, char*);
+void escribir_valor_en_memoria(uint32_t, uint32_t, char*);
 
 //Auxiliar de conversión
 uint32_t convertir_a_uint32_t (char*);

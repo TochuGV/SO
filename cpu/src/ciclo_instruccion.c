@@ -37,7 +37,7 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     }
   }
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
-  finalizar_proceso_en_cache(pcb->pid,estado);
+  //finalizar_proceso_en_cache(pcb->pid,estado);
   free(pcb);
   return NULL;
 }
@@ -159,7 +159,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
   uint32_t desplazamiento = direccion % tamanio_pagina;
   uint32_t direccion_fisica;
-  char* valor_a_leer=NULL;
+  char* valor_a_leer;
   bool es_escritura=false;
 
   if (parametros_cache->cantidad_entradas > 0) {
@@ -174,7 +174,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
 
   direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
 
-  valor_a_leer=pedir_valor_a_memoria(direccion_fisica, parametro2);
+  valor_a_leer = pedir_valor_a_memoria(pid, direccion_fisica, parametro2);
 
   if (valor_a_leer == NULL) {
       log_error(logger, "No se pudo leer de memoria");
@@ -196,8 +196,8 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
 
   if (parametros_cache->cantidad_entradas > 0) {
     int pagina = consultar_pagina_cache(pid,nro_pagina);
-    if (pagina != 0) {
-      free (cache[pagina].contenido);
+    if (pagina != -1) {
+      //free (cache[pagina].contenido);
       strcpy(cache[pagina].contenido, valor_a_escribir);
       cache[pagina].bit_modificado = 1;
       cache[pagina].bit_uso = 1;
@@ -213,7 +213,7 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   //Log 4. Lectura Memoria
   log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_escribir);
 
-  escribir_valor_en_memoria(direccion_fisica, valor_a_escribir);
+  escribir_valor_en_memoria(pid, direccion_fisica, valor_a_escribir);
 
   actualizar_cache(pid, nro_pagina,valor_a_escribir,es_escritura);
 }

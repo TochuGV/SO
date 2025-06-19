@@ -49,6 +49,4 @@ void manejar_respuesta_io(uint32_t pid){
   } else {
     dispositivo->ocupado = false;
   };
-
-  mover_proceso_a_exec();
 };
