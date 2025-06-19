@@ -40,13 +40,13 @@ int consultar_pagina_cache (uint32_t pid, uint32_t nro_pagina) {
 }
 
 //Actualiza la caché con el nuevo valor según el algoritmo
-void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir) {
+void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir, bool es_escritura) {
   int cantidad=parametros_cache->cantidad_entradas;
 
   //busco entrada libre
   for(int i= 0; i < parametros_tlb -> cantidad_entradas; i++){
     if(cache[i].pid == -1){
-      asignar_lugar_en_cache(i,pid,nro_pagina,valor_a_escribir);
+      asignar_lugar_en_cache(i,pid,nro_pagina,valor_a_escribir,es_escritura);
       parametros_cache->puntero_reemplazo= (i+1) % cantidad;
     return;
     }
@@ -56,7 +56,7 @@ void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir) {
     case CLOCK:
       while(true){
         if(cache[parametros_cache->puntero_reemplazo].bit_uso == 0) {
-          asignar_lugar_en_cache(parametros_cache->puntero_reemplazo,pid,nro_pagina,valor_a_escribir);
+          asignar_lugar_en_cache(parametros_cache->puntero_reemplazo,pid,nro_pagina,valor_a_escribir,es_escritura);
           parametros_cache->puntero_reemplazo = (parametros_cache->puntero_reemplazo + 1) % cantidad;
           return;
         }
@@ -74,13 +74,13 @@ void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir) {
           int index = (parametros_cache->puntero_reemplazo + i) % cantidad;
 
           if(vueltas==0 && cache[index].bit_uso == 0 && cache[index].bit_modificado == 0) {
-          asignar_lugar_en_cache(index,pid,nro_pagina,valor_a_escribir);
+          asignar_lugar_en_cache(index,pid,nro_pagina,valor_a_escribir,es_escritura);
           parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
           return;
           }
 
           if(vueltas==1 && cache[index].bit_uso == 0 && cache[index].bit_modificado == 1) {
-          asignar_lugar_en_cache(index,pid,nro_pagina,valor_a_escribir);
+          asignar_lugar_en_cache(index,pid,nro_pagina,valor_a_escribir,es_escritura);
           parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
           return;
           }
@@ -93,7 +93,7 @@ void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir) {
       }
 
       int index = parametros_cache->puntero_reemplazo;
-      asignar_lugar_en_cache(index, pid, nro_pagina, valor_a_escribir);
+      asignar_lugar_en_cache(index, pid, nro_pagina, valor_a_escribir,es_escritura);
       parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
     return;
   }
@@ -197,12 +197,12 @@ void actualizar_TLB (uint32_t pid, uint32_t pagina, uint32_t marco) {
 } 
 
 //Auxiliar para hacer los reemplazos y asignaciones en aché y TLB
-void asignar_lugar_en_cache(int ubicacion, uint32_t pid, uint32_t pagina,char* valor){
+void asignar_lugar_en_cache(int ubicacion, uint32_t pid, uint32_t pagina,char* valor, bool es_escritura){
   cache[ubicacion].pid=pid;
   cache[ubicacion].pagina=pagina;
   cache[ubicacion].contenido=valor;
   cache[ubicacion].bit_uso=1;
-  cache[ubicacion].bit_modificado=1;
+  cache[ubicacion].bit_modificado = es_escritura? 1 : 0;
 }
 
 void asignar_lugar_en_TLB(int ubicacion, uint32_t pid, uint32_t marco, uint32_t pagina, int ultimo_agregado) {

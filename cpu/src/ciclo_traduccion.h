@@ -45,7 +45,7 @@ extern uint32_t cant_niveles;
 //Manejo de caché de Páginas
 char* consultar_contenido_cache(uint32_t, uint32_t);
 int consultar_pagina_cache(uint32_t, uint32_t);
-void actualizar_cache(uint32_t,uint32_t,char*);
+void actualizar_cache(uint32_t,uint32_t,char*,bool);
 
 //Traducción de dirección física
 uint32_t traducir_direccion(uint32_t, uint32_t, uint32_t); 
@@ -56,7 +56,7 @@ uint32_t consultar_memoria (uint32_t, uint32_t);
 void actualizar_TLB (uint32_t,uint32_t, uint32_t);
 
 //Auxiliares para asignaciones en Cache y TLB
-void asignar_lugar_en_cache(int, uint32_t,uint32_t,char*);
+void asignar_lugar_en_cache(int, uint32_t,uint32_t,char*,bool);
 void asignar_lugar_en_TLB(int,uint32_t,uint32_t,uint32_t,int);
 
 //Auxiliares para ejecutar Write y Read

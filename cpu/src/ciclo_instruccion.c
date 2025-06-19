@@ -159,6 +159,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   uint32_t desplazamiento = direccion % tamanio_pagina;
   uint32_t direccion_fisica;
   char* valor_a_leer=NULL;
+  bool es_escritura=false;
 
   if (parametros_cache->cantidad_entradas > 0) {
     valor_a_leer = consultar_contenido_cache(pid,nro_pagina);
@@ -182,7 +183,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   //Log 4. Lectura Memoria
   log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_leer);
 
-  actualizar_cache(pid,nro_pagina,valor_a_leer);
+  actualizar_cache(pid,nro_pagina,valor_a_leer,es_escritura);
 }
 
 void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribir){
@@ -190,6 +191,7 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   //Calcular numero de pagina y desplazamiento 
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
   uint32_t desplazamiento = direccion % tamanio_pagina;
+  bool es_escritura=true;
 
   if (parametros_cache->cantidad_entradas > 0) {
     int pagina = consultar_pagina_cache(pid,nro_pagina);
@@ -212,7 +214,7 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
 
   escribir_valor_en_memoria(direccion_fisica, valor_a_escribir);
 
-  actualizar_cache(pid, nro_pagina,valor_a_escribir);
+  actualizar_cache(pid, nro_pagina,valor_a_escribir,es_escritura);
 }
 
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
