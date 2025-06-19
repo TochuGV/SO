@@ -6,7 +6,7 @@ void* atender_kernel(void* arg)
 {
   int cliente_kernel = *(int*)arg;
 
-  while (1) {
+
     int cod_op = recibir_operacion(cliente_kernel);
     uint32_t pid;
     t_list* valores;
@@ -47,13 +47,16 @@ void* atender_kernel(void* arg)
       break;
         
     case -1:
-      log_error(logger, "Kernel se desconectó. Terminando servidor...");
+      log_error(logger, "Error Kernel se desconectó de forma extraña. Terminando servidor...");
       pthread_exit((void*)EXIT_FAILURE);
     default:
       log_warning(logger,"Operación desconocida. No quieras meter la pata.");
       break;
     }
-  }
+
+  log_info(logger, "Kernel Desconectado - FD del socket: <%d>", cliente_kernel);
+  pthread_exit((void*)EXIT_FAILURE);
+  
   return NULL;
 }
 
@@ -99,9 +102,6 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
 
     list_add(lista_instrucciones, nueva_instruccion);
 
-    //log_debug(logger, "Tipo: %d", instruccion.tipo);
-    //log_debug(logger, "Parametro 1: %s", instruccion.parametro1);
-    //log_debug(logger, "Parametro 2: %s", instruccion.parametro2);
   }
   fclose(file);
   return lista_instrucciones;
@@ -126,14 +126,12 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
 
   if (verificar_espacio_memoria(cantidad_marcos_proceso)) {
 
-    uint32_t longitud_archivo_pseudocodigo = *(int32_t*)list_get(valores, 0); 
+    uint32_t longitud_archivo_pseudocodigo = *(uint32_t*)list_get(valores, 0); 
 
     char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
     memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
 
     uint32_t pid = *(uint32_t*)list_get(valores, 3);
-
-    //log_debug(logger,"Proceso %s con pid %d recibido",archivo_pseudocodigo,pid);
 
     t_proceso* proceso = malloc(sizeof(t_proceso));
     proceso->pid = pid;
