@@ -42,45 +42,72 @@ void mover_proceso_a_ready(void){
     return;
   };
 
-  t_pcb* pcb = es_PMCP() ? elegir_proceso_mas_chico(cola_new, lista_info_procesos) : queue_peek(cola_new);
-  if(!pcb){
+  if(es_PMCP()){
+    while(!queue_is_empty(cola_new)){
+      t_pcb* pcb = elegir_proceso_mas_chico(cola_new, lista_info_procesos);
+      if(!pcb) break;
+
+      uint32_t pid_buscado = pcb->pid;
+      bool tiene_pid_igual(void* elem){
+        return((t_informacion_largo_plazo*) elem)->pid == pid_buscado;
+      };
+
+      t_informacion_largo_plazo* info = list_find(lista_info_procesos, tiene_pid_igual);
+      if(!info) break;
+      pthread_mutex_unlock(&mutex_new);
+
+      if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
+        pthread_mutex_lock(&mutex_ready);
+        queue_push(cola_ready, pcb);
+        pthread_mutex_unlock(&mutex_ready); 
+
+        cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+        sem_post(&semaforo_ready);
+
+        pthread_mutex_lock(&mutex_new);
+        list_remove_by_condition(lista_info_procesos, tiene_pid_igual); //--> Revisar de crear una función para remover el elemento de la cola sin acceder directamente al campo 'elements'
+      } else {
+        pthread_mutex_lock(&mutex_new);
+        queue_push(cola_new, pcb);
+        break;
+      };
+    };
     pthread_mutex_unlock(&mutex_new);
     return;
   };
 
-  uint32_t pid_buscado = pcb->pid;
-  bool tiene_pid_igual(void* elem){
-    return((t_informacion_largo_plazo*) elem)->pid == pid_buscado;
-  };
+  while(1){
+    if(queue_is_empty(cola_new)) return;
+    t_pcb* pcb = queue_peek(cola_new);
+    uint32_t pid_buscado = pcb->pid;
+    bool tiene_pid_igual(void* elem){
+      return ((t_informacion_largo_plazo*) elem)->pid == pid_buscado;
+    };
 
-  t_informacion_largo_plazo* info = list_find(lista_info_procesos, tiene_pid_igual);
+    t_informacion_largo_plazo* info = list_find(lista_info_procesos, tiene_pid_igual);
+    if(!info) return;
+    pthread_mutex_unlock(&mutex_new);
 
-  pthread_mutex_unlock(&mutex_new);
+    if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
+      pthread_mutex_lock(&mutex_ready);
+      queue_push(cola_ready, pcb);
+      pthread_mutex_unlock(&mutex_ready); 
 
-  if(!info){
-    log_error(logger, "No se encontró información del proceso <%d>", pcb->pid);
-    return;
-  };
+      cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+      sem_post(&semaforo_ready);
 
-  if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0) {
-    pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb);
-    pthread_mutex_unlock(&mutex_ready); 
-    cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
-    sem_post(&semaforo_ready);
-
-    bool es_pid(void* elem){ return ((t_pcb*)elem)->pid == pcb->pid; };
-
-    pthread_mutex_lock(&mutex_new);
-    if(es_PMCP()){
-      list_remove_by_condition(cola_new->elements, es_pid); //--> Revisar de crear una función para remover el elemento de la cola sin acceder directamente al campo 'elements'
-    } else {
+      pthread_mutex_lock(&mutex_new);
+      list_remove_by_condition(lista_info_procesos, tiene_pid_igual); //--> Revisar de crear una función para remover el elemento de la cola sin acceder directamente al campo 'elements'
       queue_pop(cola_new);
-    }
-    pthread_mutex_unlock(&mutex_new);
-  } else {
-    log_info(logger, "Proceso <%d> no pudo entrar a memoria. Sigue en NEW", pcb->pid);
+      pthread_mutex_unlock(&mutex_new);
+      continue;
+    } else {
+      log_info(logger, "Proceso <%d> no pudo entrar a memoria. Sigue en NEW...", pcb->pid);
+      pthread_mutex_lock(&mutex_new);
+      break;
+    };
   };
+  pthread_mutex_unlock(&mutex_new);
 };
 
 void finalizar_proceso(t_pcb* pcb){
@@ -134,7 +161,7 @@ void finalizar_proceso(t_pcb* pcb){
     if(info) free(info);
 
     destruir_pcb(pcb);
-    sem_post(&semaforo_revisar_largo_plazo);
+    sem_post(&semaforo_revisar_largo_plazo); //SOSPECHOSO DE QUE INTENTE INGRESAR A READY CUANDO SE BLOQUEA.
     return;
   };
   log_error(logger, "Error al eliminar el proceso");
