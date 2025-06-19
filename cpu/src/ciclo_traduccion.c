@@ -9,7 +9,7 @@ uint32_t cant_entradas_tabla;
 uint32_t cant_niveles;
 
 //Caché de páginas
-//verificar si tengo el valor que necesito leer y la página que necesito escribir
+//verificar si tengo el valor que necesito leer
 char* consultar_contenido_cache (uint32_t pid, uint32_t nro_pagina) {
   for (int i=0;i<parametros_cache->cantidad_entradas ;i++) {
     if (cache[i].pid==pid && cache[i].pagina==nro_pagina) {
@@ -24,6 +24,7 @@ char* consultar_contenido_cache (uint32_t pid, uint32_t nro_pagina) {
   return NULL;
 }
 
+//Verificar si tengo la página que estoy buscando escribir
 int consultar_pagina_cache (uint32_t pid, uint32_t nro_pagina) {
   for (int i=0;i<parametros_cache->cantidad_entradas ;i++) {
     if (cache[i].pid==pid && cache[i].pagina==nro_pagina) {
@@ -38,36 +39,63 @@ int consultar_pagina_cache (uint32_t pid, uint32_t nro_pagina) {
   return 0;
 }
 
-//
+//Actualiza la caché con el nuevo valor según el algoritmo
 void actualizar_cache(uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir) {
-  int reemplazo=0;
-  
+  int cantidad=parametros_cache->cantidad_entradas;
+
   //busco entrada libre
   for(int i= 0; i < parametros_tlb -> cantidad_entradas; i++){
-    if(tlb[i].pid == -1){
-      asignar_lugar_en_cache(reemplazo,pid,nro_pagina,valor_a_escribir);
+    if(cache[i].pid == -1){
+      asignar_lugar_en_cache(i,pid,nro_pagina,valor_a_escribir);
+      parametros_cache->puntero_reemplazo= (i+1) % cantidad;
     return;
     }
   }
-
+  
   switch (parametros_cache->algoritmo_reemplazo){
     case CLOCK:
-    for (int i=0; i < parametros_cache -> cantidad_entradas; i++){
-      if(cache[i].bit_uso == 0) {
-        reemplazo = i;
+      while(true){
+        if(cache[parametros_cache->puntero_reemplazo].bit_uso == 0) {
+          asignar_lugar_en_cache(parametros_cache->puntero_reemplazo,pid,nro_pagina,valor_a_escribir);
+          parametros_cache->puntero_reemplazo = (parametros_cache->puntero_reemplazo + 1) % cantidad;
+          return;
+        }
+        else {
+          cache[parametros_cache->puntero_reemplazo].bit_uso=0;
+          parametros_cache->puntero_reemplazo = (parametros_cache->puntero_reemplazo + 1) % cantidad;
+        }
       }
-      asignar_lugar_en_cache(reemplazo,pid,nro_pagina,valor_a_escribir);
-    }
     break;
 
     case CLOCK_M:
-    for (int i=0;i <= parametros_tlb->cantidad_entradas;i++) {
-      if (cache[i].bit_uso == 0 && cache[i].bit_uso == 0) {
-        reemplazo = i;
+      int vueltas = 0;
+      while (vueltas < 2) {
+        for (int i = 0; i < cantidad; i++) {
+          int index = (parametros_cache->puntero_reemplazo + i) % cantidad;
+
+          if(vueltas==0 && cache[index].bit_uso == 0 && cache[index].bit_modificado == 0) {
+          asignar_lugar_en_cache(index,pid,nro_pagina,valor_a_escribir);
+          parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
+          return;
+          }
+
+          if(vueltas==1 && cache[index].bit_uso == 0 && cache[index].bit_modificado == 1) {
+          asignar_lugar_en_cache(index,pid,nro_pagina,valor_a_escribir);
+          parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
+          return;
+          }
+
+          else {
+          cache[index].bit_uso=0;
+          }
+        }
+        vueltas++;
       }
-    }
-    asignar_lugar_en_cache(reemplazo,pid,nro_pagina,valor_a_escribir);
-    break;
+
+      int index = parametros_cache->puntero_reemplazo;
+      asignar_lugar_en_cache(index, pid, nro_pagina, valor_a_escribir);
+      parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
+    return;
   }
 }
 

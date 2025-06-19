@@ -157,8 +157,8 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   //Calcular numero de pagina y desplazamiento 
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
   uint32_t desplazamiento = direccion % tamanio_pagina;
-  char* valor_a_leer=NULL;
   uint32_t direccion_fisica;
+  char* valor_a_leer=NULL;
 
   if (parametros_cache->cantidad_entradas > 0) {
     valor_a_leer = consultar_contenido_cache(pid,nro_pagina);
