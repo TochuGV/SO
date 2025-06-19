@@ -2,8 +2,9 @@
 #define MAIN_H_
 
 #include "./utils/utils.h"
-#include "common_cpu.h"
+#include "conexiones.h"
+#include "ciclo_instruccion.h"
+#include "ciclo_traduccion.h"
 
-
-#endif /* MAIN_H_ */
+#endif /* MAIN_H */
 

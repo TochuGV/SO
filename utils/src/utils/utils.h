@@ -27,8 +27,6 @@ typedef enum {
   PETICION_IO,
   SOLICITUD_INSTRUCCION,
   INSTRUCCION,
-  OP_READ,
-  OP_WRITE,
   PCB,
   SOLICITUD_DUMP_MEMORY,
   DATOS_MEMORIA,
@@ -47,6 +45,15 @@ typedef enum {
 } tipo_syscall;
 
 typedef enum {
+  EJECUCION_CONTINUA,
+  EJECUCION_CONTINUA_INIT_PROC,
+  EJECUCION_FINALIZADA,
+  EJECUCION_BLOQUEADA_IO,
+  EJECUCION_BLOQUEADA_DUMP,
+  EJECUCION_BLOQUEADA_SOLICITUD
+} t_estado_ejecucion;
+
+typedef enum {
   MODULO_KERNEL = 100,
   MODULO_MEMORIA = 101,
   MODULO_CPU = 102,
@@ -57,6 +64,16 @@ typedef enum {
   CPU_DISPATCH,
   CPU_INTERRUPT
 } tipo_conexion_cpu;
+
+typedef enum {
+  LRU,
+  FIFO
+} t_algoritmo_tlb;
+
+typedef enum {
+  CLOCK,
+  CLOCK_M
+} t_algoritmo_cache;
 
 typedef struct {
 	int size;
