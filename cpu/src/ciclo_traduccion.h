@@ -5,39 +5,6 @@
 #include "conexiones.h"
 #include <math.h>
 
-typedef struct {
-uint32_t pid;
-int pagina;
-char* contenido;
-bool bit_uso; //Para Clock y Clock M
-bool bit_modificado; //Para Clock M
-} entrada_cache;
-
-typedef struct {
-entrada_cache* entradas;
-int cantidad_entradas;
-t_algoritmo_tlb algoritmo_reemplazo;
-int puntero_reemplazo; 
-} cache_paginas_t;
-
-typedef struct {
-  uint32_t pid;
-  int pagina;
-  int marco;
-  uint32_t tiempo_transcurrido; //Reemplaza el mayor en LRU
-  uint32_t nro_orden; //Reemplaza el menor en FIFO
-} entrada_tlb;
-
-typedef struct {
-  entrada_tlb* entradas;
-  int cantidad_entradas;
-  t_algoritmo_tlb algoritmo_reemplazo;
-} tlb_t;
-
-extern entrada_cache* cache;
-extern cache_paginas_t* parametros_cache;
-extern entrada_tlb* tlb;
-extern tlb_t* parametros_tlb;
 
 //Manejo de caché de Páginas
 char* consultar_contenido_cache(uint32_t, uint32_t);

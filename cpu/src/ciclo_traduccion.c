@@ -1,10 +1,5 @@
 #include "ciclo_traduccion.h"
 
-entrada_cache* cache;
-cache_paginas_t* parametros_cache;
-entrada_tlb* tlb;
-tlb_t* parametros_tlb;
-
 //Caché de páginas
 //verificar si tengo el valor que necesito leer
 char* consultar_contenido_cache (uint32_t pid, uint32_t nro_pagina) {
