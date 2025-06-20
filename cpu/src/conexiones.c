@@ -49,6 +49,16 @@ void iniciar_cpu(int32_t identificador_cpu) {
   char* algoritmo_tlb = config_get_string_value(config,"REEMPLAZO_TLB");
   parametros_tlb->algoritmo_reemplazo = convertir_tlb (algoritmo_tlb);
 
+  cache = malloc(sizeof(entrada_cache) * parametros_cache->cantidad_entradas);
+  for (int i = 0; i < parametros_cache->cantidad_entradas; i++) {
+    cache[i].pid = -1;
+    cache[i].pagina = -1;
+    cache[i].contenido = NULL;
+    cache[i].bit_uso = 0;
+    cache[i].bit_uso = 0;
+    cache[i].bit_modificado = 0;
+  }
+
   tlb = malloc(sizeof(entrada_tlb) * parametros_tlb->cantidad_entradas);
   for (int i = 0; i < parametros_tlb->cantidad_entradas; i++) {
     tlb[i].pid = -1;
