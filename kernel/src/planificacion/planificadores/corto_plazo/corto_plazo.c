@@ -14,7 +14,31 @@ void iniciar_planificacion_corto_plazo() {
 };
 
 void mover_proceso_a_exec(){
-  pthread_mutex_lock(&mutex_ready); 
+  pthread_mutex_lock(&mutex_ready);
+
+
+  log_debug(logger, "Estimaciones actuales de procesos en READY:");
+  t_list* lista_auxiliar = list_create();
+
+  while (!queue_is_empty(cola_ready)) {
+    t_pcb* pcb = queue_pop(cola_ready);
+    list_add(lista_auxiliar, pcb);
+
+    char* clave = string_itoa(pcb->pid);
+    double* estimacion = dictionary_get(diccionario_estimaciones, clave);
+    double valor = estimacion ? *estimacion : ESTIMACION_INICIAL;
+    log_debug(logger, "PID <%d> - Estimación: %.2f", pcb->pid, valor);
+    free(clave);
+  }
+
+  // Volvemos a poner los procesos en la cola
+  for (int i = 0; i < list_size(lista_auxiliar); i++) {
+    t_pcb* pcb = list_get(lista_auxiliar, i);
+    queue_push(cola_ready, pcb);
+  }
+  list_destroy(lista_auxiliar);
+
+
   if (queue_is_empty(cola_ready)) { 
     log_info(logger, "No hay procesos en la cola READY"); 
     pthread_mutex_unlock(&mutex_ready); 
