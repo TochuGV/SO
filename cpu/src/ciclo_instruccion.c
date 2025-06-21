@@ -33,8 +33,8 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
 
     if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
       log_info(logger, "PID %d interrumpido", pcb->pid);
-      estado = EJECUCION_BLOQUEADA_SOLICITUD;
-    }
+      estado = EJECUCION_DESALOJADO;
+    };
   }
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
   //finalizar_proceso_en_cache(pcb->pid,estado);
@@ -248,27 +248,29 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
   t_paquete* paquete = NULL;
   switch(estado){
     case EJECUCION_CONTINUA_INIT_PROC:
-      //enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_INIT_PROC);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
       break;
     
     case EJECUCION_FINALIZADA:
-      //enviar_finalizacion(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_EXIT);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, "", "", pcb->pc);
       break;
 
     case EJECUCION_BLOQUEADA_IO:
-      //enviar_bloqueo_IO(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_IO);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
       break;
 
     case EJECUCION_BLOQUEADA_DUMP:
-      //enviar_bloqueo_DUMP(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, "", "", pcb->pc);
+      break;
+
+    case EJECUCION_DESALOJADO:
+      paquete = crear_paquete(DESALOJO);
+      agregar_a_paquete(paquete, (&pcb->pid), sizeof(uint32_t));
+      agregar_a_paquete(paquete, (&pcb->pc), sizeof(uint32_t));
       break;
 
     default:
@@ -283,7 +285,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
   int pid_interrupcion;
   log_info(logger, "Socket interrupt: %d", socket_interrupt);
   log_info(logger, "PID actual: %d", pid_actual);
-  int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
+  int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(uint32_t), MSG_DONTWAIT);
 
   if (bytes > 0) {
     //Log 2. Interrupción recibida

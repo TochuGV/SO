@@ -16,7 +16,6 @@ void iniciar_planificacion_corto_plazo() {
 void mover_proceso_a_exec(){
   pthread_mutex_lock(&mutex_ready);
 
-
   log_debug(logger, "Estimaciones actuales de procesos en READY:");
   t_list* lista_auxiliar = list_create();
 
@@ -38,7 +37,6 @@ void mover_proceso_a_exec(){
   }
   list_destroy(lista_auxiliar);
 
-
   if (queue_is_empty(cola_ready)) { 
     log_info(logger, "No hay procesos en la cola READY"); 
     pthread_mutex_unlock(&mutex_ready); 
@@ -46,11 +44,12 @@ void mover_proceso_a_exec(){
   };
   
   t_pcb* pcb_elegido = obtener_proximo_proceso_ready(cola_ready);
+  /*
   if (strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0) {
     double estimacion = obtener_estimacion(pcb_elegido->pid);
     log_info(logger, "SJF seleccionó PID <%d> con estimación %.2f", pcb_elegido->pid, estimacion);
   }
-
+  */
   pthread_mutex_unlock(&mutex_ready);
   pthread_mutex_lock(&mutex_cpus);
   t_cpu* cpu_seleccionada = NULL;
@@ -66,15 +65,12 @@ void mover_proceso_a_exec(){
   pthread_mutex_unlock(&mutex_cpus);
   if(cpu_seleccionada == NULL){
     log_info(logger, "No hay CPUs disponibles. Esperando...");
-    
-    pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb_elegido); //Estas 3 líneas son opcionales por si no se puede asignar una CPU
-    pthread_mutex_unlock(&mutex_ready);
-    
+    encolar_proceso_en_ready(pcb_elegido);
     return;
   };
 
   log_info(logger, "Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
+  cpu_seleccionada->proceso_en_ejecucion = pcb_elegido; 
   enviar_a_cpu(pcb_elegido, cpu_seleccionada->socket_dispatch);
   cambiar_estado(pcb_elegido, ESTADO_READY, ESTADO_EXEC);
 };
@@ -104,6 +100,7 @@ void liberar_cpu_por_pid(uint32_t pid){
     t_cpu* cpu = list_get(lista_cpus, i);
     if(!cpu->disponible){
       cpu->disponible = true;
+      cpu->proceso_en_ejecucion = NULL;
       sem_post(&semaforo_cpu_libre);
       log_debug(logger, "Se liberó la CPU %d, ya que el proceso <%d> dejó de utilizar este recurso", cpu->id_cpu, pid);
       break;

@@ -9,6 +9,7 @@
 #include "./planificacion/algoritmos/sjf/sjf.h"
 #include <commons/collections/queue.h>
 #include <semaphore.h>
+#include "./planificacion/algoritmos/srt/srt.h"
 
 typedef struct {
   uint32_t pid;

@@ -60,11 +60,9 @@ void mover_proceso_a_ready(void){
       pthread_mutex_unlock(&mutex_new);
 
       if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
-        pthread_mutex_lock(&mutex_ready);
-        queue_push(cola_ready, pcb);
-        pthread_mutex_unlock(&mutex_ready); 
-
+        encolar_proceso_en_ready(pcb); 
         cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+        
         sem_post(&semaforo_ready);
 
         pthread_mutex_lock(&mutex_new);
@@ -92,10 +90,7 @@ void mover_proceso_a_ready(void){
     pthread_mutex_unlock(&mutex_new);
 
     if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
-      pthread_mutex_lock(&mutex_ready);
-      queue_push(cola_ready, pcb);
-      pthread_mutex_unlock(&mutex_ready); 
-
+      encolar_proceso_en_ready(pcb);
       cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
       sem_post(&semaforo_ready);
 

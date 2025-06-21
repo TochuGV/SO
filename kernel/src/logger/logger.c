@@ -21,7 +21,9 @@ void log_fin_io(uint32_t pid){
   log_info(logger, "## (<%d>) finalizó IO y pasa a READY", pid);
 };
 
-//void log_desalojo_sjf_srt(){};
+void log_desalojo_sjf_srt(uint32_t pid){
+  log_info(logger, "## (<%d>) - Desalojado por algoritmo SJF/SRT", pid);
+};
 
 void log_fin_proceso(uint32_t pid){
   log_info(logger, "## (<%d>) - Finaliza el proceso", pid);

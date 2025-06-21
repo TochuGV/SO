@@ -7,7 +7,7 @@
 * Calcula estimaciones de ráfaga y selecciona el próximo proceso READY.
 * Usa un diccionario <pid, estimación> para trackear historiales.
 */
-
+/*
 // Recorre la cola READY y selecciona el proceso con menor estimación de ráfaga
 t_pcb* seleccionar_proceso_con_menor_estimacion(t_queue* cola_ready) {
    // Si la cola está vacía, no hay proceso a elegir.
@@ -37,12 +37,30 @@ t_pcb* seleccionar_proceso_con_menor_estimacion(t_queue* cola_ready) {
    // Retornamos el proceso con menor estimación.
   return pcb_menor;
 }
+*/
+
+void reordenar_cola_ready_por_estimacion(t_queue* cola_ready) {
+  if (queue_is_empty(cola_ready)) return;
+
+  t_list* lista_ready = cola_ready->elements;
+
+  list_sort(lista_ready, (void*) comparar_estimaciones);
+}
+
+bool comparar_estimaciones(t_pcb* pcb1, t_pcb* pcb2) {
+  double estimacion1 = obtener_estimacion(pcb1->pid);
+  double estimacion2 = obtener_estimacion(pcb2->pid);
+  return estimacion1 < estimacion2;
+}
 
 
 // Decide qué algoritmo usar dinámicamente según la config
 t_pcb* obtener_proximo_proceso_ready(t_queue* cola_ready) {
-  if (strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0)
-    return seleccionar_proceso_con_menor_estimacion(cola_ready);
+  if (strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0 || strcmp(ALGORITMO_CORTO_PLAZO, "SRT") == 0) {
+    reordenar_cola_ready_por_estimacion(cola_ready);
+    return queue_pop(cola_ready);
+  }
+    //return seleccionar_proceso_con_menor_estimacion(cola_ready);
   else
     return queue_pop(cola_ready); // FIFO por defecto
 }

@@ -93,3 +93,11 @@ void destruir_contexto_io(void* contexto){
   if(ctx->dispositivo_actual) free(ctx->dispositivo_actual);
   free(ctx);
 };
+
+void encolar_proceso_en_ready(t_pcb* pcb){
+  pthread_mutex_lock(&mutex_ready);
+  queue_push(cola_ready, pcb);
+  pthread_mutex_unlock(&mutex_ready);
+  if(es_SRT())
+    desalojar_cpu();
+};

@@ -122,9 +122,7 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   
   if(respuesta == 0){
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
-    pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb);
-    pthread_mutex_unlock(&mutex_ready);
+    encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
     sem_post(&semaforo_ready);
   } else {

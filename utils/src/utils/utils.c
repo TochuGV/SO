@@ -5,14 +5,6 @@
 t_log* logger;
 t_config* config;
 
-//PARA ESTIMACIONES
-uint64_t timestamp() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (tv.tv_sec * 1000) + (tv.tv_usec / 1000); // milisegundos
-}
-
-
 //// LOGGER
 t_log* iniciar_logger(char* file_name, char* process_name, t_log_level level){
 	t_log* nuevo_logger;

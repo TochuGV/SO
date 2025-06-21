@@ -32,6 +32,7 @@ int recibir_handshake_kernel(int cliente_kernel){
         cpu->socket_dispatch = -1;
         cpu->socket_interrupt = -1;
         cpu->disponible = true;
+        cpu->proceso_en_ejecucion = NULL;
         list_add(lista_cpus, cpu);
       };
       if(tipo_conexion == CPU_DISPATCH){

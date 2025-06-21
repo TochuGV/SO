@@ -12,6 +12,8 @@
 // Selección y planificación
 t_pcb* seleccionar_proceso_con_menor_estimacion(t_queue*);
 t_pcb* obtener_proximo_proceso_ready(t_queue*);
+void reordenar_cola_ready_por_estimacion(t_queue* cola_ready);
+bool comparar_estimaciones(t_pcb* pcb1, t_pcb* pcb2);
 
 // Estimaciones
 void inicializar_estimacion_rafaga(uint32_t);
