@@ -1,4 +1,5 @@
 #include "corto_plazo.h"
+#include "planificacion/algoritmos/sjf/sjf.h"
 
 t_queue* cola_ready;
 sem_t semaforo_ready;
@@ -19,15 +20,13 @@ void mover_proceso_a_exec(){
     pthread_mutex_unlock(&mutex_ready); 
     return;
   };
-  /*
-  t_pcb* pcb_elegido = obtener_proximo_proceso_ready();
-
+  
+  t_pcb* pcb_elegido = obtener_proximo_proceso_ready(cola_ready);
   if (strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0) {
-    log_info(logger, "SJF seleccionó PID <%d> con estimación %.2f",
-            pcb_elegido->pid, pcb_elegido->estimacion_rafaga);
+    double estimacion = obtener_estimacion(pcb_elegido->pid);
+    log_info(logger, "SJF seleccionó PID <%d> con estimación %.2f", pcb_elegido->pid, estimacion);
   }
-  */
-  t_pcb* pcb_elegido = queue_pop(cola_ready);
+
   pthread_mutex_unlock(&mutex_ready);
   pthread_mutex_lock(&mutex_cpus);
   t_cpu* cpu_seleccionada = NULL;
@@ -39,6 +38,7 @@ void mover_proceso_a_exec(){
       break;
     };
   };
+
   pthread_mutex_unlock(&mutex_cpus);
   if(cpu_seleccionada == NULL){
     log_info(logger, "No hay CPUs disponibles. Esperando...");
@@ -49,6 +49,7 @@ void mover_proceso_a_exec(){
     
     return;
   };
+
   log_info(logger, "Asignando proceso %d a CPU %d", pcb_elegido->pid, cpu_seleccionada->id_cpu);
   enviar_a_cpu(pcb_elegido, cpu_seleccionada->socket_dispatch);
   cambiar_estado(pcb_elegido, ESTADO_READY, ESTADO_EXEC);

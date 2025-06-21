@@ -1,9 +1,16 @@
 #include "utils.h"
-
+#include <sys/time.h>
 
 //// VARIABLES GLOBALES
 t_log* logger;
 t_config* config;
+
+//PARA ESTIMACIONES
+uint64_t timestamp() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * 1000) + (tv.tv_usec / 1000); // milisegundos
+}
 
 
 //// LOGGER
@@ -265,3 +272,5 @@ void terminar_programa(int conexion, t_log* logger, t_config* config){
 	log_destroy(logger);
 	config_destroy(config);	
 };
+
+
