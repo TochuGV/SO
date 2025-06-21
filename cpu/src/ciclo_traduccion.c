@@ -1,10 +1,5 @@
 #include "ciclo_traduccion.h"
 
-entrada_cache* cache;
-cache_paginas_t* parametros_cache;
-entrada_tlb* tlb;
-tlb_t* parametros_tlb;
-
 //Caché de páginas
 //verificar si tengo el valor que necesito leer
 char* consultar_contenido_cache (uint32_t pid, uint32_t nro_pagina) {
@@ -24,7 +19,7 @@ char* consultar_contenido_cache (uint32_t pid, uint32_t nro_pagina) {
 //Verificar si tengo la página que estoy buscando escribir
 int consultar_pagina_cache (uint32_t pid, uint32_t nro_pagina) {
   for (int i=0;i<parametros_cache->cantidad_entradas ;i++) {
-    if (cache[i].pid==pid && cache[i].pagina==nro_pagina) {
+    if (cache[i].pid == pid && cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
         log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
         
@@ -236,7 +231,7 @@ void asignar_lugar_en_TLB(int ubicacion, uint32_t pid, uint32_t marco, uint32_t 
 }
 
 char* pedir_valor_a_memoria(uint32_t pid, uint32_t direccion_fisica, char* tamanio){
-  uint32_t tamanio_a_leer = (uint32_t) atoi(tamanio);
+  uint32_t tamanio_a_leer = atoi(tamanio);
   t_paquete* paquete = crear_paquete(LECTURA);
 
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
@@ -246,6 +241,7 @@ char* pedir_valor_a_memoria(uint32_t pid, uint32_t direccion_fisica, char* taman
   enviar_paquete(paquete, conexion_memoria);
 
   int cod_op = recibir_operacion(conexion_memoria);
+
 
   char* valor;
 

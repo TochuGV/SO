@@ -159,7 +159,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
   uint32_t desplazamiento = direccion % tamanio_pagina;
   uint32_t direccion_fisica;
-  char* valor_a_leer;
+  char* valor_a_leer = NULL;
   bool es_escritura=false;
 
   if (parametros_cache->cantidad_entradas > 0) {
@@ -194,6 +194,8 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   uint32_t desplazamiento = direccion % tamanio_pagina;
   bool es_escritura=true;
 
+  log_warning(logger, "Nro pag: %d, Desplazamiento: %d",nro_pagina,desplazamiento);
+
   if (parametros_cache->cantidad_entradas > 0) {
     int pagina = consultar_pagina_cache(pid,nro_pagina);
     if (pagina != -1) {
@@ -203,7 +205,7 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
       cache[pagina].bit_uso = 1;
     }
   }
-
+  
   uint32_t direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
 
   if (direccion_fisica==-1){
