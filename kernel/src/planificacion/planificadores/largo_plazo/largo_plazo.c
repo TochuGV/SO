@@ -15,6 +15,8 @@ void iniciar_planificacion_largo_plazo(){
 };
 
 void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamanio){
+
+  inicializar_estimacion_rafaga(pcb->pid);
   pthread_mutex_lock(&mutex_new);
   queue_push(cola_new, pcb);
   list_add(lista_pcbs, pcb);
@@ -27,6 +29,7 @@ void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamani
   pthread_mutex_unlock(&mutex_new);
   
   entrar_estado(pcb, ESTADO_NEW);
+  
   log_creacion_proceso(pcb->pid);
   sem_post(&semaforo_revisar_largo_plazo);
 };
@@ -147,6 +150,12 @@ void finalizar_proceso(t_pcb* pcb){
 
   if (resultado == 0) {
     dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
+
+    //eliminamos la estimacion del proceso terminado
+    char* clave_estimacion = string_itoa(pcb->pid);
+    dictionary_remove_and_destroy(diccionario_estimaciones, clave_estimacion, free);
+    free(clave_estimacion);
+
     free(clave_pid);
     log_fin_proceso(pcb->pid); //Agregar en todos los que se vaya a EXIT
     char* buffer = crear_cadena_metricas_estado(pcb);

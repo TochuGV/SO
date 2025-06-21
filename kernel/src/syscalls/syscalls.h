@@ -3,6 +3,7 @@
 
 #include "utils/utils.h"
 #include "planificacion/planificacion.h"
+#include "init/init.h"
 
 typedef struct {
   uint32_t pid;

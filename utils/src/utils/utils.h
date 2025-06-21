@@ -125,7 +125,6 @@ typedef struct {
   uint32_t pc;
   uint32_t me[CANTIDAD_ESTADOS];
   uint32_t mt[CANTIDAD_ESTADOS];
-  double estimacion_rafaga;
 } t_pcb;
 
 //// VARIABLES GLOBALES

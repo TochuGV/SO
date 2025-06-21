@@ -28,6 +28,7 @@ extern t_list* lista_pcbs;
 extern t_dictionary* diccionario_dispositivos;
 extern t_dictionary* diccionario_cronometros;
 extern t_dictionary* diccionario_contextos_io;
+extern t_dictionary* diccionario_estimaciones;
 
 extern pthread_mutex_t mutex_pcbs;
 

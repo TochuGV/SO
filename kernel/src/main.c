@@ -10,6 +10,10 @@ int main(int argc, char* argv[]){
 
   //terminar_programa(conexion_memoria, logger, config); --> 'conexion_memoria' ya no existe más.
   dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);
+
+  //destruimos el diccionario de estimaciones que se usa para sjf
+  //dictionary_destroy_and_destroy_elements(diccionario_estimaciones, free);
+
   //Se pueden destruir logs, configs, conexiones, listas con elementos, semáforos, diccionarios, etc.
 	return EXIT_SUCCESS;
 };
