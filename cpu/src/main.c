@@ -2,34 +2,47 @@
 
 int main(int argc, char* argv[]) 
 {
+  if (argc < 2) {
+    fprintf(stderr, "Uso: %s <ID_CPU>\n", argv[0]);
+    exit(EXIT_FAILURE);
+}
+
   logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_DEBUG);
   config = iniciar_config("cpu.config");
 
+  ip_kernel = config_get_string_value(config, "IP_KERNEL");
+  ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+
+  puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
+  puerto_kernel_interrupt = config_get_string_value(config, "PUERTO_KERNEL_INTERRUPT");
+  puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+
   int32_t identificador_cpu = atoi(argv[1]);
 
-  iniciar_cpu(identificador_cpu);
+  t_cpu* cpu = iniciar_cpu(identificador_cpu);
 
   //Hilos
   pthread_t hilo_kernel_dispatch;
   pthread_t hilo_kernel_interrupt;
   pthread_t hilo_memoria;
 
-  pthread_create(&hilo_kernel_dispatch, NULL, conectar_dispatch, datos_dispatch);
-  pthread_create(&hilo_kernel_interrupt, NULL, conectar_interrupt, datos_interrupt);
-  pthread_create(&hilo_memoria, NULL, conectar_memoria, datos_memoria);
+  pthread_create(&hilo_kernel_dispatch, NULL, conectar_dispatch, cpu);
+  pthread_create(&hilo_kernel_interrupt, NULL, conectar_interrupt, cpu);
+  pthread_create(&hilo_memoria, NULL, conectar_memoria, cpu);
 
   pthread_join(hilo_kernel_dispatch, NULL);
-  log_debug(logger, "Socket de Kernel Dispatch: %d", conexion_kernel_dispatch);
+  log_debug(logger, "Socket de Kernel Dispatch: %d", cpu->conexion_kernel_dispatch);
   pthread_join(hilo_kernel_interrupt, NULL);
+  log_debug(logger, "Socket de Kernel Interupt: %d", cpu->conexion_kernel_interrupt);
   pthread_join(hilo_memoria, NULL);
-  log_debug(logger, "Socket de Memoria: %d", conexion_memoria);
+  log_debug(logger, "Socket de Memoria: %d", cpu->conexion_memoria);
 
   bool cpu_disponible=true;
 
   while(1){   
     if(cpu_disponible){
         //Paso 1: Recibir el PCB desde Kernel
-        t_pcb* pcb = recibir_pcb(conexion_kernel_dispatch);
+        t_pcb* pcb = recibir_pcb(cpu->conexion_kernel_dispatch);
         if (pcb == NULL) {
           //log_info(logger, "No se recibió ningún PCB");
           log_debug(logger, "recv devolvió -1. Loop infinito evitado.");
@@ -37,9 +50,10 @@ int main(int argc, char* argv[])
           break;
         };
         cpu_disponible = false;
-        ciclo_de_instruccion(pcb, conexion_kernel_dispatch, conexion_kernel_interrupt, conexion_memoria);
+        ciclo_de_instruccion(cpu,pcb, cpu->conexion_kernel_dispatch, cpu->conexion_kernel_interrupt, cpu->conexion_memoria);
         cpu_disponible = true;
     }
   }
+  liberar_cpu (cpu);
   return EXIT_SUCCESS;
 }

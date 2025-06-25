@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "ciclo_instruccion.h": "c",
+        "math.h": "c",
+        "ciclo_traduccion.h": "c",
+        "estructuras.h": "c"
+    }
+}
