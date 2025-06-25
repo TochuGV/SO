@@ -91,7 +91,7 @@ void iniciar_conexiones_constantes_entre_modulos(){
 void iniciar_planificadores(){
   pthread_create(&hilo_planificador_largo_plazo, NULL, planificador_largo_plazo, NULL);
   pthread_create(&hilo_planificador_corto_plazo, NULL, planificador_corto_plazo, NULL);
-  //pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
+  pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
 };
 
 void unir_hilos(){
@@ -100,7 +100,7 @@ void unir_hilos(){
   pthread_join(hilo_conexion_io, NULL);
   pthread_join(hilo_planificador_largo_plazo, NULL);
   pthread_join(hilo_planificador_corto_plazo, NULL);
-  //pthread_join(hilo_planificador_mediano_plazo, NULL);
+  pthread_join(hilo_planificador_mediano_plazo, NULL);
 };
 
 void finalizar_kernel(){

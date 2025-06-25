@@ -14,3 +14,9 @@ void* planificador_corto_plazo(void* arg){
     mover_proceso_a_exec();
   };
 };
+
+void* planificador_mediano_plazo(void* arg){
+  while(1){
+    sleep(1);
+  };
+};
