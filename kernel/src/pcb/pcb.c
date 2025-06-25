@@ -30,37 +30,17 @@ void destruir_pcb(t_pcb* pcb){
   free(pcb);
 };
 
-/*
-void* serializar_pcb(t_pcb* pcb, int bytes){
-  
-  int tamanio_me = sizeof(uint32_t) * 7;
-  int tamanio_mt = sizeof(uint32_t) * 7;
-  int tamanio = sizeof(uint32_t) * 2 + tamanio_me + tamanio_mt;
+void* serializar_pcb(t_pcb* pcb, int* bytes){
 
+  /*
   Se pueden calcular los bytes antes de llamar a la función, o calcularlos dentro de la función o crear otra.
   Si se calculan antes, el parámetro es 'int bytes', sino tendría que ser 'int* bytes'.
 
   Ejemplo de uso:
-    int bytes = sizeof(uint32_t) * (2 + CANTIDAD_ESTADOS * 2);
+    int bytes = sizeof(uint32_t) * 2;
     void* buffer = serializar_pcb(pcb, bytes);
-  
-  void* magic = malloc(bytes);
-  int desplazamiento = 0;
+  */
 
-  memcpy(magic + desplazamiento, &(pcb->pid), sizeof(uint32_t));
-  desplazamiento += sizeof(uint32_t);
-  memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
-  desplazamiento += sizeof(uint32_t);
-  memcpy(magic + desplazamiento, pcb->me, sizeof(uint32_t) * CANTIDAD_ESTADOS);
-  desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
-  memcpy(magic + desplazamiento, pcb->mt, sizeof(uint32_t) * CANTIDAD_ESTADOS);
-  desplazamiento += sizeof(uint32_t) * CANTIDAD_ESTADOS;
-
-  return magic;
-};
-*/
-
-void* serializar_pcb_para_cpu(t_pcb* pcb, int* bytes){
   *bytes = sizeof(uint32_t) * 2;
   void* magic = malloc(*bytes);
   int desplazamiento = 0;

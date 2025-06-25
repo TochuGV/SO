@@ -77,7 +77,7 @@ void mover_proceso_a_exec(){
 
 void enviar_a_cpu(t_pcb* pcb, int socket_cpu_dispatch){
   int bytes;
-  void* stream = serializar_pcb_para_cpu(pcb, &bytes);
+  void* stream = serializar_pcb(pcb, &bytes);
   t_paquete* paquete = crear_paquete(PCB);
   agregar_a_paquete(paquete, stream, bytes);
   enviar_paquete(paquete, socket_cpu_dispatch);

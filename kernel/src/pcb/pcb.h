@@ -4,24 +4,10 @@
 #include <stdint.h>
 #include <utils/utils.h>
 
-/*
-typedef enum {
-  ESTADO_NEW,
-  ESTADO_READY,
-  ESTADO_EXEC,
-  ESTADO_BLOCKED,
-  ESTADO_SUSP_BLOCKED,
-  ESTADO_SUSP_READY,
-  ESTADO_EXIT,
-  CANTIDAD_ESTADOS
-} t_estado;
-*/
-
 uint32_t generar_pid();
 t_pcb* crear_pcb();
 void destruir_pcb(t_pcb*);
-void* serializar_pcb(t_pcb*, int);
-void* serializar_pcb_para_cpu(t_pcb*, int*);
+void* serializar_pcb(t_pcb*, int*);
 char* obtener_nombre_estado(t_estado);
 
 #endif

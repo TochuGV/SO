@@ -29,7 +29,7 @@ pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 pthread_t hilo_planificador_largo_plazo;
 pthread_t hilo_planificador_corto_plazo;
-//pthread_t hilo_planificador_mediano_plazo;
+pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
@@ -79,7 +79,6 @@ void crear_proceso_inicial(char* archivo_pseudocodigo, uint32_t tamanio){
   t_pcb* pcb_nuevo = crear_pcb();
   inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
   log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
-  //mover_proceso_a_ready();
   sem_post(&semaforo_revisar_largo_plazo);
 };
 
@@ -102,4 +101,17 @@ void unir_hilos(){
   pthread_join(hilo_planificador_largo_plazo, NULL);
   pthread_join(hilo_planificador_corto_plazo, NULL);
   //pthread_join(hilo_planificador_mediano_plazo, NULL);
+};
+
+void finalizar_kernel(){
+  log_destroy(logger);
+  config_destroy(config);
+
+  //terminar_programa(conexion_memoria, logger, config); --> 'conexion_memoria' ya no existe más.
+  dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);
+
+  //destruimos el diccionario de estimaciones que se usa para sjf
+  //dictionary_destroy_and_destroy_elements(diccionario_estimaciones, free);
+
+  //Se pueden destruir logs, configs, conexiones, listas con elementos, semáforos, diccionarios, etc.
 };

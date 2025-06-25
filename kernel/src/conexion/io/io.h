@@ -2,6 +2,7 @@
 #define IO_H_
 
 #include "./common/common.h"
+#include "./conexion/conexion.h"
 #include "./conexion/handshake/entrante/entrante.h"
 #include "./planificacion/bloqueo_io/bloqueo_io.h"
 

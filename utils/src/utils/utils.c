@@ -262,7 +262,7 @@ int iniciar_conexion(void* arg){
 void terminar_programa(int conexion, t_log* logger, t_config* config){
 	close(conexion);
 	log_destroy(logger);
-	config_destroy(config);	
+	config_destroy(config);
 };
 
 

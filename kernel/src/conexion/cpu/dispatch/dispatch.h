@@ -2,6 +2,7 @@
 #define DISPATCH_H_
 
 #include "./common/common.h"
+#include "./conexion/conexion.h"
 #include "./conexion/handshake/entrante/entrante.h"
 #include "./syscalls/syscalls.h"
 #include "./pcb/pcb.h"
