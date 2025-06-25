@@ -75,16 +75,6 @@ void iniciar_cpu(int32_t identificador_cpu) {
     tlb[i].marco = -1;
     tlb[i].tiempo_transcurrido = 0;
   }
-
-  cache = malloc(sizeof(entrada_cache) * parametros_cache->cantidad_entradas);
-  for (int i = 0; i < parametros_cache->cantidad_entradas; i++) {
-    cache[i].pid = -1;
-    cache[i].pagina = -1;
-    cache[i].contenido = NULL;
-    cache[i].bit_uso = 0;
-    cache[i].bit_uso = 0;
-    cache[i].bit_modificado = 0;
-  }
 }
 
 //Conexiones

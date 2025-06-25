@@ -167,7 +167,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   }
   
   if (valor_a_leer != NULL) {
-    //Al haber habido Caché Hit, no contamos con la dirección lógica
+    //Al haber habido Caché Hit, no contamos con la dirección física
     log_info(logger, "PID: %d - Acción: LEER - Valor: %s", pid, valor_a_leer);
     return; 
   }  
@@ -197,13 +197,14 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   log_warning(logger, "Nro pag: %d, Desplazamiento: %d",nro_pagina,desplazamiento);
 
   if (parametros_cache->cantidad_entradas > 0) {
-    int pagina = consultar_pagina_cache(pid,nro_pagina);
-    if (pagina != -1) {
-      //free (cache[pagina].contenido);
-      strcpy(cache[pagina].contenido, valor_a_escribir);
-      cache[pagina].bit_modificado = 1;
-      cache[pagina].bit_uso = 1;
+    int ubicacion = consultar_pagina_cache(pid,nro_pagina);
+    if (ubicacion != -1) {
+      asignar_lugar_en_cache(ubicacion,pid,nro_pagina,valor_a_escribir,es_escritura);
     }
+    else {
+      actualizar_cache(pid, nro_pagina,valor_a_escribir,es_escritura);
+    }
+    return;
   }
   
   uint32_t direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
