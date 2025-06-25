@@ -2,11 +2,6 @@
 
 int main(int argc, char* argv[]) 
 {
-  if (argc < 2) {
-    fprintf(stderr, "Uso: %s <ID_CPU>\n", argv[0]);
-    exit(EXIT_FAILURE);
-}
-
   logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_DEBUG);
   config = iniciar_config("cpu.config");
 
@@ -31,11 +26,8 @@ int main(int argc, char* argv[])
   pthread_create(&hilo_memoria, NULL, conectar_memoria, cpu);
 
   pthread_join(hilo_kernel_dispatch, NULL);
-  log_debug(logger, "Socket de Kernel Dispatch: %d", cpu->conexion_kernel_dispatch);
   pthread_join(hilo_kernel_interrupt, NULL);
-  log_debug(logger, "Socket de Kernel Interupt: %d", cpu->conexion_kernel_interrupt);
   pthread_join(hilo_memoria, NULL);
-  log_debug(logger, "Socket de Memoria: %d", cpu->conexion_memoria);
 
   bool cpu_disponible=true;
 

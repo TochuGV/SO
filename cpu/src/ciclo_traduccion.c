@@ -6,13 +6,13 @@ char* consultar_contenido_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) 
   for (int i=0;i<cpu->parametros_cache->cantidad_entradas ;i++) {
     if (cpu->cache[i].pid==pid && cpu->cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
-        log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
+        log_info(logger, "PID: <%d> - Cache Hit - Pagina: <%d>", pid, nro_pagina);
         
         return cpu->cache[i].contenido;
     }
   }
   //Log 7. Página faltante en Caché
-  log_info(logger, "PID: %d - Cache Miss - Pagina: %d", pid, nro_pagina);
+  log_info(logger, "PID: <%d> - Cache Miss - Pagina: <%d>", pid, nro_pagina);
   return NULL;
 }
 
@@ -21,13 +21,13 @@ int consultar_pagina_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
   for (int i=0;i<cpu->parametros_cache->cantidad_entradas ;i++) {
     if (cpu->cache[i].pid == pid && cpu->cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
-        log_info(logger, "PID: %d - Cache Hit - Pagina: %d", pid, nro_pagina);
+        log_info(logger, "PID: <%d> - CACHE HIT - Pagina: <%d>", pid, nro_pagina);
         
         return i;  
     }
   }
   //Log 7. Página faltante en Caché
-  log_info(logger, "PID: %d - Cache Miss - Pagina: %d", pid, nro_pagina);
+  log_info(logger, "PID: <%d> - CACHE MISS - Pagina: <%d>", pid, nro_pagina);
   return -1;
 }
 
@@ -123,14 +123,14 @@ uint32_t traducir_direccion(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina,uint32
     marco = consultar_memoria(cpu, pid, nro_pagina);
 
     if(marco == -1){
-      log_error(logger, "No se pudo obtener el marco para la página %d del PID %d", nro_pagina, pid);
+      log_error(logger, "No se pudo obtener el marco para la página <%d> del PID <%d>", nro_pagina, pid);
       return -1;
     };
     
     actualizar_TLB(cpu,pid, nro_pagina, marco);
     }
   //Log 5. Obtener Marco
-  log_info(logger, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, nro_pagina, marco);
+  log_info(logger, "PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>", pid, nro_pagina, marco);
   return marco * tamanio_pagina + desplazamiento;
 }
 
@@ -141,12 +141,12 @@ uint32_t consultar_TLB (t_cpu* cpu,uint32_t pid, uint32_t nro_pagina) {
     if (cpu->tlb[i].pid==pid && cpu->tlb[i].pagina==nro_pagina) {
         cpu->tlb[i].nro_orden = i;
         //Log 6. TLB Hit
-        log_info(logger, "PID: %d - TLB HIT - Pagina: %d", pid, nro_pagina);
+        log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, nro_pagina);
         return cpu->tlb[i].marco;
     }
   } 
   //Log 7. TLB Miss
-  log_info(logger, "PID: %d - TLB MISS - Pagina: %d", pid, nro_pagina);
+  log_info(logger, "PID: <%d> - TLB MISS - Pagina: <%d>", pid, nro_pagina);
   return -1;
 }
 
@@ -211,9 +211,16 @@ void actualizar_TLB (t_cpu* cpu, uint32_t pid, uint32_t pagina, uint32_t marco) 
 void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pagina,char* valor, bool es_escritura){
   if (cpu->cache[ubicacion].bit_modificado==1) {
     uint32_t direccion_fisica=traducir_direccion(cpu,pid,cpu->cache[ubicacion].pagina,0);
+    //Log 10. Pagina Actualizada de Cache a Memoria
+    //Como actualizo una página completa, no conozco el frame
+    log_info(logger,"PID: <%d> - MEMORY UPDATE - Pagina: <%d>",pid,pagina);
+    
     escribir_valor_en_memoria(cpu,pid, direccion_fisica,cpu->cache[ubicacion].contenido);
   }
-  
+
+  //Log 9. Página ingresada en Cache
+  log_info(logger,"PID: <%d> - CACHE ADD - Pagina: <%d>",pid,pagina);
+
   cpu->cache[ubicacion].pid=pid;
   cpu->cache[ubicacion].pagina=pagina;
   cpu->cache[ubicacion].contenido=valor;
@@ -252,7 +259,7 @@ char* pedir_valor_a_memoria(t_cpu* cpu, uint32_t pid, uint32_t direccion_fisica,
 
     valor = malloc(longitud_valor);
     memcpy(valor, list_get(valores, 1), longitud_valor);
-    log_debug(logger, "El valor leido: %s, fue recibido", valor);
+    log_debug(logger, "El valor leido: <%s>, fue recibido", valor);
   }
 
   return valor;
