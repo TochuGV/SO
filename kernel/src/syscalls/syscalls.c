@@ -54,6 +54,17 @@ void syscall_io(t_syscall* syscall){
   };
   pcb->pc = syscall->pc;
 
+  char* clave_pid = string_itoa(pcb->pid);
+  t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave_pid);
+
+  if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
+    double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
+    actualizar_estimacion(pcb->pid, rafaga_real);
+    log_debug(logger, "PID <%d> - Ráfaga real: %.2f - Estimación actualizada", pcb->pid, rafaga_real);
+  } else {
+    log_warning(logger, "No se pudo medir la ráfaga real del proceso <%d>", pcb->pid);
+  };
+
   // Obtener el dispositivo directamente, sin chequeo previo
   t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
   if(!dispositivo){
@@ -68,7 +79,7 @@ void syscall_io(t_syscall* syscall){
   t_contexto_io* contexto = malloc(sizeof(t_contexto_io));
   contexto->dispositivo_actual = strdup(syscall->arg1);
   contexto->duracion_io = atoi(syscall->arg2);
-  char* clave_pid = string_itoa(pcb->pid);
+  //char* clave_pid = string_itoa(pcb->pid);
   dictionary_put(diccionario_contextos_io, clave_pid, contexto);
   free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
@@ -111,9 +122,7 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   
   if(respuesta == 0){
     log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
-    pthread_mutex_lock(&mutex_ready);
-    queue_push(cola_ready, pcb);
-    pthread_mutex_unlock(&mutex_ready);
+    encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
     sem_post(&semaforo_ready);
   } else {

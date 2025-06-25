@@ -14,15 +14,15 @@ uint32_t generar_pid(){
 };
 
 t_pcb* crear_pcb(){
-  t_pcb* pcb_nuevo = malloc(sizeof(t_pcb));
-  if(!pcb_nuevo) return NULL;
-  pcb_nuevo->pid = generar_pid();
-  pcb_nuevo->pc = 0;
+  t_pcb* pcb = malloc(sizeof(t_pcb));
+  if(!pcb) return NULL;
+  pcb->pid = generar_pid();
+  pcb->pc = 0;
   for(int i = 0; i < CANTIDAD_ESTADOS; i++){
-    pcb_nuevo->me[i] = 0;
-    pcb_nuevo->mt[i] = 0;
+    pcb->me[i] = 0;
+    pcb->mt[i] = 0;
   };
-  return pcb_nuevo;
+  return pcb;
 };
 
 void destruir_pcb(t_pcb* pcb){
@@ -30,8 +30,9 @@ void destruir_pcb(t_pcb* pcb){
   free(pcb);
 };
 
+/*
 void* serializar_pcb(t_pcb* pcb, int bytes){
-  /*
+  
   int tamanio_me = sizeof(uint32_t) * 7;
   int tamanio_mt = sizeof(uint32_t) * 7;
   int tamanio = sizeof(uint32_t) * 2 + tamanio_me + tamanio_mt;
@@ -42,8 +43,7 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
   Ejemplo de uso:
     int bytes = sizeof(uint32_t) * (2 + CANTIDAD_ESTADOS * 2);
     void* buffer = serializar_pcb(pcb, bytes);
-  */
-
+  
   void* magic = malloc(bytes);
   int desplazamiento = 0;
 
@@ -58,6 +58,7 @@ void* serializar_pcb(t_pcb* pcb, int bytes){
 
   return magic;
 };
+*/
 
 void* serializar_pcb_para_cpu(t_pcb* pcb, int* bytes){
   *bytes = sizeof(uint32_t) * 2;
@@ -68,7 +69,7 @@ void* serializar_pcb_para_cpu(t_pcb* pcb, int* bytes){
   memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
   desplazamiento += sizeof(uint32_t);
   return magic;
-}
+};
 
 char* obtener_nombre_estado(t_estado estado){
   switch(estado){

@@ -15,6 +15,8 @@ void iniciar_planificacion_largo_plazo(){
 };
 
 void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamanio){
+
+  inicializar_estimacion_rafaga(pcb->pid);
   pthread_mutex_lock(&mutex_new);
   queue_push(cola_new, pcb);
   list_add(lista_pcbs, pcb);
@@ -27,6 +29,7 @@ void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamani
   pthread_mutex_unlock(&mutex_new);
   
   entrar_estado(pcb, ESTADO_NEW);
+  
   log_creacion_proceso(pcb->pid);
   sem_post(&semaforo_revisar_largo_plazo);
 };
@@ -57,11 +60,9 @@ void mover_proceso_a_ready(void){
       pthread_mutex_unlock(&mutex_new);
 
       if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
-        pthread_mutex_lock(&mutex_ready);
-        queue_push(cola_ready, pcb);
-        pthread_mutex_unlock(&mutex_ready); 
-
+        encolar_proceso_en_ready(pcb); 
         cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
+        
         sem_post(&semaforo_ready);
 
         pthread_mutex_lock(&mutex_new);
@@ -89,10 +90,7 @@ void mover_proceso_a_ready(void){
     pthread_mutex_unlock(&mutex_new);
 
     if(enviar_proceso_a_memoria(info->archivo_pseudocodigo, info->tamanio, pcb->pid) == 0){
-      pthread_mutex_lock(&mutex_ready);
-      queue_push(cola_ready, pcb);
-      pthread_mutex_unlock(&mutex_ready); 
-
+      encolar_proceso_en_ready(pcb);
       cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
       sem_post(&semaforo_ready);
 
@@ -147,6 +145,12 @@ void finalizar_proceso(t_pcb* pcb){
 
   if (resultado == 0) {
     dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
+
+    //eliminamos la estimacion del proceso terminado
+    char* clave_estimacion = string_itoa(pcb->pid);
+    dictionary_remove_and_destroy(diccionario_estimaciones, clave_estimacion, free);
+    free(clave_estimacion);
+
     free(clave_pid);
     log_fin_proceso(pcb->pid); //Agregar en todos los que se vaya a EXIT
     char* buffer = crear_cadena_metricas_estado(pcb);

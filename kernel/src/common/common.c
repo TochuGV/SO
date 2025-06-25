@@ -81,7 +81,7 @@ t_pcb* obtener_pcb_por_pid(uint32_t pid){
   bool coincide(void* elem){
     return ((t_pcb*)elem)->pid == pid;
   };
-  log_debug(logger, "%d", list_size(lista_pcbs));
+  //log_debug(logger, "%d", list_size(lista_pcbs));
   t_pcb* pcb = list_find(lista_pcbs, coincide);
   //log_debug(logger, "PCB encontrado PID: %d", pcb->pid);
   pthread_mutex_unlock(&mutex_pcbs);
@@ -92,4 +92,12 @@ void destruir_contexto_io(void* contexto){
   t_contexto_io* ctx = (t_contexto_io*) contexto;
   if(ctx->dispositivo_actual) free(ctx->dispositivo_actual);
   free(ctx);
+};
+
+void encolar_proceso_en_ready(t_pcb* pcb){
+  pthread_mutex_lock(&mutex_ready);
+  queue_push(cola_ready, pcb);
+  pthread_mutex_unlock(&mutex_ready);
+  if(es_SRT())
+    desalojar_cpu();
 };

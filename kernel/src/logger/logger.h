@@ -10,7 +10,7 @@ void log_creacion_proceso(uint32_t);
 void log_cambio_estado(uint32_t, char*, char*);
 void log_motivo_bloqueo(uint32_t, nombre_dispositivo_io);
 void log_fin_io(uint32_t);
-//void log_desalojo_sjf_srt();
+void log_desalojo_sjf_srt(uint32_t);
 void log_fin_proceso(uint32_t);
 void log_metricas_estado(char*);
 

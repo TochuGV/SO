@@ -12,6 +12,15 @@ datos_conexion_t* datos_dispatch;
 datos_conexion_t* datos_interrupt;
 datos_conexion_t* datos_memoria;
 
+uint32_t tamanio_pagina;
+uint32_t cant_entradas_tabla;
+uint32_t cant_niveles;
+
+entrada_cache* cache;
+cache_paginas_t* parametros_cache;
+entrada_tlb* tlb;
+tlb_t* parametros_tlb;
+
 void iniciar_cpu(int32_t identificador_cpu) {
 
   ip_kernel = config_get_string_value(config, "IP_KERNEL");
@@ -65,6 +74,16 @@ void iniciar_cpu(int32_t identificador_cpu) {
     tlb[i].pagina = -1;
     tlb[i].marco = -1;
     tlb[i].tiempo_transcurrido = 0;
+  }
+
+  cache = malloc(sizeof(entrada_cache) * parametros_cache->cantidad_entradas);
+  for (int i = 0; i < parametros_cache->cantidad_entradas; i++) {
+    cache[i].pid = -1;
+    cache[i].pagina = -1;
+    cache[i].contenido = NULL;
+    cache[i].bit_uso = 0;
+    cache[i].bit_uso = 0;
+    cache[i].bit_modificado = 0;
   }
 }
 

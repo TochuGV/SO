@@ -1,10 +1,9 @@
 #include "utils.h"
-
+#include <sys/time.h>
 
 //// VARIABLES GLOBALES
 t_log* logger;
 t_config* config;
-
 
 //// LOGGER
 t_log* iniciar_logger(char* file_name, char* process_name, t_log_level level){
@@ -265,3 +264,5 @@ void terminar_programa(int conexion, t_log* logger, t_config* config){
 	log_destroy(logger);
 	config_destroy(config);	
 };
+
+

@@ -21,9 +21,7 @@ void manejar_respuesta_io(uint32_t pid){
     return;
   };
 
-  pthread_mutex_lock(&mutex_ready);
-  queue_push(cola_ready, pcb);
-  pthread_mutex_unlock(&mutex_ready);
+  encolar_proceso_en_ready(pcb);
 
   cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
   sem_post(&semaforo_ready);
@@ -49,6 +47,4 @@ void manejar_respuesta_io(uint32_t pid){
   } else {
     dispositivo->ocupado = false;
   };
-
-  mover_proceso_a_exec();
 };

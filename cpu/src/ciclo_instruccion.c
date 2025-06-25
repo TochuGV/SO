@@ -33,11 +33,11 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
 
     if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
       log_info(logger, "PID %d interrumpido", pcb->pid);
-      estado = EJECUCION_BLOQUEADA_SOLICITUD;
-    }
+      estado = EJECUCION_DESALOJADO;
+    };
   }
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
-  finalizar_proceso_en_cache(pcb->pid,estado);
+  //finalizar_proceso_en_cache(pcb->pid,estado);
   free(pcb);
   return NULL;
 }
@@ -159,7 +159,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
   uint32_t desplazamiento = direccion % tamanio_pagina;
   uint32_t direccion_fisica;
-  char* valor_a_leer=NULL;
+  char* valor_a_leer = NULL;
   bool es_escritura=false;
 
   if (parametros_cache->cantidad_entradas > 0) {
@@ -174,7 +174,7 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
 
   direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
 
-  valor_a_leer=pedir_valor_a_memoria(direccion_fisica, parametro2);
+  valor_a_leer = pedir_valor_a_memoria(pid, direccion_fisica, parametro2);
 
   if (valor_a_leer == NULL) {
       log_error(logger, "No se pudo leer de memoria");
@@ -194,16 +194,18 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   uint32_t desplazamiento = direccion % tamanio_pagina;
   bool es_escritura=true;
 
+  log_warning(logger, "Nro pag: %d, Desplazamiento: %d",nro_pagina,desplazamiento);
+
   if (parametros_cache->cantidad_entradas > 0) {
     int pagina = consultar_pagina_cache(pid,nro_pagina);
-    if (pagina != 0) {
-      free (cache[pagina].contenido);
+    if (pagina != -1) {
+      //free (cache[pagina].contenido);
       strcpy(cache[pagina].contenido, valor_a_escribir);
       cache[pagina].bit_modificado = 1;
       cache[pagina].bit_uso = 1;
     }
   }
-
+  
   uint32_t direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
 
   if (direccion_fisica==-1){
@@ -213,7 +215,7 @@ void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribi
   //Log 4. Lectura Memoria
   log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_escribir);
 
-  escribir_valor_en_memoria(direccion_fisica, valor_a_escribir);
+  escribir_valor_en_memoria(pid, direccion_fisica, valor_a_escribir);
 
   actualizar_cache(pid, nro_pagina,valor_a_escribir,es_escritura);
 }
@@ -246,27 +248,29 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
   t_paquete* paquete = NULL;
   switch(estado){
     case EJECUCION_CONTINUA_INIT_PROC:
-      //enviar_bloqueo_INIT_PROC(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_INIT_PROC);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
       break;
     
     case EJECUCION_FINALIZADA:
-      //enviar_finalizacion(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_EXIT);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_EXIT, "", "", pcb->pc);
       break;
 
     case EJECUCION_BLOQUEADA_IO:
-      //enviar_bloqueo_IO(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_IO);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
       break;
 
     case EJECUCION_BLOQUEADA_DUMP:
-      //enviar_bloqueo_DUMP(instruccion,pcb,conexion_kernel_dispatch);
       paquete = crear_paquete(SYSCALL_DUMP_MEMORY);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_DUMP_MEMORY, "", "", pcb->pc);
+      break;
+
+    case EJECUCION_DESALOJADO:
+      paquete = crear_paquete(DESALOJO);
+      agregar_a_paquete(paquete, (&pcb->pid), sizeof(uint32_t));
+      agregar_a_paquete(paquete, (&pcb->pc), sizeof(uint32_t));
       break;
 
     default:
@@ -281,7 +285,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
   int pid_interrupcion;
   log_info(logger, "Socket interrupt: %d", socket_interrupt);
   log_info(logger, "PID actual: %d", pid_actual);
-  int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(int), MSG_DONTWAIT);
+  int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(uint32_t), MSG_DONTWAIT);
 
   if (bytes > 0) {
     //Log 2. Interrupción recibida

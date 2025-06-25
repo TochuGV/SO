@@ -34,7 +34,8 @@ typedef enum {
   ESCRITURA,
   LECTURA,
   FINALIZACION_IO,
-  FINALIZAR_PROCESO
+  FINALIZAR_PROCESO,
+  DESALOJO
 } op_code_comunicacion;
 
 typedef enum {
@@ -50,7 +51,7 @@ typedef enum {
   EJECUCION_FINALIZADA,
   EJECUCION_BLOQUEADA_IO,
   EJECUCION_BLOQUEADA_DUMP,
-  EJECUCION_BLOQUEADA_SOLICITUD
+  EJECUCION_DESALOJADO
 } t_estado_ejecucion;
 
 typedef enum {
@@ -125,7 +126,6 @@ typedef struct {
   uint32_t pc;
   uint32_t me[CANTIDAD_ESTADOS];
   uint32_t mt[CANTIDAD_ESTADOS];
-  double estimacion_rafaga;
 } t_pcb;
 
 //// VARIABLES GLOBALES
