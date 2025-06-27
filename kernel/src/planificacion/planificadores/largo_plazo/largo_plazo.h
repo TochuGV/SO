@@ -5,7 +5,10 @@
 #include "logger/logger.h"
 #include "common/common.h"
 #include "utils/utils.h" // Revisar después
-#include "./planificacion/algoritmos/pmcp/pmcp.h"
+
+#include "planificacion/planificadores/largo_plazo/algoritmos/fifo/fifo.h"
+#include "planificacion/planificadores/largo_plazo/algoritmos/pmcp/pmcp.h"
+
 #include "./planificacion/algoritmos/sjf/sjf.h"
 #include <commons/collections/queue.h>
 #include <semaphore.h>
