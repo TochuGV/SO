@@ -12,7 +12,6 @@ double ESTIMACION_INICIAL;
 char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
-t_list* lista_cpus;
 t_list* lista_pcbs;
 
 t_dictionary* diccionario_dispositivos;
@@ -21,8 +20,6 @@ t_dictionary* diccionario_contextos_io;
 t_dictionary* diccionario_estimaciones;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
-
-sem_t semaforo_cpu_libre;
 
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
@@ -63,13 +60,12 @@ void inicializar_kernel(){
   log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
   extraer_datos_config();
-  lista_cpus = list_create();
+  inicializar_estructura_cpus();
   lista_pcbs = list_create();
   diccionario_cronometros = dictionary_create();
   diccionario_contextos_io = dictionary_create();
   diccionario_estimaciones = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
-  sem_init(&semaforo_cpu_libre, 0, 0);
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();

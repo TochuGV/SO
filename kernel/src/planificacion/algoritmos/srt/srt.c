@@ -30,70 +30,42 @@ double tiempo_restante_exec(t_pcb* pcb) {
 
 
 //fijarse el puntero proceso_en_ejecucion --> seteado para poder saber que proceso se está ejecutando. 
-t_pcb* obtener_proceso_en_exec_con_mayor_estimacion(int cant_cpus) {
-    t_pcb* peor_pcb = NULL;
-    double mayor_tiempo_restante = -1.0;
-    
+t_pcb* obtener_proceso_en_exec_con_mayor_estimacion(int cantidad_cpus) {
+  t_pcb* peor_pcb = NULL;
+  double mayor_tiempo_restante = -1.0;
+  
+  //log_warning(logger, "Cantidad CPUs: %d", cantidad_cpus);
+  for(int i = 0; i < cantidad_cpus; i++){
+    pthread_mutex_lock(&mutex_cpus);
+    t_cpu* cpu = list_get(lista_cpus, i);
+    pthread_mutex_unlock(&mutex_cpus);
+    if(!cpu->disponible && cpu->proceso_en_ejecucion){
+      t_pcb* ejecutando = cpu->proceso_en_ejecucion;
+      //log_warning(logger, "PID EJECUTANDO: %d", ejecutando->pid);
+      double tiempo_restante = tiempo_restante_exec(ejecutando);
 
-    //pthread_mutex_lock(&mutex_cpus);
-    log_warning(logger, "Cantidad CPUs: %d", cant_cpus);
-    for (int i = 0; i < cant_cpus; i++) {
-        pthread_mutex_lock(&mutex_cpus);
-        t_cpu* cpu = list_get(lista_cpus, i);
-        pthread_mutex_unlock(&mutex_cpus);
-        if (!cpu->disponible && cpu->proceso_en_ejecucion) {
-            t_pcb* ejecutando = cpu->proceso_en_ejecucion;
-            log_warning(logger, "PID EJECUTANDO: %d", ejecutando->pid);
-            double tiempo_restante = tiempo_restante_exec(ejecutando);
-
-            if (tiempo_restante > mayor_tiempo_restante) {
-                peor_pcb = ejecutando;
-                log_warning(logger, "PID con mayor tiempo: %d", peor_pcb->pid);
-                mayor_tiempo_restante = tiempo_restante;
-            }
-        }
-    }
-    //pthread_mutex_unlock(&mutex_cpus);
-
-    return peor_pcb;
+      if(tiempo_restante > mayor_tiempo_restante){
+        peor_pcb = ejecutando;
+        //log_warning(logger, "PID con mayor tiempo: %d", peor_pcb->pid);
+        mayor_tiempo_restante = tiempo_restante;
+      };
+    };
+  };
+  return peor_pcb;
 };
 
 void desalojar_cpu(void) {
   if (!es_SRT()) return;
 
-  //t_pcb* proceso_en_exec = obtener_proceso_en_exec_con_mayor_tiempo_restante();
-  /*
-  if (proceso_en_exec == NULL) {
-    // No hay nadie ejecutando, no hay nada que interrumpir
-    return;
-  }
-  */
-  //double estimacion_nuevo = obtener_estimacion(nuevo_proceso_ready->pid);
-  //double restante_exec = tiempo_restante_exec(proceso_en_exec);
+  int cantidad_cpus = obtener_cantidad_cpus();
 
-  //log_info(logger, "SRT: El proceso <%d> interrumpe al <%d> (%.2f < %.2f)", nuevo_proceso_ready->pid, proceso_en_exec->pid, estimacion_nuevo, restante_exec);
+  t_pcb* proceso_en_exec = obtener_proceso_en_exec_con_mayor_estimacion(cantidad_cpus);
+  if (proceso_en_exec == NULL) return;
 
-  // Buscar la CPU que tiene ejecutando a este proceso y mandar interrupción
-  pthread_mutex_lock(&mutex_cpus);
-  int cant_cpus = list_size(lista_cpus);
-  pthread_mutex_unlock(&mutex_cpus);
+  t_cpu* cpu = obtener_cpu_que_ejecuta(proceso_en_exec->pid);
+  if(!cpu) return;
 
-  t_pcb* proceso_en_exec = obtener_proceso_en_exec_con_mayor_estimacion(cant_cpus);
-  if (proceso_en_exec == NULL) {
-    // No hay nadie ejecutando, no hay nada que interrumpir
-    //pthread_mutex_unlock(&mutex_cpus);
-    return;
-  }
-  for (int i = 0; i < cant_cpus; i++) {
-    pthread_mutex_lock(&mutex_cpus);
-    t_cpu* cpu = list_get(lista_cpus, i);
-    pthread_mutex_unlock(&mutex_cpus);
-    if(!cpu->disponible && cpu->proceso_en_ejecucion && cpu->proceso_en_ejecucion->pid == proceso_en_exec->pid){
-      int socket_interrupt = cpu->socket_interrupt;
-      send(socket_interrupt, &(proceso_en_exec->pid), sizeof(uint32_t), 0);
-      break;
-    }
-  }
-  //pthread_mutex_unlock(&mutex_cpus);
-}
+  int socket_interrupt = cpu->socket_interrupt;
+  send(socket_interrupt, &(proceso_en_exec->pid), sizeof(uint32_t), 0);
+};
 

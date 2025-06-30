@@ -7,6 +7,7 @@
 #include <commons/collections/dictionary.h>
 #include "init/init.h"
 #include "pcb/pcb.h"
+#include "cpu/cpu.h"
 
 bool es_SRT(void);
 

@@ -39,24 +39,10 @@ void* atender_cpu_dispatch(void* arg){
         encolar_proceso_en_ready(pcb);
         cambiar_estado(pcb, ESTADO_EXEC, ESTADO_READY);
 
-
-        // Liberar la CPU correspondiente (ya no está ejecutando)
-        pthread_mutex_lock(&mutex_cpus);
-        for (int i = 0; i < list_size(lista_cpus); i++) {
-          t_cpu* cpu = list_get(lista_cpus, i);
-          if (!cpu->disponible && cpu->proceso_en_ejecucion && cpu->proceso_en_ejecucion->pid == pcb->pid) {
-            cpu->proceso_en_ejecucion = NULL;
-            cpu->disponible = true;
-            break;
-          }
-        }
-        pthread_mutex_unlock(&mutex_cpus);
-
-        sem_post(&semaforo_ready);
-        sem_post(&semaforo_cpu_libre);
+        liberar_cpu_por_pid(pcb->pid);
         continue;
-      }
-    }
+      };
+    };
 
     t_syscall* syscall = recibir_syscall(socket_cpu_dispatch);
     if(!syscall){

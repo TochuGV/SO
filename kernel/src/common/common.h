@@ -11,14 +11,6 @@
 #include "./planificacion/algoritmos/srt/srt.h"
 
 typedef struct {
-  int32_t id_cpu;
-  int socket_dispatch;
-  int socket_interrupt;
-  bool disponible;
-  t_pcb* proceso_en_ejecucion;
-} t_cpu;
-
-typedef struct {
   char* dispositivo_actual;
   uint32_t duracion_io;
 } t_contexto_io;
