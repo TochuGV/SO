@@ -21,5 +21,8 @@ t_list* leer_archivo_instrucciones(char* path);
 int finalizar_proceso(uint32_t pid);
 int atender_dump_memory(uint32_t pid);
 void escribir_dump(t_tabla* tabla_de_paginas, FILE* file);
+void escribir_en_swap(t_tabla* tabla_de_paginas);
+void suspender_proceso(uint32_t);
+void desuspender_proceso(uint32_t);
 
 #endif /* ATENCION_KERNEL_H_ */

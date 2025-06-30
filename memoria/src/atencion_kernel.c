@@ -45,7 +45,23 @@ void* atender_kernel(void* arg)
       else
         send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
       break;
-        
+    
+    case SUSPENDER:
+      valores = recibir_paquete(cliente_kernel);
+      pid = *(uint32_t*) list_get(valores, 0);
+
+      suspender_proceso(pid);
+      // falta verificacion y enviar ok al kernel, eso ultimo nose igual
+      break;
+    
+    case DESUSPENDER:
+      valores = recibir_paquete(cliente_kernel);
+      pid = *(uint32_t*) list_get(valores, 0);
+
+      desuspender_proceso(pid);
+      // falta verificacion y enviar ok al kernel, eso ultimo nose igual
+      break;
+
     case -1:
       log_error(logger, "Error Kernel se desconectó de forma extraña. Terminando servidor...");
       pthread_exit((void*)EXIT_FAILURE);
@@ -139,6 +155,8 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
     proceso->marcos_en_uso = cantidad_marcos_proceso;
     memset(proceso->metricas, 0, sizeof(proceso->metricas));
+    proceso->base_swap = -1;
+    proceso->tamanio_swap = 0;
 
     list_add(lista_procesos,proceso);
 
@@ -191,10 +209,13 @@ int atender_dump_memory(uint32_t pid)
   
   log_info(logger, "## PID: <%d> - Memory Dump solicitado", pid);
 
-  time_t timestamp = time(NULL);
+  char* timestamp = temporal_get_string_time("%d-%m-%y_%H-%M-%S");
+
   char path_archivo[256];
-  snprintf(path_archivo, sizeof(path_archivo), "%s<%d>-<%ld>.dmp", path_dump, pid, (long)timestamp);
+  snprintf(path_archivo, sizeof(path_archivo), "%s<%d>-<%s>.dmp", path_dump, pid, timestamp);
   FILE *file = fopen(path_archivo, "wb");
+
+  free(timestamp);
 
   if (file == NULL) {
     log_error(logger, "Error: no se pudo crear el archivo DUMP");
@@ -230,4 +251,57 @@ void escribir_dump(t_tabla* tabla_de_paginas, FILE* file)
       fwrite(memoria + offset, 1, tamanio_pagina, file);
     }
   }
+}
+
+void suspender_proceso(uint32_t pid)
+{
+  t_proceso* proceso = obtener_proceso(pid);
+
+  if(!proceso)
+    return;
+
+  proceso->base_swap = swap_offset;
+
+  escribir_en_swap(proceso->tabla_de_paginas);
+  proceso->metricas[BAJADAS_A_SWAP]++;
+
+  proceso->tamanio_swap = proceso->marcos_en_uso * tamanio_pagina;
+  proceso->marcos_en_uso = 0;
+
+  liberar_marcos(proceso->tabla_de_paginas);
+}
+
+void escribir_en_swap(t_tabla* tabla_de_paginas)
+{
+  if (tabla_de_paginas == NULL) return;
+
+  for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+    t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+
+    if (entrada->siguiente_tabla != NULL) {
+      escribir_en_swap(entrada->siguiente_tabla);
+    }
+    else if (entrada->marco != -1) {
+      uint32_t offset = entrada->marco * tamanio_pagina;
+      fseek(swapfile, swap_offset, SEEK_SET);
+      fwrite(memoria + offset, 1, tamanio_pagina, swapfile);
+      swap_offset += tamanio_pagina;
+    }
+  }
+}
+
+void desuspender_proceso(uint32_t pid)
+{
+  t_proceso* proceso = obtener_proceso(pid);
+
+  if(!proceso)
+    return;
+    
+  // con tamanio swap verificar si entra en memoria
+  // volver a crear tabla de paginas
+  // crear funcion leer_de_swap:
+  // guardar el contenido de swap en las nuevos marcos, usar tamanio pagina como offset
+  // recorrer el espacio swap e ir guardando cada pagina en el proximo marco, con orden secuencial, para no perder el orden de las paginas
+  // tener en cuenta las variables globales
+  return;
 }

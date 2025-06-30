@@ -18,6 +18,8 @@ char* path_instrucciones;
 uint32_t cantidad_marcos;
 uint32_t marcos_libres;
 uint8_t* bitmap_marcos;
+FILE* swapfile;
+uint32_t swap_offset;
 
 int servidor_memoria;
 char* puerto_escucha;
@@ -56,6 +58,11 @@ void inicializar_memoria(void)
 
   bitmap_marcos = malloc(cantidad_marcos * sizeof(uint8_t));
   memset(bitmap_marcos, 0, cantidad_marcos);
+
+  swapfile  = fopen(path_swapfile, "wb");
+  if (swapfile == NULL)
+    log_error(logger, "Error: no se pudo crear el archivo SWAP");
+  swap_offset = 0;
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
