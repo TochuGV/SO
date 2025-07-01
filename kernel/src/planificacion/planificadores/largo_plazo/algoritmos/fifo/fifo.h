@@ -1,5 +1,5 @@
-#ifndef FIFO_H_
-#define FIFO_H_
+#ifndef LP_FIFO_H_
+#define LP_FIFO_H_
 
 #include "planificacion/planificadores/largo_plazo/largo_plazo.h"
 #include "planificacion/planificadores/largo_plazo/algoritmos/algoritmos.h"

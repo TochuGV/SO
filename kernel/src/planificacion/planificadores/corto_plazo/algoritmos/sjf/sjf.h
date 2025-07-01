@@ -22,5 +22,6 @@ void actualizar_estimacion(uint32_t, double);
 
 // Limpieza
 void destruir_diccionario_estimaciones(void);
+void mover_proceso_a_exec_sjf(void);
 
 #endif /* SJF_H */

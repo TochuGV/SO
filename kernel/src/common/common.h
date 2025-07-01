@@ -8,7 +8,7 @@
 #include <commons/collections/queue.h>
 #include <commons/temporal.h>
 #include "conexion/handshake/saliente/saliente.h"
-#include "./planificacion/algoritmos/srt/srt.h"
+#include "./planificacion/planificadores/corto_plazo/algoritmos/srt/srt.h"
 
 typedef struct {
   char* dispositivo_actual;
