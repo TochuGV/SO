@@ -36,7 +36,6 @@ int main(int argc, char* argv[])
         //Paso 1: Recibir el PCB desde Kernel
         t_pcb* pcb = recibir_pcb(cpu->conexion_kernel_dispatch);
         if (pcb == NULL) {
-          //log_info(logger, "No se recibió ningún PCB");
           log_debug(logger, "recv devolvió -1. Loop infinito evitado.");
           log_warning(logger, "Se perdió la conexión con Kernel. Terminando CPU...");
           break;

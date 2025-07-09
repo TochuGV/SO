@@ -9,7 +9,7 @@
 char* consultar_contenido_cache(t_cpu*,uint32_t, uint32_t);
 int consultar_pagina_cache(t_cpu*,uint32_t, uint32_t);
 void actualizar_cache(t_cpu*,uint32_t,uint32_t,char*,bool);
-void finalizar_proceso_en_cache(t_cpu*,uint32_t,t_estado_ejecucion);
+void finalizar_proceso_en_cache(t_cpu*,uint32_t);
 
 //Traducción de dirección física
 uint32_t traducir_direccion(t_cpu*,uint32_t,uint32_t,uint32_t); 
