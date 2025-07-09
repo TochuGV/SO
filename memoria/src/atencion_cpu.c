@@ -114,6 +114,7 @@ void recibir_solicitud_marco(int cliente_cpu)
 
   if (list_size(valores) - 1 != cantidad_niveles) {
     log_error(logger, "Error al recibir las entradas de nivel del proceso con PID: %d", pid);
+    list_destroy_and_destroy_elements(valores, free);
     return;
   }
 
@@ -125,6 +126,7 @@ void recibir_solicitud_marco(int cliente_cpu)
 
     if (!entrada) {
       log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      list_destroy_and_destroy_elements(valores, free);
       return;
     }
 
@@ -135,6 +137,7 @@ void recibir_solicitud_marco(int cliente_cpu)
       tabla_actual = entrada->siguiente_tabla;
       if (!tabla_actual) {
         log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+        list_destroy_and_destroy_elements(valores, free);
         return;
       }
     } 
@@ -161,7 +164,9 @@ void recibir_solicitud_escritura(int cliente_cpu)
   char* valor = malloc(longitud_valor);
   memcpy(valor, list_get(valores, 3), longitud_valor); 
 
+  pthread_mutex_lock(&mutex_memoria);
   memcpy(memoria + direccion_fisica, valor, longitud_valor);
+  pthread_mutex_unlock(&mutex_memoria);
 
   char* destino = (char*)(memoria + direccion_fisica);
 
@@ -171,12 +176,14 @@ void recibir_solicitud_escritura(int cliente_cpu)
     t_proceso* proceso = obtener_proceso(pid);
     if (!proceso) {
       log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
+      list_destroy_and_destroy_elements(valores, free);
       return;
     }
     proceso->metricas[ESCRITURAS]++;
   } else {
     log_error(logger, "Error, fallo la operacion WRITE");
   }
+  list_destroy_and_destroy_elements(valores, free);
 }
 
 void recibir_solicitud_lectura(int cliente_cpu)
@@ -189,17 +196,22 @@ void recibir_solicitud_lectura(int cliente_cpu)
 
   if (direccion_fisica + tamanio > tamanio_memoria) {
     log_error(logger, "Lectura fuera de los límites de memoria. PID: %d", pid);
+    list_destroy_and_destroy_elements(valores, free);
     return;
   }
 
   char* valor = malloc(tamanio);
+  
+  pthread_mutex_lock(&mutex_memoria);
   memcpy(valor, memoria + direccion_fisica, tamanio);
+  pthread_mutex_unlock(&mutex_memoria);
 
   log_info(logger, "## PID: <%d> - <Lectura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, tamanio);
   t_proceso* proceso = obtener_proceso(pid);
 
   if (!proceso) {
     log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
+    list_destroy_and_destroy_elements(valores, free);
     return;
   }
   proceso->metricas[LECTURAS]++;
@@ -209,5 +221,6 @@ void recibir_solicitud_lectura(int cliente_cpu)
   agregar_a_paquete(paquete, &longitud_valor, sizeof(uint32_t));
   agregar_a_paquete(paquete, valor, longitud_valor);
   enviar_paquete(paquete, cliente_cpu);
+  list_destroy_and_destroy_elements(valores, free);
 
 }

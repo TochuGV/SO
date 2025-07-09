@@ -50,16 +50,24 @@ void* atender_kernel(void* arg)
       valores = recibir_paquete(cliente_kernel);
       pid = *(uint32_t*) list_get(valores, 0);
 
-      suspender_proceso(pid);
-      // falta verificacion y enviar ok al kernel, eso ultimo nose igual
+      if (suspender_proceso(pid) == 0) {
+        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
+      }
+      else
+        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+
       break;
     
     case DESUSPENDER:
       valores = recibir_paquete(cliente_kernel);
       pid = *(uint32_t*) list_get(valores, 0);
 
-      desuspender_proceso(pid);
-      // falta verificacion y enviar ok al kernel, eso ultimo nose igual
+      if (desuspender_proceso(pid) == 0) {
+        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
+      }
+      else
+        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+
       break;
 
     case -1:
@@ -126,7 +134,10 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
 bool verificar_espacio_memoria(uint32_t cantidad_marcos_proceso)
 {
   if (marcos_libres >= cantidad_marcos_proceso) {
+
+    pthread_mutex_lock(&mutex_marcos_libres);
     marcos_libres = marcos_libres - cantidad_marcos_proceso;
+    pthread_mutex_unlock(&mutex_marcos_libres);
     return true;
   }
   return false;
@@ -253,12 +264,12 @@ void escribir_dump(t_tabla* tabla_de_paginas, FILE* file)
   }
 }
 
-void suspender_proceso(uint32_t pid)
+int suspender_proceso(uint32_t pid)
 {
   t_proceso* proceso = obtener_proceso(pid);
 
   if(!proceso)
-    return;
+    return -1;
 
   proceso->base_swap = swap_offset;
 
@@ -269,6 +280,7 @@ void suspender_proceso(uint32_t pid)
   proceso->marcos_en_uso = 0;
 
   liberar_marcos(proceso->tabla_de_paginas);
+  return 0;
 }
 
 void escribir_en_swap(t_tabla* tabla_de_paginas)
@@ -283,25 +295,60 @@ void escribir_en_swap(t_tabla* tabla_de_paginas)
     }
     else if (entrada->marco != -1) {
       uint32_t offset = entrada->marco * tamanio_pagina;
+
+      pthread_mutex_lock(&mutex_swapfile);
       fseek(swapfile, swap_offset, SEEK_SET);
       fwrite(memoria + offset, 1, tamanio_pagina, swapfile);
+      pthread_mutex_unlock(&mutex_swapfile);
+
+      pthread_mutex_lock(&mutex_swap_offset);
       swap_offset += tamanio_pagina;
+      pthread_mutex_unlock(&mutex_swap_offset);
     }
   }
 }
 
-void desuspender_proceso(uint32_t pid)
+int desuspender_proceso(uint32_t pid)
 {
   t_proceso* proceso = obtener_proceso(pid);
 
   if(!proceso)
-    return;
-    
-  // con tamanio swap verificar si entra en memoria
-  // volver a crear tabla de paginas
-  // crear funcion leer_de_swap:
-  // guardar el contenido de swap en las nuevos marcos, usar tamanio pagina como offset
-  // recorrer el espacio swap e ir guardando cada pagina en el proximo marco, con orden secuencial, para no perder el orden de las paginas
-  // tener en cuenta las variables globales
-  return;
+    return -1;
+  
+  uint32_t cantidad_marcos_proceso = proceso->tamanio_swap / tamanio_pagina;
+
+  if (verificar_espacio_memoria(cantidad_marcos_proceso)) {
+    proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
+    int32_t offset_swap_actual = proceso->base_swap;
+    leer_swap(proceso->tabla_de_paginas, &offset_swap_actual);
+    proceso->metricas[SUBIDAS_A_MP]++;
+    proceso->base_swap = -1;
+    proceso->tamanio_swap = 0;
+    proceso->marcos_en_uso = cantidad_marcos_proceso;
+    return 0;
+  }
+  return -1;
+}
+
+void leer_swap(t_tabla* tabla_de_paginas, int32_t* offset_swap_actual)
+{
+  if (tabla_de_paginas == NULL) return;
+
+  for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+    t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+
+    if (entrada->siguiente_tabla != NULL) {
+      leer_swap(entrada->siguiente_tabla, offset_swap_actual);
+    }
+    else if (entrada->marco != -1) {
+      uint32_t marco_offset = entrada->marco * tamanio_pagina;
+
+      pthread_mutex_lock(&mutex_swapfile);
+      fseek(swapfile, *offset_swap_actual, SEEK_SET);
+      fread(memoria + marco_offset, 1, tamanio_pagina, swapfile);
+      pthread_mutex_unlock(&mutex_swapfile);
+
+      *offset_swap_actual += tamanio_pagina;
+    }
+  }
 }
