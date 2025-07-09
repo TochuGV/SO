@@ -8,13 +8,13 @@ char* consultar_contenido_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) 
     log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);
     if (cpu->cache[i].pid==pid && cpu->cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
-        log_info(logger, "PID: <%d> - Cache Hit - Pagina: <%d>", pid, nro_pagina);
+        log_info(logger, "PID: <%d> - CACHE HIT - Pagina: <%d>", pid, nro_pagina);
         
         return cpu->cache[i].contenido;
     }
   }
   //Log 7. Página faltante en Caché
-  log_info(logger, "PID: <%d> - CACHE HIT - Pagina: <%d>", pid, nro_pagina);
+  log_info(logger, "PID: <%d> - CACHE MISS - Pagina: <%d>", pid, nro_pagina);
   return NULL;
 }
 
@@ -40,7 +40,7 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
   int cantidad=cpu->parametros_cache->cantidad_entradas;
 
   //busco entrada libre
-  for(int i= 0; i < cpu->parametros_tlb->cantidad_entradas; i++){
+  for(int i= 0; i < cpu->parametros_cache->cantidad_entradas; i++){
     if(cpu-> cache[i].pid == -1){
       asignar_lugar_en_cache(cpu,i,pid,nro_pagina,valor_a_escribir,es_escritura);
       cpu->parametros_cache->puntero_reemplazo= (i+1) % cantidad;
@@ -131,8 +131,10 @@ uint32_t traducir_direccion(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina,uint32
       return -1;
     };
     
-    actualizar_TLB(cpu,pid, nro_pagina, marco);
-    }
+    if (cpu->parametros_tlb->cantidad_entradas>0) {
+        actualizar_TLB(cpu,pid, nro_pagina, marco);
+     }
+  }
   //Log 5. Obtener Marco
   log_info(logger, "PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>", pid, nro_pagina, marco);
   return marco * tamanio_pagina + desplazamiento;
@@ -140,10 +142,13 @@ uint32_t traducir_direccion(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina,uint32
 
 //Consultar TLB si falló en Caché
 uint32_t consultar_TLB (t_cpu* cpu,uint32_t pid, uint32_t nro_pagina) {
+  log_debug(logger,"Iniciando consulta a TLB");
   for (int i=0;i<cpu->parametros_tlb->cantidad_entradas ;i++) {
+    log_debug(logger, "PID: <%d> - PAGINA: <%d> - MARCO: <%d> - TIEMPO: <%d>",cpu->tlb[i].pid,cpu->tlb[i].pagina,cpu->tlb[i].marco,cpu->tlb[i].tiempo_transcurrido);
     cpu->tlb[i].tiempo_transcurrido++;
     if (cpu->tlb[i].pid==pid && cpu->tlb[i].pagina==nro_pagina) {
         cpu->tlb[i].nro_orden = i;
+        cpu->tlb[i].tiempo_transcurrido = 0;
         //Log 6. TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, nro_pagina);
         return cpu->tlb[i].marco;
@@ -175,38 +180,39 @@ uint32_t consultar_memoria(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
 //Insertar un nuevo marco en el TLB
 void actualizar_TLB (t_cpu* cpu, uint32_t pid, uint32_t pagina, uint32_t marco) {
   int index_orden = 10000;
-  int index_tiempo = -1;
-  int ultimo_agregado = 0;
+  int index_tiempo = 0;
   int reemplazo;
   
   //busco entrada libre
   for(int i= 0; i < cpu->parametros_tlb -> cantidad_entradas; i++){
     if(cpu->tlb[i].pid == -1){
-      ultimo_agregado = i;
-      asignar_lugar_en_TLB(cpu,i,pid,marco,pagina,ultimo_agregado);
+      cpu->orden_actual_tlb = i;
+      asignar_lugar_en_TLB(cpu,i,pid,marco,pagina,cpu->orden_actual_tlb);
     return;
     }
   }
 
   switch (cpu->parametros_tlb->algoritmo_reemplazo){
     case LRU:
-    for (int i=0; i < cpu->parametros_tlb -> cantidad_entradas; i++){
+    for (int i=0; i < cpu->parametros_tlb->cantidad_entradas; i++){
       if(cpu->tlb[i].tiempo_transcurrido > index_tiempo) {
         reemplazo = i;
+        index_tiempo = cpu->tlb[i].tiempo_transcurrido;
       }
     }
-    ultimo_agregado +=1;
-    asignar_lugar_en_TLB(cpu,reemplazo,pid,marco,pagina,ultimo_agregado);
+    cpu->orden_actual_tlb ++;
+    asignar_lugar_en_TLB(cpu,reemplazo,pid,marco,pagina,cpu->orden_actual_tlb);
     break;
 
     case FIFO:
-    for (int i=0;i <= cpu->parametros_tlb->cantidad_entradas;i++) {
+    for (int i=0;i < cpu->parametros_tlb->cantidad_entradas;i++) {
       if (cpu->tlb[i].nro_orden < index_orden) {
         reemplazo = i;
+        index_orden = cpu->tlb[i].nro_orden;
       }
     }
-    ultimo_agregado +=1;
-    asignar_lugar_en_TLB(cpu,reemplazo,pid,marco,pagina,ultimo_agregado);
+    cpu->orden_actual_tlb ++;
+    asignar_lugar_en_TLB(cpu,reemplazo,pid,marco,pagina,cpu->orden_actual_tlb);
     break;
   }
 } 

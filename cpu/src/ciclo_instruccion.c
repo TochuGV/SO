@@ -185,7 +185,9 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
   //Log 4. Lectura Memoria
   log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_leer);
 
-  actualizar_cache(cpu,pid,nro_pagina,valor_a_leer,es_escritura);
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    actualizar_cache(cpu,pid,nro_pagina,valor_a_leer,es_escritura);
+  }
 }
 
 void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* valor_a_escribir){
@@ -197,6 +199,7 @@ void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* val
 
   if (cpu->parametros_cache->cantidad_entradas > 0) {
     int ubicacion = consultar_pagina_cache(cpu,pid,nro_pagina);
+
     if (ubicacion != -1) {
       asignar_lugar_en_cache(cpu,ubicacion,pid,nro_pagina,valor_a_escribir,es_escritura);
     }
@@ -216,8 +219,11 @@ void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* val
   log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_escribir);
 
   escribir_valor_en_memoria(cpu,pid, direccion_fisica, valor_a_escribir);
+  
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura);
+  }
 
-  actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura);
 }
 
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){

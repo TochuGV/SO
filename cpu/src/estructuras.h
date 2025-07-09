@@ -69,6 +69,7 @@ typedef struct {
   cache_paginas_t* parametros_cache;
   entrada_tlb* tlb;
   tlb_t* parametros_tlb;
+  uint32_t orden_actual_tlb;
 } t_cpu;
 
 extern const char* ip_kernel;

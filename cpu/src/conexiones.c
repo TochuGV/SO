@@ -56,6 +56,7 @@ t_cpu* iniciar_cpu(int32_t identificador_cpu) {
     cpu->tlb[i].tiempo_transcurrido = 0;
   }
 
+  cpu->orden_actual_tlb = 0;
   return cpu;
 }
 
