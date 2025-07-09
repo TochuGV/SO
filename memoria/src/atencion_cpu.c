@@ -66,11 +66,13 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
 
   if (!proceso) {
     log_warning(logger,"Error al encontrar el proceso que CPU solicita.");
+    list_destroy_and_destroy_elements(solicitud, free);
     return NULL;
   }
 
   if (pc >= list_size(proceso->lista_instrucciones)) {
     log_error(logger, "El PC %d excede la cantidad de instrucciones del proceso %d.", pc, pid);
+    list_destroy_and_destroy_elements(solicitud, free);
     return NULL;
   }
 
@@ -96,6 +98,7 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
   agregar_a_paquete(paquete, parametro2, longitud_parametro2);
 
   enviar_paquete(paquete, cliente_cpu);
+  list_destroy_and_destroy_elements(solicitud, free);
 
   //log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
 

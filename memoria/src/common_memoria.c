@@ -288,6 +288,11 @@ void terminar_memoria(void)
   close(servidor_memoria);
   list_destroy_and_destroy_elements(lista_procesos, free);
   list_destroy_and_destroy_elements(lista_ids_cpus, free);
+  pthread_mutex_destroy(&mutex_memoria);
+  pthread_mutex_destroy(&mutex_swapfile);
+  pthread_mutex_destroy(&mutex_swap_offset);
+  pthread_mutex_destroy(&mutex_marcos_libres);
+  pthread_mutex_destroy(&mutex_bitmap);
 	log_destroy(logger);
 	config_destroy(config);	
 }

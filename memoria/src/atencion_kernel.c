@@ -1,7 +1,6 @@
 #include "atencion_kernel.h"
 
 
-
 void* atender_kernel(void* arg)
 {
   int cliente_kernel = *(int*)arg;
@@ -33,6 +32,8 @@ void* atender_kernel(void* arg)
       }
       else
         send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+      
+      list_destroy_and_destroy_elements(valores, free);
       break;
     
     case SOLICITUD_DUMP_MEMORY:
@@ -44,6 +45,8 @@ void* atender_kernel(void* arg)
       }
       else
         send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+      
+      list_destroy_and_destroy_elements(valores, free);
       break;
     
     case SUSPENDER:
@@ -56,6 +59,7 @@ void* atender_kernel(void* arg)
       else
         send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
 
+      list_destroy_and_destroy_elements(valores, free);
       break;
     
     case DESUSPENDER:
@@ -68,6 +72,7 @@ void* atender_kernel(void* arg)
       else
         send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
 
+      list_destroy_and_destroy_elements(valores, free);
       break;
 
     case -1:
@@ -83,6 +88,48 @@ void* atender_kernel(void* arg)
   
   return NULL;
 }
+
+
+int recibir_y_ubicar_proceso(int cliente_kernel)
+{
+  t_list* valores = recibir_paquete(cliente_kernel);
+
+  uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2);
+
+  uint32_t cantidad_marcos_proceso = (tamanio_proceso + tamanio_pagina - 1) / tamanio_pagina;
+
+  if (verificar_espacio_memoria(cantidad_marcos_proceso)) {
+
+    uint32_t longitud_archivo_pseudocodigo = *(uint32_t*)list_get(valores, 0); 
+
+    char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
+    memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
+
+    uint32_t pid = *(uint32_t*)list_get(valores, 3);
+
+    t_proceso* proceso = malloc(sizeof(t_proceso));
+    proceso->pid = pid;
+    proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
+    proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
+    proceso->marcos_en_uso = cantidad_marcos_proceso;
+    memset(proceso->metricas, 0, sizeof(proceso->metricas));
+    proceso->base_swap = -1;
+    proceso->tamanio_swap = 0;
+
+    list_add(lista_procesos,proceso);
+
+    log_info(logger, "## PID: <%d> - Proceso Creado - Tamaño: <%d>",pid,tamanio_proceso);
+    
+    free(archivo_pseudocodigo);
+    list_destroy_and_destroy_elements(valores, free);
+    return 0;
+  };
+
+  log_warning(logger,"No hay lugar en memoria para el proceso.");
+  list_destroy_and_destroy_elements(valores, free);
+  return -1;
+}
+
 
 t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
 {
@@ -143,42 +190,6 @@ bool verificar_espacio_memoria(uint32_t cantidad_marcos_proceso)
   return false;
 }
 
-int recibir_y_ubicar_proceso(int cliente_kernel)
-{
-  t_list* valores = recibir_paquete(cliente_kernel);
-
-  uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2);
-
-  uint32_t cantidad_marcos_proceso = (tamanio_proceso + tamanio_pagina - 1) / tamanio_pagina;
-
-  if (verificar_espacio_memoria(cantidad_marcos_proceso)) {
-
-    uint32_t longitud_archivo_pseudocodigo = *(uint32_t*)list_get(valores, 0); 
-
-    char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
-    memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
-
-    uint32_t pid = *(uint32_t*)list_get(valores, 3);
-
-    t_proceso* proceso = malloc(sizeof(t_proceso));
-    proceso->pid = pid;
-    proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
-    proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
-    proceso->marcos_en_uso = cantidad_marcos_proceso;
-    memset(proceso->metricas, 0, sizeof(proceso->metricas));
-    proceso->base_swap = -1;
-    proceso->tamanio_swap = 0;
-
-    list_add(lista_procesos,proceso);
-
-    log_info(logger, "## PID: <%d> - Proceso Creado - Tamaño: <%d>",pid,tamanio_proceso);
-
-    return 0;
-  };
-
-  log_warning(logger,"No hay lugar en memoria para el proceso.");
-  return -1;
-}
 
 int finalizar_proceso(uint32_t pid) 
 {
@@ -274,6 +285,7 @@ int suspender_proceso(uint32_t pid)
   proceso->base_swap = swap_offset;
 
   escribir_en_swap(proceso->tabla_de_paginas);
+  usleep(retardo_swap * 1000);
   proceso->metricas[BAJADAS_A_SWAP]++;
 
   proceso->tamanio_swap = proceso->marcos_en_uso * tamanio_pagina;
@@ -321,6 +333,7 @@ int desuspender_proceso(uint32_t pid)
     proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
     int32_t offset_swap_actual = proceso->base_swap;
     leer_swap(proceso->tabla_de_paginas, &offset_swap_actual);
+    usleep(retardo_swap * 1000);
     proceso->metricas[SUBIDAS_A_MP]++;
     proceso->base_swap = -1;
     proceso->tamanio_swap = 0;
