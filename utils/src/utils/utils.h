@@ -36,7 +36,9 @@ typedef enum {
   FINALIZACION_IO,
   FINALIZAR_PROCESO,
   DESALOJO,
-  SYSCALL
+  SYSCALL,
+  SUSPENDER,
+  DESUSPENDER
 } op_code_comunicacion;
 
 typedef enum {
@@ -66,16 +68,6 @@ typedef enum {
   CPU_DISPATCH,
   CPU_INTERRUPT
 } tipo_conexion_cpu;
-
-typedef enum {
-  LRU,
-  FIFO
-} t_algoritmo_tlb;
-
-typedef enum {
-  CLOCK,
-  CLOCK_M
-} t_algoritmo_cache;
 
 typedef struct {
 	int size;

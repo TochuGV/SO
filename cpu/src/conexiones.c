@@ -1,86 +1,70 @@
 #include "conexiones.h"
 
-char* ip_kernel;
-char* ip_memoria;
-char* puerto_kernel_dispatch;
-char* puerto_kernel_interrupt;
-char* puerto_memoria;
-int conexion_kernel_dispatch;
-int conexion_kernel_interrupt;
-int conexion_memoria;
-datos_conexion_t* datos_dispatch;
-datos_conexion_t* datos_interrupt;
-datos_conexion_t* datos_memoria;
-
+const char* ip_kernel;
+const char* ip_memoria;
+const char* puerto_kernel_dispatch;
+const char* puerto_kernel_interrupt;
+const char* puerto_memoria;
 uint32_t tamanio_pagina;
 uint32_t cant_entradas_tabla;
 uint32_t cant_niveles;
 
-entrada_cache* cache;
-cache_paginas_t* parametros_cache;
-entrada_tlb* tlb;
-tlb_t* parametros_tlb;
+t_cpu* iniciar_cpu(int32_t identificador_cpu) {
 
-void iniciar_cpu(int32_t identificador_cpu) {
+  t_cpu* cpu = malloc(sizeof(t_cpu));
+  cpu->id = identificador_cpu;
 
-  ip_kernel = config_get_string_value(config, "IP_KERNEL");
-  ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+  cpu->datos_dispatch = malloc(sizeof(datos_conexion_t));
+  cpu->datos_dispatch->ip = ip_kernel;
+  cpu->datos_dispatch->puerto = puerto_kernel_dispatch;
+  cpu->datos_dispatch->id_cpu = identificador_cpu;
 
-  puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
-  puerto_kernel_interrupt = config_get_string_value(config, "PUERTO_KERNEL_INTERRUPT");
-  puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
+  cpu->datos_interrupt = malloc(sizeof(datos_conexion_t));
+  cpu->datos_interrupt->ip = ip_kernel;
+  cpu->datos_interrupt->puerto = puerto_kernel_interrupt;
+  cpu->datos_interrupt->id_cpu = identificador_cpu;
 
-  datos_dispatch = malloc(sizeof(datos_conexion_t));
-  datos_dispatch->ip = ip_kernel;
-  datos_dispatch->puerto = puerto_kernel_dispatch;
-  datos_dispatch->id_cpu = identificador_cpu;
-  datos_dispatch->socket = conexion_kernel_dispatch;
+  cpu->datos_memoria = malloc(sizeof(datos_conexion_t));
+  cpu->datos_memoria->ip = ip_memoria;
+  cpu->datos_memoria->puerto = puerto_memoria;
+  cpu->datos_memoria->id_cpu = identificador_cpu;
 
-  datos_interrupt = malloc(sizeof(datos_conexion_t));
-  datos_interrupt->ip = ip_kernel;
-  datos_interrupt->puerto = puerto_kernel_interrupt;
-  datos_interrupt->id_cpu = identificador_cpu;
-  datos_interrupt->socket = conexion_kernel_interrupt;
-
-  datos_memoria = malloc(sizeof(datos_conexion_t));
-  datos_memoria->ip = ip_memoria;
-  datos_memoria->puerto = puerto_memoria;
-  datos_memoria->id_cpu = identificador_cpu;
-  datos_memoria->socket = conexion_memoria;
-
-  parametros_cache=malloc(sizeof(cache_paginas_t));
-  parametros_cache->cantidad_entradas = config_get_int_value(config,"ENTRADAS_CACHE");
+  cpu->parametros_cache=malloc(sizeof(cache_paginas_t));
+  cpu->parametros_cache->cantidad_entradas = config_get_int_value(config,"ENTRADAS_CACHE");
   char* algoritmo_cache = config_get_string_value(config,"REEMPLAZO_CACHE");
-  parametros_cache->algoritmo_reemplazo = convertir_cache (algoritmo_cache);
+  cpu->parametros_cache->algoritmo_reemplazo = convertir_cache (algoritmo_cache);
 
-  parametros_tlb = malloc(sizeof(tlb_t));
-  parametros_tlb->cantidad_entradas = config_get_int_value(config, "ENTRADAS_TLB");
+  cpu->parametros_tlb = malloc(sizeof(tlb_t));
+  cpu->parametros_tlb->cantidad_entradas = config_get_int_value(config, "ENTRADAS_TLB");
   char* algoritmo_tlb = config_get_string_value(config,"REEMPLAZO_TLB");
-  parametros_tlb->algoritmo_reemplazo = convertir_tlb (algoritmo_tlb);
+  cpu->parametros_tlb->algoritmo_reemplazo = convertir_tlb (algoritmo_tlb);
 
-  tlb = malloc(sizeof(entrada_tlb) * parametros_tlb->cantidad_entradas);
-  for (int i = 0; i < parametros_tlb->cantidad_entradas; i++) {
-    tlb[i].pid = -1;
-    tlb[i].pagina = -1;
-    tlb[i].marco = -1;
-    tlb[i].tiempo_transcurrido = 0;
+  cpu->cache = malloc(sizeof(entrada_cache) * cpu->parametros_cache->cantidad_entradas);
+  for (int i = 0; i < cpu->parametros_cache->cantidad_entradas; i++) {
+    cpu->cache[i].pid = -1;
+    cpu->cache[i].pagina = -1;
+    cpu->cache[i].contenido = NULL;
+    cpu->cache[i].bit_uso = 0;
+    cpu->cache[i].bit_modificado = 0;
   }
 
-  cache = malloc(sizeof(entrada_cache) * parametros_cache->cantidad_entradas);
-  for (int i = 0; i < parametros_cache->cantidad_entradas; i++) {
-    cache[i].pid = -1;
-    cache[i].pagina = -1;
-    cache[i].contenido = NULL;
-    cache[i].bit_uso = 0;
-    cache[i].bit_uso = 0;
-    cache[i].bit_modificado = 0;
+  cpu->tlb = malloc(sizeof(entrada_tlb) * cpu->parametros_tlb->cantidad_entradas);
+  for (int i = 0; i < cpu->parametros_tlb->cantidad_entradas; i++) {
+    cpu->tlb[i].pid = -1;
+    cpu->tlb[i].pagina = -1;
+    cpu->tlb[i].marco = -1;
+    cpu->tlb[i].tiempo_transcurrido = 0;
   }
+
+  cpu->orden_actual_tlb = 0;
+  return cpu;
 }
 
 //Conexiones
 void* conectar_dispatch(void* arg) {
-  datos_conexion_t* datos = (datos_conexion_t*) arg;
-    datos->socket = crear_conexion(datos->ip, datos->puerto, MODULO_CPU);
+  t_cpu* cpu = arg; 
+  datos_conexion_t* datos = cpu->datos_dispatch;
+    datos->socket = crear_conexion((char*)datos->ip, (char*)datos->puerto, MODULO_CPU);
     if (datos->socket == -1) {
         log_error(logger, "Fallo al conectar con Kernel Dispatch");
         pthread_exit(NULL);
@@ -102,14 +86,15 @@ void* conectar_dispatch(void* arg) {
     }
 
     log_info(logger, "Conexión con Kernel Dispatch exitosa");
-    conexion_kernel_dispatch = datos->socket;
-    free(datos);
+    cpu->conexion_kernel_dispatch = datos->socket;
+
     return NULL;
 }
 
 void* conectar_interrupt(void* arg) {
-  datos_conexion_t* datos = (datos_conexion_t*) arg;
-    datos->socket = crear_conexion(datos->ip, datos->puerto, MODULO_CPU);
+  t_cpu* cpu = arg; 
+  datos_conexion_t* datos = cpu->datos_interrupt;
+    datos->socket = crear_conexion((char*)datos->ip, (char*)datos->puerto, MODULO_CPU);
     if (datos->socket == -1) {
         log_error(logger, "Fallo al conectar con Kernel Interrupt");
         pthread_exit(NULL);
@@ -131,14 +116,15 @@ void* conectar_interrupt(void* arg) {
     }
 
     log_info(logger, "Conexión con Kernel Interrupt exitosa");
-    conexion_kernel_interrupt = datos->socket;
-    free(datos);
+    cpu->conexion_kernel_interrupt = datos->socket;
+
     return NULL;
 }
 
 void* conectar_memoria(void* arg) {
-  datos_conexion_t* datos = (datos_conexion_t*) arg;
-    datos->socket = crear_conexion(datos->ip, datos->puerto, MODULO_CPU);
+  t_cpu* cpu = arg; 
+  datos_conexion_t* datos = cpu->datos_memoria;
+    datos->socket = crear_conexion((char*)datos->ip, (char*)datos->puerto, MODULO_CPU);
     if (datos->socket == -1) {
         log_error(logger, "Fallo al conectar con Memoria");
         pthread_exit(NULL);
@@ -158,23 +144,22 @@ void* conectar_memoria(void* arg) {
     }
 
     log_info(logger, "Conexión con Memoria exitosa");
-    conexion_memoria = datos->socket;
+    cpu->conexion_memoria = datos->socket;
 
-    recibir_datos_memoria();
+    recibir_datos_memoria(cpu);
 
-    free(datos);
     return NULL;
 }
 
-void recibir_datos_memoria() {
+void recibir_datos_memoria(t_cpu* cpu) {
 
   int cod_op = DATOS_MEMORIA;
-  send(conexion_memoria, &cod_op, sizeof(int), 0);
+  send(cpu->conexion_memoria, &cod_op, sizeof(int), 0);
 
-  cod_op = recibir_operacion(conexion_memoria);
+  cod_op = recibir_operacion(cpu->conexion_memoria);
 
   if (cod_op == DATOS_MEMORIA) {
-    t_list* datos_memoria = recibir_paquete(conexion_memoria);
+    t_list* datos_memoria = recibir_paquete(cpu->conexion_memoria);
 
     tamanio_pagina = *(uint32_t*) list_get(datos_memoria, 0);
     cant_entradas_tabla = *(uint32_t*) list_get(datos_memoria, 1);
@@ -194,3 +179,18 @@ t_algoritmo_cache convertir_cache (char* algoritmo) {
   if (strcmp(algoritmo, "CLOCK_M") == 0) {return CLOCK_M;}
   return 0;
   } 
+
+//Auxiliar para liberar los espacios de memoria reservados
+void liberar_cpu(t_cpu* cpu) {
+    free(cpu->datos_dispatch);
+    free(cpu->datos_interrupt);
+    free(cpu->datos_memoria);
+
+    free(cpu->parametros_cache);
+    free(cpu->parametros_tlb);
+
+    free(cpu->cache);
+    free(cpu->tlb);
+
+    free(cpu);
+}
