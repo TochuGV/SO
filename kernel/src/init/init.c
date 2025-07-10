@@ -18,6 +18,7 @@ t_dictionary* diccionario_dispositivos;
 t_dictionary* diccionario_cronometros;
 t_dictionary* diccionario_contextos_io;
 t_dictionary* diccionario_estimaciones;
+t_dictionary* diccionario_tiempo_bloqueado;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
@@ -65,6 +66,7 @@ void inicializar_kernel(){
   diccionario_cronometros = dictionary_create();
   diccionario_contextos_io = dictionary_create();
   diccionario_estimaciones = dictionary_create();
+  diccionario_tiempo_bloqueado = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
