@@ -1,13 +1,14 @@
 #include "ciclo_instruccion.h"
 
 //Realizar todo el ciclo de cada instrucción
-void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexion_kernel_interrupt, int conexion_memoria){
+void* ciclo_de_instruccion(t_cpu* cpu, t_pcb* pcb, int conexion_kernel_dispatch, int conexion_kernel_interrupt, int conexion_memoria){
   t_list* lista_instruccion;
   t_instruccion instruccion;
   t_estado_ejecucion estado = EJECUCION_CONTINUA;
 
   while(estado == EJECUCION_CONTINUA || estado == EJECUCION_CONTINUA_INIT_PROC){
-    log_info (logger, "## PID: %d - FETCH - Program Counter: %d", pcb->pid, pcb->pc);
+    //Log 1. Fetch Instrucción
+    log_info (logger, "PID: <%d> - FETCH - Program Counter: <%d>", pcb->pid, pcb->pc);
     
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
     if (list_size(lista_instruccion) == 0) {
@@ -25,7 +26,7 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
     memcpy(instruccion.parametro2, list_get(lista_instruccion, 4), longitud_parametro2); 
 
     list_destroy_and_destroy_elements(lista_instruccion, free);
-    estado = trabajar_instruccion(instruccion, pcb);
+    estado = trabajar_instruccion(cpu, instruccion, pcb);
 
     if(estado == EJECUCION_CONTINUA_INIT_PROC){
       actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
@@ -45,7 +46,6 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
 //Recibir información del PCB desde Kernel
 t_pcb* recibir_pcb(int conexion_kernel_dispatch) {
   int cod_op = recibir_operacion(conexion_kernel_dispatch);
-  log_debug(logger, "%d", cod_op);
   if(cod_op != PCB) {
     return NULL;
   };
@@ -91,69 +91,70 @@ t_list* recibir_instruccion(t_pcb* pcb, int conexion_memoria) {
 }
 
 //Decode y Execute Instrucción
-t_estado_ejecucion trabajar_instruccion(t_instruccion instruccion, t_pcb* pcb){
+t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t_pcb* pcb){
   switch (instruccion.tipo) {
   //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
-      log_info (logger, "## PID: %d - Ejecutando: NOOP", pcb->pid);
+      log_info (logger, "PID: <%d> - Ejecutando: <NOOP>", pcb->pid);
       sleep(1); //Uso una duración de 1 segundo como default para NOOP
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case READ:
-      log_info(logger, "## PID: %d - Ejecutando: READ - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      ejecutar_read(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "PID: <%d> - Ejecutando: <READ> - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      ejecutar_read(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case WRITE: 
-      log_info(logger, "## PID: %d - Ejecutando: WRITE - Direccion logica: %s - Valor: %s ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      ejecutar_write(pcb->pid,instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "PID: <%d> - Ejecutando: <WRITE> - Direccion logica: <%s> - Valor: <%s> ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      ejecutar_write(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case GOTO: 
-      log_info(logger, "## PID: %d - Ejecutando: GOTO - Nuevo PC: %s", pcb->pid, instruccion.parametro1);
+      log_info(logger, "PID: <%d> - Ejecutando: <GOTO> - Nuevo PC: <%s>", pcb->pid, instruccion.parametro1);
       pcb->pc = atoi(instruccion.parametro1);
       return EJECUCION_CONTINUA;
       break;
     
     case IO: 
-      log_info(logger, "## PID: %d - Ejecutando: IO - Dispositivo: %s - Tiempo: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "PID: <%d> - Ejecutando: <IO> - Dispositivo: <%s> - Tiempo: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_IO;
       break;
     
     case INIT_PROC:
-      log_info(logger, "## PID: %d - Ejecutando: INIT_PROC - Archivo: %s - Tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "PID: <%d> - Ejecutando: <INIT_PROC> - Archivo: <%s> - Tamaño: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
     case DUMP_MEMORY:
-      log_info(logger,"## PID: %d - Ejecutando: DUMP_MEMORY", pcb->pid);
+      log_info(logger,"PID: <%d> - Ejecutando: <DUMP_MEMORY>", pcb->pid);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_DUMP;
       break;
 
     case EXIT:
-      log_info(logger, "## PID: %d - Ejecutando: EXIT", pcb->pid);
+      log_info(logger, "PID: <%d> - Ejecutando: <EXIT>", pcb->pid);
       pcb->pc++;
+      finalizar_proceso_en_cache(cpu,pcb->pid);
       return EJECUCION_FINALIZADA;
       break;
     
     default: 
-      log_warning(logger, "## PID: %d - Instrucción desconocida: %d", pcb->pid, instruccion.tipo);
+      log_warning(logger, "## PID: <%d> - Instrucción desconocida: <%d>", pcb->pid, instruccion.tipo);
       break;
   };
   return EJECUCION_FINALIZADA;
 };
 
 //Ejecutar Write y Read
-void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
+void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* parametro2){
   int direccion = atoi(direccion_logica);
   //Calcular numero de pagina y desplazamiento 
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
@@ -162,19 +163,19 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   char* valor_a_leer = NULL;
   bool es_escritura=false;
 
-  if (parametros_cache->cantidad_entradas > 0) {
-    valor_a_leer = consultar_contenido_cache(pid,nro_pagina);
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    valor_a_leer = consultar_contenido_cache(cpu,pid,nro_pagina);
   }
   
   if (valor_a_leer != NULL) {
-    //Al haber habido Caché Hit, no contamos con la dirección lógica
-    log_info(logger, "PID: %d - Acción: LEER - Valor: %s", pid, valor_a_leer);
+    //Al haber habido Caché Hit, no contamos con la dirección física
+    log_info(logger, "PID: <%d> - Acción: <LEER> - Valor: <%s>", pid, valor_a_leer);
     return; 
   }  
 
-  direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
+  direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
-  valor_a_leer = pedir_valor_a_memoria(pid, direccion_fisica, parametro2);
+  valor_a_leer = pedir_valor_a_memoria(cpu,pid, direccion_fisica, parametro2);
 
   if (valor_a_leer == NULL) {
       log_error(logger, "No se pudo leer de memoria");
@@ -182,42 +183,47 @@ void ejecutar_read (uint32_t pid, char* direccion_logica, char* parametro2){
   }
     
   //Log 4. Lectura Memoria
-  log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_leer);
+  log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_leer);
 
-  actualizar_cache(pid,nro_pagina,valor_a_leer,es_escritura);
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    actualizar_cache(cpu,pid,nro_pagina,valor_a_leer,es_escritura);
+  }
 }
 
-void ejecutar_write (uint32_t pid, char* direccion_logica, char* valor_a_escribir){
+void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* valor_a_escribir){
   int direccion = atoi(direccion_logica);
   //Calcular numero de pagina y desplazamiento 
   uint32_t nro_pagina = floor(direccion / tamanio_pagina);
   uint32_t desplazamiento = direccion % tamanio_pagina;
   bool es_escritura=true;
 
-  log_warning(logger, "Nro pag: %d, Desplazamiento: %d",nro_pagina,desplazamiento);
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    int ubicacion = consultar_pagina_cache(cpu,pid,nro_pagina);
 
-  if (parametros_cache->cantidad_entradas > 0) {
-    int pagina = consultar_pagina_cache(pid,nro_pagina);
-    if (pagina != -1) {
-      //free (cache[pagina].contenido);
-      strcpy(cache[pagina].contenido, valor_a_escribir);
-      cache[pagina].bit_modificado = 1;
-      cache[pagina].bit_uso = 1;
+    if (ubicacion != -1) {
+      asignar_lugar_en_cache(cpu,ubicacion,pid,nro_pagina,valor_a_escribir,es_escritura);
     }
+    else {
+      actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura);
+    }
+    return;
   }
   
-  uint32_t direccion_fisica = traducir_direccion(pid,nro_pagina,desplazamiento);
+  uint32_t direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
   if (direccion_fisica==-1){
     log_error(logger,"No se pudo obtener la dirección física, pid: %d",pid);
   }
     
   //Log 4. Lectura Memoria
-  log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pid, direccion_fisica, valor_a_escribir);
+  log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_escribir);
 
-  escribir_valor_en_memoria(pid, direccion_fisica, valor_a_escribir);
+  escribir_valor_en_memoria(cpu,pid, direccion_fisica, valor_a_escribir);
+  
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura);
+  }
 
-  actualizar_cache(pid, nro_pagina,valor_a_escribir,es_escritura);
 }
 
 void agregar_syscall_a_paquete(t_paquete* paquete, uint32_t pid, uint32_t tipo, char* arg1, char* arg2, uint32_t pc){
@@ -274,7 +280,7 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
       break;
 
     default:
-      log_warning(logger, "Motivo de interrupción desconocida. Estado: %d", estado);
+      log_warning(logger, "Motivo de interrupción desconocida. Estado: <%d>", estado);
       return;
   };
   enviar_paquete(paquete, conexion_kernel_dispatch);
@@ -283,8 +289,6 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
 //funcion que espera el mensaje de kernel
 bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
   int pid_interrupcion;
-  log_info(logger, "Socket interrupt: %d", socket_interrupt);
-  log_info(logger, "PID actual: %d", pid_actual);
   int bytes = recv(socket_interrupt, &pid_interrupcion, sizeof(uint32_t), MSG_DONTWAIT);
 
   if (bytes > 0) {
@@ -293,7 +297,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
     if(pid_interrupcion == pid_actual){
       return true;
     }else{
-      log_info(logger, "PID %d no corresponde al proceso en ejecución (PID actual: %d)", pid_interrupcion, pid_actual);
+      log_info(logger, "PID <%d> no corresponde al proceso en ejecución (PID actual: <%d>)", pid_interrupcion, pid_actual);
     }
   }
   return false;
