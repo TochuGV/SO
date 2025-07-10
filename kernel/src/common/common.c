@@ -40,7 +40,7 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
 };
 
 void esperar_enter_para_planificar(){ //Se podría ver alguna forma de que se loggee el mensaje "Presiona 'Enter' para comenzar la planificación..."
-  char* leido = readline("Presiona 'Enter' para comenzar la planificación...\n");
+  char* leido = readline("");
   if(leido != NULL && strlen(leido) == 0){
     log_debug(logger, "Se presionó 'Enter', comenzando la planificación...");
     free(leido);
@@ -98,6 +98,6 @@ void encolar_proceso_en_ready(t_pcb* pcb){
   pthread_mutex_lock(&mutex_ready);
   queue_push(cola_ready, pcb);
   pthread_mutex_unlock(&mutex_ready);
-  if(es_SRT())
-    desalojar_cpu();
+  if(es_SRT()) desalojar_cpu();
+  sem_post(&semaforo_ready);
 };

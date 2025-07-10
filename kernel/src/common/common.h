@@ -8,15 +8,7 @@
 #include <commons/collections/queue.h>
 #include <commons/temporal.h>
 #include "conexion/handshake/saliente/saliente.h"
-#include "./planificacion/algoritmos/srt/srt.h"
-
-typedef struct {
-  int32_t id_cpu;
-  int socket_dispatch;
-  int socket_interrupt;
-  bool disponible;
-  t_pcb* proceso_en_ejecucion;
-} t_cpu;
+#include "./planificacion/planificadores/corto_plazo/algoritmos/srt/srt.h"
 
 typedef struct {
   char* dispositivo_actual;

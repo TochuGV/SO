@@ -5,11 +5,12 @@
 #include "logger/logger.h"
 #include "common/common.h"
 #include "utils/utils.h" // Revisar después
-#include "./planificacion/algoritmos/pmcp/pmcp.h"
-#include "./planificacion/algoritmos/sjf/sjf.h"
+
+#include "planificacion/planificadores/largo_plazo/algoritmos/fifo/fifo.h"
+#include "planificacion/planificadores/largo_plazo/algoritmos/pmcp/pmcp.h"
+
 #include <commons/collections/queue.h>
 #include <semaphore.h>
-#include "./planificacion/algoritmos/srt/srt.h"
 
 typedef struct {
   uint32_t pid;
@@ -20,7 +21,6 @@ typedef struct {
 extern t_queue* cola_new;
 extern t_list* lista_info_procesos;
 extern pthread_mutex_t mutex_new;  
-//extern sem_t hay_procesos_en_new;
 extern sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo();

@@ -12,7 +12,6 @@ double ESTIMACION_INICIAL;
 char* TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
-t_list* lista_cpus;
 t_list* lista_pcbs;
 
 t_dictionary* diccionario_dispositivos;
@@ -22,14 +21,12 @@ t_dictionary* diccionario_estimaciones;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 
-sem_t semaforo_cpu_libre;
-
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
 pthread_t hilo_conexion_io;
 pthread_t hilo_planificador_largo_plazo;
 pthread_t hilo_planificador_corto_plazo;
-//pthread_t hilo_planificador_mediano_plazo;
+pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
@@ -63,13 +60,12 @@ void inicializar_kernel(){
   log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
   extraer_datos_config();
-  lista_cpus = list_create();
+  inicializar_estructura_cpus();
   lista_pcbs = list_create();
   diccionario_cronometros = dictionary_create();
   diccionario_contextos_io = dictionary_create();
   diccionario_estimaciones = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
-  sem_init(&semaforo_cpu_libre, 0, 0);
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
@@ -79,7 +75,6 @@ void crear_proceso_inicial(char* archivo_pseudocodigo, uint32_t tamanio){
   t_pcb* pcb_nuevo = crear_pcb();
   inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
   log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
-  //mover_proceso_a_ready();
   sem_post(&semaforo_revisar_largo_plazo);
 };
 
@@ -92,7 +87,7 @@ void iniciar_conexiones_constantes_entre_modulos(){
 void iniciar_planificadores(){
   pthread_create(&hilo_planificador_largo_plazo, NULL, planificador_largo_plazo, NULL);
   pthread_create(&hilo_planificador_corto_plazo, NULL, planificador_corto_plazo, NULL);
-  //pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
+  pthread_create(&hilo_planificador_mediano_plazo, NULL, planificador_mediano_plazo, NULL);
 };
 
 void unir_hilos(){
@@ -101,5 +96,18 @@ void unir_hilos(){
   pthread_join(hilo_conexion_io, NULL);
   pthread_join(hilo_planificador_largo_plazo, NULL);
   pthread_join(hilo_planificador_corto_plazo, NULL);
-  //pthread_join(hilo_planificador_mediano_plazo, NULL);
+  pthread_join(hilo_planificador_mediano_plazo, NULL);
+};
+
+void finalizar_kernel(){
+  log_destroy(logger);
+  config_destroy(config);
+
+  //terminar_programa(conexion_memoria, logger, config); --> 'conexion_memoria' ya no existe más.
+  dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);
+
+  //destruimos el diccionario de estimaciones que se usa para sjf
+  //dictionary_destroy_and_destroy_elements(diccionario_estimaciones, free);
+
+  //Se pueden destruir logs, configs, conexiones, listas con elementos, semáforos, diccionarios, etc.
 };

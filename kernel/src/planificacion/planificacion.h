@@ -7,5 +7,6 @@
 
 void* planificador_largo_plazo(void*);
 void* planificador_corto_plazo(void*);
+void* planificador_mediano_plazo(void*);
 
 #endif

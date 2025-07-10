@@ -240,13 +240,12 @@ int crear_conexion(char *ip, char* puerto, int header_cliente){
 
 	int socket_cliente = socket(server_info->ai_family, server_info->ai_socktype, server_info->ai_protocol);
 
-  log_info(logger, "Esperando servidor...");
+  log_debug(logger, "Esperando servidor...");
   while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-  sleep(1);
-  }
+  	sleep(1);
+  };
 
 	freeaddrinfo(server_info);
-
 	return socket_cliente;
 };
 
@@ -262,7 +261,7 @@ int iniciar_conexion(void* arg){
 void terminar_programa(int conexion, t_log* logger, t_config* config){
 	close(conexion);
 	log_destroy(logger);
-	config_destroy(config);	
+	config_destroy(config);
 };
 
 

@@ -2,6 +2,7 @@
 #define INTERRUPT_H_
 
 #include "./common/common.h"
+#include "./conexion/conexion.h"
 #include "./conexion/handshake/entrante/entrante.h"
 
 void* conectar_cpu_interrupt(void*);

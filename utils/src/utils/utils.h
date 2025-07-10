@@ -36,6 +36,7 @@ typedef enum {
   FINALIZACION_IO,
   FINALIZAR_PROCESO,
   DESALOJO,
+  SYSCALL,
   SUSPENDER,
   DESUSPENDER
 } op_code_comunicacion;

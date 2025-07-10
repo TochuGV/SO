@@ -1,35 +1,17 @@
 #include "io.h"
 
 void* conectar_io(void* arg){
-  char* puerto = (char*) arg;
-  int socket_escucha = iniciar_servidor(puerto);
-  if (socket_escucha == -1){
-    pthread_exit(NULL);
-  };
-  log_info(logger, "Esperando conexiones de IO...");
-  while(1){
-    int socket_cliente = esperar_cliente(socket_escucha);
-    if(socket_cliente == -1){
-      log_error(logger, "Error al aceptar conexión desde dispositivo IO");
-      continue;
-    };
-    int* socket_ptr = malloc(sizeof(int));
-    *socket_ptr = socket_cliente;
-    pthread_t hilo_atender_io;
-    pthread_create(&hilo_atender_io, NULL, atender_io, socket_ptr);
-    pthread_detach(hilo_atender_io);
-  };
+  aceptar_conexiones((char*) arg, atender_io, "IO");
   return NULL;
 };
 
 void* atender_io(void* arg){
   int socket_io = *(int*)arg;
   free(arg);
-  if (recibir_handshake_kernel(socket_io) != MODULO_IO){
-    log_error(logger, "Se esperaba un IO, pero se conectó otro tipo");
-    close(socket_io);
+  
+  if(!validar_handshake_cliente(socket_io, MODULO_IO, "IO"))
     pthread_exit(NULL);
-  };
+
   t_list* lista;
   while (1) {
     int cod_op = recibir_operacion(socket_io);
@@ -46,7 +28,6 @@ void* atender_io(void* arg){
           break;
         } else {
           uint32_t pid = *(uint32_t*) list_get(lista, 0);
-          log_info(logger, "Operacion IO del proceso: %d, termino.", pid);
           manejar_respuesta_io(pid);
           list_destroy_and_destroy_elements(lista, free);
         };

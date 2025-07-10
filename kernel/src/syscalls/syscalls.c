@@ -121,12 +121,11 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   close(socket_memoria);
   
   if(respuesta == 0){
-    log_info(logger, "Dump de Memoria exitoso para proceso <%d>", pcb->pid);
+    log_debug(logger, "Volcado de memoria exitoso para proceso <%d>", pcb->pid);
     encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
-    sem_post(&semaforo_ready);
   } else {
-    log_error(logger, "Error al realizar dump de Memoria para proceso <%d>", pcb->pid);
+    log_error(logger, "Error al realizar volcado de memoria para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
     finalizar_proceso(pcb);
   };

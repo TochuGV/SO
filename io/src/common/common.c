@@ -33,7 +33,7 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
     return -1;
   } else {
     convertir_primera_letra_en_mayuscula(nombre);
-    log_info(logger, "%s se ha conectado a Kernel exitosamente!", nombre);
+    log_debug(logger, "%s se ha conectado a Kernel exitosamente!", nombre);
     return 0;
   };
 };

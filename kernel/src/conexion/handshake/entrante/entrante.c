@@ -21,20 +21,9 @@ int recibir_handshake_kernel(int cliente_kernel){
         return -1;
       };
       
-      bool misma_cpu(void* elem){
-        return ((t_cpu*)elem)->id_cpu == id_cpu;
-      };
+      registrar_cpu_si_no_existe(id_cpu);
+      t_cpu* cpu = obtener_cpu_por_id(id_cpu);
 
-      t_cpu* cpu = list_find(lista_cpus, misma_cpu);
-      if(cpu == NULL){
-        cpu = malloc(sizeof(t_cpu));
-        cpu->id_cpu = id_cpu;
-        cpu->socket_dispatch = -1;
-        cpu->socket_interrupt = -1;
-        cpu->disponible = true;
-        cpu->proceso_en_ejecucion = NULL;
-        list_add(lista_cpus, cpu);
-      };
       if(tipo_conexion == CPU_DISPATCH){
         if(cpu->socket_dispatch != -1){
           log_error(logger, "CPU %d ya tiene conexión Dispatch", id_cpu);
@@ -42,7 +31,7 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_dispatch = cliente_kernel;
-        log_info(logger, "CPU %d conectó Dispatch", id_cpu);
+        log_debug(logger, "CPU %d conectó Dispatch", id_cpu);
       } else {
         if(cpu->socket_interrupt != -1){
           log_error(logger, "CPU %d ya tiene una conexión Interrupt", id_cpu);
@@ -50,15 +39,11 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_interrupt = cliente_kernel;
-        log_info(logger, "CPU %d conectó Interrupt", id_cpu);
+        log_debug(logger, "CPU %d conectó Interrupt", id_cpu);
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
 
-      bool cpu_completa(t_cpu* cpu){
-        return cpu->socket_dispatch != -1 && cpu->socket_interrupt != -1;
-      };
-
-      if(cpu_completa(cpu)){
+      if(cpu_esta_completa(cpu)){
         sem_post(&semaforo_cpu_libre);
         log_debug(logger, "CPU %d está completamente conectada. Se habilita para planificación", id_cpu);
       };
@@ -82,7 +67,7 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_info(logger, "Dispositivo '%s' conectado", nombre_io);
+      log_debug(logger, "Dispositivo '%s' conectado", nombre_io);
       return MODULO_IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);

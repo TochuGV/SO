@@ -32,3 +32,17 @@ t_pcb* elegir_proceso_mas_chico(t_queue* cola_new, t_list* lista_info_procesos){
 
   return pcb_seleccionado;
 };
+
+void mover_proceso_a_ready_pmcp(void){
+  while(!queue_is_empty(cola_new)){
+    t_pcb* pcb = elegir_proceso_mas_chico(cola_new, lista_info_procesos);
+    if(!pcb) break;
+
+    if(intentar_enviar_proceso_a_ready(pcb)){
+      continue;
+    } else {
+      queue_push(cola_new, pcb);
+      break;
+    };
+  };
+};
