@@ -31,7 +31,7 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_dispatch = cliente_kernel;
-        log_info(logger, "CPU %d conectó Dispatch", id_cpu);
+        log_debug(logger, "CPU %d conectó Dispatch", id_cpu);
       } else {
         if(cpu->socket_interrupt != -1){
           log_error(logger, "CPU %d ya tiene una conexión Interrupt", id_cpu);
@@ -39,7 +39,7 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_interrupt = cliente_kernel;
-        log_info(logger, "CPU %d conectó Interrupt", id_cpu);
+        log_debug(logger, "CPU %d conectó Interrupt", id_cpu);
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
 
@@ -67,7 +67,7 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_info(logger, "Dispositivo '%s' conectado", nombre_io);
+      log_debug(logger, "Dispositivo '%s' conectado", nombre_io);
       return MODULO_IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);

@@ -31,10 +31,12 @@ void* ciclo_de_instruccion(t_pcb* pcb, int conexion_kernel_dispatch, int conexio
       actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
     };
 
-    if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
-      log_warning(logger, "PID %d interrumpido", pcb->pid);
-      estado = EJECUCION_DESALOJADO;
-    };
+    if (estado == EJECUCION_CONTINUA_INIT_PROC || estado == EJECUCION_CONTINUA) {
+      if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
+        log_warning(logger, "PID %d interrumpido", pcb->pid);
+        estado = EJECUCION_DESALOJADO;
+      };
+    }
   }
   actualizar_kernel(instruccion, estado, pcb, conexion_kernel_dispatch);
   //finalizar_proceso_en_cache(pcb->pid,estado);

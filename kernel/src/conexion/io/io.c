@@ -28,7 +28,6 @@ void* atender_io(void* arg){
           break;
         } else {
           uint32_t pid = *(uint32_t*) list_get(lista, 0);
-          log_info(logger, "Operacion IO del proceso: %d, termino.", pid);
           manejar_respuesta_io(pid);
           list_destroy_and_destroy_elements(lista, free);
         };

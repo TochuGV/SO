@@ -2,9 +2,7 @@
 
 void reordenar_cola_ready_por_estimacion(t_queue* cola_ready) {
   if (queue_is_empty(cola_ready)) return;
-
   t_list* lista_ready = cola_ready->elements;
-
   list_sort(lista_ready, (void*) comparar_estimaciones);
 }
 
@@ -93,4 +91,3 @@ void mover_proceso_a_exec_sjf(void){
   enviar_a_cpu(pcb, cpu->socket_dispatch);
   cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
 };
-
