@@ -1,6 +1,6 @@
 #include "common.h"
 
-char* NOMBRES_DISPOSITIVOS_IO[] = { "IMPRESORA", "TECLADO", "MOUSE", "AURICULARES", "PARLANTE" };
+char* NOMBRES_DISPOSITIVOS_IO[] = { "IMPRESORA", "TECLADO", "MOUSE", "AURICULARES", "PARLANTE", "DISCO" };
 char* NOMBRES_SYSCALLS[] = { "INIT_PROC", "EXIT", "IO", "DUMP_MEMORY" };
 
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid){
@@ -72,6 +72,7 @@ char* token_io_to_string(int32_t token) {
     case MOUSE: return "MOUSE";
     case AURICULARES: return "AURICULARES";
     case PARLANTE: return "PARLANTE";
+    case DISCO: return "DISCO";
     default: return NULL;
   };
 };

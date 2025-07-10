@@ -2,17 +2,18 @@
 
 int main(int argc, char* argv[]) 
 {
+  int32_t identificador_cpu = atoi(argv[1]);
+  char archivo_config[64];
+  snprintf(archivo_config, sizeof(archivo_config), "cpu%d.config", identificador_cpu);
+  config = iniciar_config(archivo_config);
+  
   logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_DEBUG);
-  config = iniciar_config("cpu.config");
-
-  ip_kernel = config_get_string_value(config, "IP_KERNEL");
+  //config = iniciar_config("cpu%d.config", identificador_cpu);
   ip_memoria = config_get_string_value(config, "IP_MEMORIA");
 
   puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
   puerto_kernel_interrupt = config_get_string_value(config, "PUERTO_KERNEL_INTERRUPT");
   puerto_memoria = config_get_string_value(config, "PUERTO_MEMORIA");
-
-  int32_t identificador_cpu = atoi(argv[1]);
 
   t_cpu* cpu = iniciar_cpu(identificador_cpu);
 

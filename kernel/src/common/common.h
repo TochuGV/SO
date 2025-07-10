@@ -26,7 +26,7 @@ typedef struct {
 } t_temporizadores_estado;
 
 extern char* NOMBRES_SYSCALLS[4];
-extern char* NOMBRES_DISPOSITIVOS_IO[5];
+extern char* NOMBRES_DISPOSITIVOS_IO[6];
 
 uint32_t enviar_proceso_a_memoria(char*, uint32_t, uint32_t);
 void esperar_enter_para_planificar();

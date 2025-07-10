@@ -16,6 +16,8 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
     token_io = AURICULARES;
   else if (strcasecmp(nombre, "parlante") == 0)
     token_io = PARLANTE;
+  else if (strcasecmp(nombre, "disco") == 0)
+    token_io = DISCO;
   else {
     log_error(logger, "Nombre de dispositivo IO desconocido: %s", nombre);
     return -1;
@@ -44,6 +46,7 @@ nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
   else if (strcasecmp(nombre, "mouse") == 0) return MOUSE;
   else if (strcasecmp(nombre, "auriculares") == 0) return AURICULARES;
   else if (strcasecmp(nombre, "parlante") == 0) return PARLANTE;
+  else if (strcasecmp(nombre, "disco") == 0) return DISCO;
   else {
     log_error(logger, "Nombre de dispositivo IO desconocido: %s", nombre);
     return -1;

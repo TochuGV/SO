@@ -94,7 +94,8 @@ typedef enum {
   TECLADO,
   MOUSE,
   AURICULARES,
-  PARLANTE
+  PARLANTE,
+  DISCO
 } nombre_dispositivo_io;
 
 typedef struct {

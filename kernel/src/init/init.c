@@ -30,7 +30,7 @@ pthread_t hilo_planificador_mediano_plazo;
 
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
-  for(int i = 0; i < 5; i++){
+  for(int i = 0; i < 6; i++){
     t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
     dispositivo->cola_bloqueados = queue_create();
     dispositivo->ocupado = false;
@@ -51,7 +51,7 @@ void extraer_datos_config(){
   ALFA = config_get_double_value(config, "ALFA");
   ESTIMACION_INICIAL = config_get_double_value(config, "ESTIMACION_INICIAL");
   TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
-  //LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
+  LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
   log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 

@@ -55,14 +55,16 @@ void syscall_io(t_syscall* syscall){
   pcb->pc = syscall->pc;
 
   char* clave_pid = string_itoa(pcb->pid);
-  t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave_pid);
-
-  if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
-    double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
-    actualizar_estimacion(pcb->pid, rafaga_real);
-    log_debug(logger, "PID <%d> - Ráfaga real: %.2f - Estimación actualizada", pcb->pid, rafaga_real);
-  } else {
-    log_warning(logger, "No se pudo medir la ráfaga real del proceso <%d>", pcb->pid);
+  
+  if(strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0 || strcmp(ALGORITMO_CORTO_PLAZO, "SRT") == 0){
+    t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave_pid);
+    if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
+      double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
+      actualizar_estimacion(pcb->pid, rafaga_real);
+      log_debug(logger, "PID <%d> - Ráfaga real: %.2f - Estimación actualizada", pcb->pid, rafaga_real);
+    } else {
+      log_warning(logger, "No se pudo medir la ráfaga real del proceso <%d>", pcb->pid);
+    };
   };
 
   // Obtener el dispositivo directamente, sin chequeo previo
