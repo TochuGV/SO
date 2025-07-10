@@ -39,6 +39,10 @@ t_pcb* obtener_proceso_en_exec_con_mayor_estimacion(int cantidad_cpus) {
     pthread_mutex_lock(&mutex_cpus);
     t_cpu* cpu = list_get(lista_cpus, i);
     pthread_mutex_unlock(&mutex_cpus);
+
+    if(cpu->disponible)
+      return NULL;
+
     if(!cpu->disponible && cpu->proceso_en_ejecucion){
       t_pcb* ejecutando = cpu->proceso_en_ejecucion;
       //log_warning(logger, "PID EJECUTANDO: %d", ejecutando->pid);
@@ -83,7 +87,7 @@ void mover_proceso_a_exec_srt(void){
   t_cpu* cpu = seleccionar_cpu_disponible();
   if(cpu != NULL){
     pthread_mutex_lock(&mutex_ready);
-    pcb = queue_pop(cola_ready);
+    pcb = obtener_proximo_proceso_ready(cola_ready); 
     pthread_mutex_unlock(&mutex_ready);
 
     log_info(logger, "Asignando proceso %d a CPU %d (SRT)", pcb->pid, cpu->id_cpu);
@@ -92,13 +96,15 @@ void mover_proceso_a_exec_srt(void){
     cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);
     return;
   };
-
+/*
   t_pcb* pcb_en_ejecucion = obtener_proceso_en_exec_con_mayor_estimacion(obtener_cantidad_cpus());
   if(!pcb_en_ejecucion) return;
 
   double estimacion_nuevo = obtener_estimacion(pcb->pid);
   double restante_ejecutando = tiempo_restante_exec(pcb_en_ejecucion);
-
+*/
+  //desalojar_cpu();
+/*
   if(estimacion_nuevo < restante_ejecutando){
     log_info(logger, "Desalojando proceso <%d> por nuevo <%d> (%.2f < %.2f)",
             pcb_en_ejecucion->pid, pcb->pid, estimacion_nuevo, restante_ejecutando);
@@ -106,5 +112,6 @@ void mover_proceso_a_exec_srt(void){
   } else {
     log_info(logger, "Proceso <%d> no desaloja a <%d> (%.2f >= %.2f)",
             pcb->pid, pcb_en_ejecucion->pid, estimacion_nuevo, restante_ejecutando);
-  };
+  };*/
+  return;
 };

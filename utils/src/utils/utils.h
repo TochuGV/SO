@@ -35,7 +35,8 @@ typedef enum {
   LECTURA,
   FINALIZACION_IO,
   FINALIZAR_PROCESO,
-  DESALOJO
+  DESALOJO,
+  SYSCALL
 } op_code_comunicacion;
 
 typedef enum {

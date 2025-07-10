@@ -43,10 +43,8 @@ void asignar_proceso_a_cpu(t_cpu* cpu, t_pcb* pcb){
 };
 
 void liberar_cpu(t_cpu* cpu){
-  pthread_mutex_lock(&mutex_cpus);
   cpu->disponible = true;
   cpu->proceso_en_ejecucion = NULL;
-  pthread_mutex_unlock(&mutex_cpus);
 };
 
 void liberar_cpu_por_pid(uint32_t pid){

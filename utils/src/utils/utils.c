@@ -242,11 +242,10 @@ int crear_conexion(char *ip, char* puerto, int header_cliente){
 
   log_info(logger, "Esperando servidor...");
   while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-  sleep(1);
-  }
+  	sleep(1);
+  };
 
 	freeaddrinfo(server_info);
-
 	return socket_cliente;
 };
 
