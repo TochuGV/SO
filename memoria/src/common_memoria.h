@@ -3,6 +3,7 @@
 
 #include "./utils/utils.h"
 #include <stdint.h>
+#include <commons/temporal.h>
 
 #define CANTIDAD_INSTRUCCIONES 8
 #define CANTIDAD_METRICAS 6
@@ -29,7 +30,13 @@ extern char* path_instrucciones;
 extern uint32_t cantidad_marcos;
 extern uint32_t marcos_libres;
 extern uint8_t* bitmap_marcos;
-
+extern FILE* swapfile;
+extern uint32_t swap_offset;
+extern pthread_mutex_t mutex_memoria;
+extern pthread_mutex_t mutex_swapfile;
+extern pthread_mutex_t mutex_swap_offset;
+extern pthread_mutex_t mutex_marcos_libres;
+extern pthread_mutex_t mutex_bitmap;
 
 // LISTAS
 extern t_list* lista_procesos;
@@ -54,6 +61,8 @@ typedef struct
   t_tabla* tabla_de_paginas;
   uint32_t marcos_en_uso;
   uint32_t metricas[CANTIDAD_METRICAS];
+  int32_t base_swap;
+  int32_t tamanio_swap;
 } t_proceso;
 
 typedef struct

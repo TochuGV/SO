@@ -18,6 +18,13 @@ char* path_instrucciones;
 uint32_t cantidad_marcos;
 uint32_t marcos_libres;
 uint8_t* bitmap_marcos;
+FILE* swapfile;
+uint32_t swap_offset;
+pthread_mutex_t mutex_memoria = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_swapfile = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_swap_offset = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_marcos_libres = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_bitmap = PTHREAD_MUTEX_INITIALIZER;
 
 int servidor_memoria;
 char* puerto_escucha;
@@ -56,6 +63,17 @@ void inicializar_memoria(void)
 
   bitmap_marcos = malloc(cantidad_marcos * sizeof(uint8_t));
   memset(bitmap_marcos, 0, cantidad_marcos);
+
+  pthread_mutex_init(&mutex_memoria, NULL);
+  pthread_mutex_init(&mutex_swapfile, NULL);
+  pthread_mutex_init(&mutex_swap_offset, NULL);
+  pthread_mutex_init(&mutex_marcos_libres, NULL);
+  pthread_mutex_init(&mutex_bitmap, NULL);
+
+  swapfile  = fopen(path_swapfile, "wb");
+  if (swapfile == NULL)
+    log_error(logger, "Error: no se pudo crear el archivo SWAP");
+  swap_offset = 0;
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
@@ -143,13 +161,16 @@ t_tabla* crear_tabla_multinivel(uint32_t* cantidad_marcos_proceso)
 
 uint32_t asignar_marco_libre(void)
 {
+  pthread_mutex_lock(&mutex_bitmap);
   for(int index_marco = 0; index_marco < cantidad_marcos; index_marco++)
   {
     if (bitmap_marcos[index_marco] == 0) {
       bitmap_marcos[index_marco] = 1;
+      pthread_mutex_unlock(&mutex_bitmap);
       return index_marco;
     }
   }
+  pthread_mutex_unlock(&mutex_bitmap);
   return -1;
 }
 
@@ -267,6 +288,11 @@ void terminar_memoria(void)
   close(servidor_memoria);
   list_destroy_and_destroy_elements(lista_procesos, free);
   list_destroy_and_destroy_elements(lista_ids_cpus, free);
+  pthread_mutex_destroy(&mutex_memoria);
+  pthread_mutex_destroy(&mutex_swapfile);
+  pthread_mutex_destroy(&mutex_swap_offset);
+  pthread_mutex_destroy(&mutex_marcos_libres);
+  pthread_mutex_destroy(&mutex_bitmap);
 	log_destroy(logger);
 	config_destroy(config);	
 }
