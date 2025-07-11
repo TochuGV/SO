@@ -70,14 +70,16 @@ void finalizar_proceso(t_pcb* pcb){
     free(cronometros_pid);
   };
 
+  t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
+  agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
+
+  pthread_mutex_lock(&mutex_memoria);
   int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   if (handshake_kernel(socket_memoria) != 0) {
     log_error(logger, "No se pudo conectar a Memoria para finalizar el proceso <%d>", pcb->pid);
     return;
   };
 
-  t_paquete* paquete = crear_paquete(FINALIZAR_PROCESO);
-  agregar_a_paquete(paquete, &pcb->pid, sizeof(uint32_t));
   enviar_paquete(paquete, socket_memoria);
 
   int32_t resultado;
@@ -88,7 +90,8 @@ void finalizar_proceso(t_pcb* pcb){
   };
 
   close(socket_memoria);
-
+  pthread_mutex_unlock(&mutex_memoria);
+  
   if (resultado == 0) {
     dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
 

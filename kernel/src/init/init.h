@@ -30,6 +30,7 @@ extern t_dictionary* diccionario_contextos_io;
 extern t_dictionary* diccionario_estimaciones;
 
 extern pthread_mutex_t mutex_pcbs;
+extern pthread_mutex_t mutex_memoria;
 
 extern pthread_t hilo_conexion_cpu_dispatch;
 extern pthread_t hilo_conexion_cpu_interrupt;

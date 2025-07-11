@@ -55,7 +55,7 @@ void revisar_bloqueados(void){
 void suspender_proceso(t_pcb* pcb){
   int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   if(handshake_kernel(socket_memoria) != 0){
-    log_error(logger, "No se pudo conectar a Memoria para solicitar DUMP_MEMORY");
+    log_error(logger, "No se pudo conectar a Memoria");
     return;
   }
   t_paquete* paquete = crear_paquete(SUSPENDER);
@@ -98,33 +98,34 @@ void desuspender_proceso(void){
   t_pcb* pcb = queue_peek(cola_susp_ready);
   pthread_mutex_unlock(&mutex_susp_ready);
 
-  if (!pcb)
-    return;
-
-  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
-  if(handshake_kernel(socket_memoria) != 0){
-    log_error(logger, "No se pudo conectar a Memoria para solicitar DUMP_MEMORY");
-    return;
-  }
   t_paquete* paquete = crear_paquete(DESUSPENDER);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
+
+  if (!pcb)
+    return;
+  
+
+  pthread_mutex_lock(&mutex_memoria);
+  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+  if(handshake_kernel(socket_memoria) != 0){
+    log_error(logger, "No se pudo conectar a Memoria");
+    return;
+  }
   enviar_paquete(paquete, socket_memoria);
 
   int32_t resultado;
 
   recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
+  close(socket_memoria);
+  pthread_mutex_unlock(&mutex_memoria);
 
   if (resultado == 0) {
     encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_SUSP_READY, ESTADO_READY);
     queue_pop(cola_susp_ready);
   }
-  close(socket_memoria);
 
-  if (queue_is_empty(cola_susp_ready))
-    sem_post(&semaforo_revisar_largo_plazo);
-  else 
-    sem_post(&semaforo_revisar_susp_ready);
+  sem_post(&semaforo_revisar_largo_plazo);
 
   return;
 }

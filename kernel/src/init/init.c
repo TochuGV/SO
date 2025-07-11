@@ -21,6 +21,7 @@ t_dictionary* diccionario_estimaciones;
 t_dictionary* diccionario_tiempo_bloqueado;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_memoria = PTHREAD_MUTEX_INITIALIZER;
 
 pthread_t hilo_conexion_cpu_dispatch;
 pthread_t hilo_conexion_cpu_interrupt;
@@ -68,6 +69,7 @@ void inicializar_kernel(){
   diccionario_estimaciones = dictionary_create();
   diccionario_tiempo_bloqueado = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
+  pthread_mutex_init(&mutex_memoria, NULL);
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();

@@ -4,12 +4,7 @@ char* NOMBRES_DISPOSITIVOS_IO[] = { "IMPRESORA", "TECLADO", "MOUSE", "AURICULARE
 char* NOMBRES_SYSCALLS[] = { "INIT_PROC", "EXIT", "IO", "DUMP_MEMORY" };
 
 uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_proceso, uint32_t pid){
-  int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
-  if(handshake_kernel(socket_memoria) != 0){
-    log_error(logger, "Handshake fallido con Memoria para el proceso <%d>", pid);
-    close(socket_memoria);
-    return -1;
-  };
+
   t_paquete* paquete = crear_paquete(SOLICITUD_MEMORIA);
   int32_t resultado;
   if(archivo_pseudocodigo != NULL){
@@ -18,10 +13,20 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     agregar_a_paquete(paquete, archivo_pseudocodigo, longitud_archivo_pseudocodigo);
     agregar_a_paquete(paquete, &tamanio_proceso, sizeof(tamanio_proceso));
     agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
+
+    pthread_mutex_lock(&mutex_memoria);
+    int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+    if(handshake_kernel(socket_memoria) != 0){
+      log_error(logger, "Handshake fallido con Memoria para el proceso <%d>", pid);
+      close(socket_memoria);
+      return -1;
+    };
     enviar_paquete(paquete, socket_memoria);
     log_info(logger, "Archivo pseudocódigo '%s' enviado a memoria para el proceso <%d>", archivo_pseudocodigo, pid);
     recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
     close(socket_memoria);
+    pthread_mutex_unlock(&mutex_memoria);
+
     if(resultado == 0){
       log_debug(logger, "Memoria aceptó el proceso <%d>", pid);
       return 0;
@@ -33,8 +38,16 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     uint32_t longitud_archivo_pseudocodigo = 0;
     agregar_a_paquete(paquete, &longitud_archivo_pseudocodigo, sizeof(uint32_t));
     log_warning(logger, "Archivo pseudocodigo es NULL, temporalmente. Se envía como longitud '0'");
+    pthread_mutex_lock(&mutex_memoria);
+    int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
+    if(handshake_kernel(socket_memoria) != 0){
+      log_error(logger, "Handshake fallido con Memoria para el proceso <%d>", pid);
+      close(socket_memoria);
+      return -1;
+    };
     enviar_paquete(paquete, socket_memoria);
     close(socket_memoria);
+    pthread_mutex_unlock(&mutex_memoria);
     return -1;
   };
 };
