@@ -111,7 +111,11 @@ void finalizar_proceso(t_pcb* pcb){
     if(info) free(info);
 
     destruir_pcb(pcb);
-    sem_post(&semaforo_revisar_largo_plazo); //SOSPECHOSO DE QUE INTENTE INGRESAR A READY CUANDO SE BLOQUEA.
+    if (queue_is_empty(cola_susp_ready))
+      sem_post(&semaforo_revisar_largo_plazo); //SOSPECHOSO DE QUE INTENTE INGRESAR A READY CUANDO SE BLOQUEA.
+    else 
+      sem_post(&semaforo_revisar_susp_ready);
+      
     return;
   };
   log_error(logger, "Error al eliminar el proceso");

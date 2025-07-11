@@ -95,10 +95,12 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
   uint32_t tamanio_proceso = *(uint32_t*)list_get(valores, 2);
 
   uint32_t cantidad_marcos_proceso = (tamanio_proceso + tamanio_pagina - 1) / tamanio_pagina;
+  
 
   if (verificar_espacio_memoria(cantidad_marcos_proceso)) {
 
     uint32_t longitud_archivo_pseudocodigo = *(uint32_t*)list_get(valores, 0); 
+    uint32_t cantidad_marcos_en_uso = cantidad_marcos_proceso;
 
     char* archivo_pseudocodigo = malloc(longitud_archivo_pseudocodigo);
     memcpy(archivo_pseudocodigo, list_get(valores, 1), longitud_archivo_pseudocodigo); 
@@ -109,7 +111,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     proceso->pid = pid;
     proceso->lista_instrucciones = leer_archivo_instrucciones(archivo_pseudocodigo);
     proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
-    proceso->marcos_en_uso = cantidad_marcos_proceso;
+    proceso->marcos_en_uso = cantidad_marcos_en_uso;
     memset(proceso->metricas, 0, sizeof(proceso->metricas));
     proceso->base_swap = -1;
     proceso->tamanio_swap = 0;
@@ -229,7 +231,7 @@ int atender_dump_memory(uint32_t pid)
   
   log_info(logger, "## PID: <%d> - Memory Dump solicitado", pid);
 
-  char* timestamp = temporal_get_string_time("%d-%m-%y_%H-%M-%S");
+  char* timestamp = temporal_get_string_time("%d-%m-%y_%H:%M:%S");
 
   char path_archivo[256];
   snprintf(path_archivo, sizeof(path_archivo), "%s<%d>-<%s>.dmp", path_dump, pid, timestamp);
@@ -243,6 +245,8 @@ int atender_dump_memory(uint32_t pid)
   }
 
   uint32_t tamanio_dump = proceso->marcos_en_uso * tamanio_pagina;
+
+  log_warning(logger, "marcos en uso: %d tamaño dump: %d",proceso->marcos_en_uso, tamanio_dump);
 
   if (ftruncate(fileno(file), tamanio_dump) == -1) {
     log_error(logger, "Error: no se pudo truncar el archivo DUMP");
@@ -284,16 +288,15 @@ void suspender_proceso(uint32_t pid)
 
   proceso->base_swap = swap_offset;
 
-  atender_dump_memory(pid);
   escribir_en_swap(proceso->tabla_de_paginas);
-  usleep(retardo_swap * 1000);
   proceso->metricas[BAJADAS_A_SWAP]++;
-  log_warning(logger, "Proceso %d suspendido", pid);
 
   proceso->tamanio_swap = proceso->marcos_en_uso * tamanio_pagina;
+  log_warning(logger, "Proceso %d suspendido, con tamaño: %d", pid, proceso->tamanio_swap);
   proceso->marcos_en_uso = 0;
 
   liberar_marcos(proceso->tabla_de_paginas);
+  usleep(retardo_swap * 1000);
   return ;
 }
 
@@ -328,10 +331,11 @@ int desuspender_proceso(uint32_t pid)
 
   if(!proceso)
     return -1;
-  
+
   uint32_t cantidad_marcos_proceso = proceso->tamanio_swap / tamanio_pagina;
 
   if (verificar_espacio_memoria(cantidad_marcos_proceso)) {
+    uint32_t cantidad_marcos_en_uso = cantidad_marcos_proceso;
     proceso->tabla_de_paginas = crear_tabla_multinivel(&cantidad_marcos_proceso);
     int32_t offset_swap_actual = proceso->base_swap;
     leer_swap(proceso->tabla_de_paginas, &offset_swap_actual);
@@ -339,7 +343,7 @@ int desuspender_proceso(uint32_t pid)
     proceso->metricas[SUBIDAS_A_MP]++;
     proceso->base_swap = -1;
     proceso->tamanio_swap = 0;
-    proceso->marcos_en_uso = cantidad_marcos_proceso;
+    proceso->marcos_en_uso = cantidad_marcos_en_uso;
     return 0;
   }
   return -1;

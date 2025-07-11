@@ -25,12 +25,9 @@ void manejar_respuesta_io(uint32_t pid){
 
   if(index_susp != -1) {
     list_remove(lista_susp_blocked, index_susp);
+    encolar_proceso_en_susp_ready(pcb);
+    sem_post(&semaforo_revisar_susp_ready);
 
-    pthread_mutex_lock(&mutex_susp_ready);
-    queue_push(cola_susp_ready, pcb);
-    pthread_mutex_unlock(&mutex_susp_ready);
-
-    cambiar_estado(pcb, ESTADO_SUSP_BLOCKED, ESTADO_SUSP_READY);
     log_fin_io_susp(pid);
 
   } else {

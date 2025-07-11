@@ -70,7 +70,7 @@ void inicializar_memoria(void)
   pthread_mutex_init(&mutex_marcos_libres, NULL);
   pthread_mutex_init(&mutex_bitmap, NULL);
 
-  swapfile  = fopen(path_swapfile, "wb");
+  swapfile  = fopen(path_swapfile, "w+b");
   if (swapfile == NULL)
     log_error(logger, "Error: no se pudo crear el archivo SWAP");
   swap_offset = 0;

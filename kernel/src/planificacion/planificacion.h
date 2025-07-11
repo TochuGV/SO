@@ -9,5 +9,7 @@
 void* planificador_largo_plazo(void*);
 void* planificador_corto_plazo(void*);
 void* planificador_mediano_plazo(void*);
+void* planificador_suspended_blocked(void*);
+void* planificador_suspended_ready(void*);
 
 #endif
