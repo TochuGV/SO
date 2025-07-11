@@ -17,7 +17,7 @@ void* planificador_corto_plazo(void* arg){
 
 void* planificador_mediano_plazo(void* arg){
   while(1){
-    // semaforo para acceder a suspender
-    sleep(1);
+    sem_wait(&semaforo_revisar_bloqueados);
+    revisar_bloqueados();
   };
 };

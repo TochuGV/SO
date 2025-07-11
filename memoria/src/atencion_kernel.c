@@ -53,11 +53,9 @@ void* atender_kernel(void* arg)
       valores = recibir_paquete(cliente_kernel);
       pid = *(uint32_t*) list_get(valores, 0);
 
-      if (suspender_proceso(pid) == 0) {
-        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
-      }
-      else
-        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+      log_warning(logger, "Proceso %d entro al case suspender", pid);
+
+      suspender_proceso(pid);
 
       list_destroy_and_destroy_elements(valores, free);
       break;
@@ -275,24 +273,28 @@ void escribir_dump(t_tabla* tabla_de_paginas, FILE* file)
   }
 }
 
-int suspender_proceso(uint32_t pid)
+void suspender_proceso(uint32_t pid)
 {
   t_proceso* proceso = obtener_proceso(pid);
 
-  if(!proceso)
-    return -1;
+  if(!proceso) {
+    log_error(logger, "Error al suspender proceso");
+    return;
+  }
 
   proceso->base_swap = swap_offset;
 
+  atender_dump_memory(pid);
   escribir_en_swap(proceso->tabla_de_paginas);
   usleep(retardo_swap * 1000);
   proceso->metricas[BAJADAS_A_SWAP]++;
+  log_warning(logger, "Proceso %d suspendido", pid);
 
   proceso->tamanio_swap = proceso->marcos_en_uso * tamanio_pagina;
   proceso->marcos_en_uso = 0;
 
   liberar_marcos(proceso->tabla_de_paginas);
-  return 0;
+  return ;
 }
 
 void escribir_en_swap(t_tabla* tabla_de_paginas)

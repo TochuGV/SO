@@ -9,7 +9,7 @@ char* ALGORITMO_CORTO_PLAZO;
 char* ALGORITMO_INGRESO_A_READY;
 double ALFA;
 double ESTIMACION_INICIAL;
-char* TIEMPO_SUSPENSION;
+int32_t TIEMPO_SUSPENSION;
 char* LOG_LEVEL;
 
 t_list* lista_pcbs;
@@ -51,7 +51,7 @@ void extraer_datos_config(){
   ALGORITMO_INGRESO_A_READY = config_get_string_value(config, "ALGORITMO_INGRESO_A_READY");
   ALFA = config_get_double_value(config, "ALFA");
   ESTIMACION_INICIAL = config_get_double_value(config, "ESTIMACION_INICIAL");
-  TIEMPO_SUSPENSION = config_get_string_value(config, "TIEMPO_SUSPENSION");
+  TIEMPO_SUSPENSION = config_get_int_value(config, "TIEMPO_SUSPENSION");
   LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
   log_debug(logger, "Datos extraídos del archivo de configuración");
 };
@@ -71,6 +71,7 @@ void inicializar_kernel(){
   inicializar_dispositivos_io();
   iniciar_planificacion_largo_plazo();
   iniciar_planificacion_corto_plazo();
+  iniciar_planificacion_mediano_plazo();
 };
 
 void crear_proceso_inicial(char* archivo_pseudocodigo, uint32_t tamanio){

@@ -5,6 +5,7 @@
 #include "logger/logger.h"
 #include "common/common.h"
 #include "planificacion/planificadores/corto_plazo/corto_plazo.h"
+#include "planificacion/planificadores/mediano_plazo/mediano_plazo.h"
 #include "utils/utils.h" // Revisar después
 #include <commons/collections/queue.h>
 #include "./conexion/io/io.h"

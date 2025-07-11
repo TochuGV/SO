@@ -21,6 +21,10 @@ void log_fin_io(uint32_t pid){
   log_info(logger, "## (<%d>) finalizó IO y pasa a READY", pid);
 };
 
+void log_fin_io_susp(uint32_t pid){
+  log_info(logger, "## (<%d>) finalizó IO y pasa a SUSPENDED READY", pid);
+};
+
 void log_desalojo_sjf_srt(uint32_t pid){
   log_info(logger, "## (<%d>) - Desalojado por algoritmo SJF/SRT", pid);
 };

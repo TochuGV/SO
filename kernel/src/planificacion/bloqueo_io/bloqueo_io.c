@@ -21,10 +21,25 @@ void manejar_respuesta_io(uint32_t pid){
     return;
   };
 
-  encolar_proceso_en_ready(pcb);
+  int index_susp = esta_suspendido(pcb);
 
-  cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
-  log_fin_io(pid);
+  if(index_susp != -1) {
+    list_remove(lista_susp_blocked, index_susp);
+
+    pthread_mutex_lock(&mutex_susp_ready);
+    queue_push(cola_susp_ready, pcb);
+    pthread_mutex_unlock(&mutex_susp_ready);
+
+    cambiar_estado(pcb, ESTADO_SUSP_BLOCKED, ESTADO_SUSP_READY);
+    log_fin_io_susp(pid);
+
+  } else {
+    encolar_proceso_en_ready(pcb);
+    cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
+    log_fin_io(pid);
+  }
+
+
 
   dictionary_remove(diccionario_contextos_io, clave_pid_actual);
   free(contexto->dispositivo_actual);

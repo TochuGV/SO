@@ -203,11 +203,13 @@ void recibir_solicitud_lectura(int cliente_cpu)
     return;
   }
 
-  char* valor = malloc(tamanio);
-  
+  char* valor = malloc(tamanio + 1);
+
   pthread_mutex_lock(&mutex_memoria);
   memcpy(valor, memoria + direccion_fisica, tamanio);
   pthread_mutex_unlock(&mutex_memoria);
+
+  valor[tamanio] = '\0';
 
   log_info(logger, "## PID: <%d> - <Lectura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, tamanio);
   t_proceso* proceso = obtener_proceso(pid);
@@ -219,7 +221,7 @@ void recibir_solicitud_lectura(int cliente_cpu)
   }
   proceso->metricas[LECTURAS]++;
 
-  uint32_t longitud_valor = strlen(valor) + 1;
+  uint32_t longitud_valor = tamanio + 1;
   t_paquete* paquete = crear_paquete(LECTURA);
   agregar_a_paquete(paquete, &longitud_valor, sizeof(uint32_t));
   agregar_a_paquete(paquete, valor, longitud_valor);

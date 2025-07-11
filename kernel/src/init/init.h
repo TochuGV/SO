@@ -19,7 +19,7 @@ extern char* ALGORITMO_CORTO_PLAZO;
 extern char* ALGORITMO_INGRESO_A_READY;
 extern double ALFA;
 extern double ESTIMACION_INICIAL;
-extern char* TIEMPO_SUSPENSION;
+extern int32_t TIEMPO_SUSPENSION;
 extern char* LOG_LEVEL;
 
 extern t_list* lista_pcbs;

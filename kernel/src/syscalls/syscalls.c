@@ -86,6 +86,7 @@ void syscall_io(t_syscall* syscall){
   free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
 
+
   if(dispositivo->ocupado){
     queue_push(dispositivo->cola_bloqueados, pcb);
     log_debug(logger, "Dispositivo <%s> ocupado. Proceso <%d> encolado", syscall->arg1, pcb->pid);
@@ -95,7 +96,11 @@ void syscall_io(t_syscall* syscall){
     log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
   };
 
+  if (contexto->duracion_io >= TIEMPO_SUSPENSION)
+    sem_post(&semaforo_revisar_bloqueados);
+
   liberar_cpu_por_pid(pcb->pid);
+  
 };
 
 void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.
