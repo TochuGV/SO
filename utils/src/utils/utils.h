@@ -131,6 +131,7 @@ extern t_config* config;
 t_log* iniciar_logger(char*, char*, t_log_level);
 void leer_consola(t_log*);
 void iterator(char*);
+t_log_level parse_log_level(const char*);
 
 
 //// CONFIG

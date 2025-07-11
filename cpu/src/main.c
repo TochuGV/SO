@@ -6,9 +6,14 @@ int main(int argc, char* argv[])
   char archivo_config[64];
   snprintf(archivo_config, sizeof(archivo_config), "cpu%d.config", identificador_cpu);
   config = iniciar_config(archivo_config);
-  
-  logger = iniciar_logger("cpu.log", "CPU", LOG_LEVEL_DEBUG);
-  //config = iniciar_config("cpu%d.config", identificador_cpu);
+
+  char* log_level = config_get_string_value(config, "LOG_LEVEL");
+  t_log_level nivel_log = parse_log_level(log_level);
+
+  char archivo_log[64];
+  snprintf(archivo_log, sizeof(archivo_log), "cpu%d.log", identificador_cpu);
+  logger = iniciar_logger(archivo_log, "CPU", nivel_log);
+
   ip_memoria = config_get_string_value(config, "IP_MEMORIA");
 
   puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");

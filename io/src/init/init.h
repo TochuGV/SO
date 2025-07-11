@@ -6,7 +6,6 @@
 
 extern char* IP_KERNEL;
 extern char* PUERTO_KERNEL;
-extern char* LOG_LEVEL;
 
 void inicializar_io();
 void extraer_datos_config();

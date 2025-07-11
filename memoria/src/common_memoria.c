@@ -16,6 +16,7 @@ char* path_swapfile;
 char* path_dump;
 char* path_instrucciones;
 uint32_t cantidad_marcos;
+char* log_level;
 uint32_t marcos_libres;
 uint8_t* bitmap_marcos;
 FILE* swapfile;
@@ -50,10 +51,13 @@ char* NOMBRES_INSTRUCCIONES[] = {
 void inicializar_memoria(void)
 {
   config = iniciar_config("memoria.config");
-  logger = iniciar_logger("memoria.log", "Memoria", LOG_LEVEL_DEBUG);
+  obtener_configs();
+
+  t_log_level nivel_log = parse_log_level(log_level);
+
+  logger = iniciar_logger("memoria.log", "Memoria", nivel_log);
   log_debug(logger, "Memoria iniciada!");
 
-  obtener_configs();
 
   memoria = malloc(tamanio_memoria);
   memset(memoria, 0, tamanio_memoria);
@@ -93,6 +97,7 @@ void obtener_configs(void)
   path_swapfile = config_get_string_value(config, "PATH_SWAPFILE");
   path_dump = config_get_string_value(config, "DUMP_PATH");
   path_instrucciones = config_get_string_value(config, "PATH_INSTRUCCIONES");
+  log_level = config_get_string_value(config, "LOG_LEVEL");
 }
 
 

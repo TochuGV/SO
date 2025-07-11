@@ -35,6 +35,16 @@ void leer_consola(t_log* logger){
 	free(leido);
 }
 
+t_log_level parse_log_level(const char* level_str) {
+    if (strcmp(level_str, "TRACE") == 0) return LOG_LEVEL_TRACE;
+    if (strcmp(level_str, "INFO") == 0) return LOG_LEVEL_INFO;
+    if (strcmp(level_str, "WARNING") == 0) return LOG_LEVEL_WARNING;
+    if (strcmp(level_str, "ERROR") == 0) return LOG_LEVEL_ERROR;
+    if (strcmp(level_str, "DEBUG") == 0) return LOG_LEVEL_DEBUG;
+
+    return LOG_LEVEL_INFO;
+}
+
 
 //// CONFIG
 t_config* iniciar_config(char* config_name){

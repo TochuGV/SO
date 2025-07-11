@@ -54,14 +54,14 @@ void extraer_datos_config(){
   ESTIMACION_INICIAL = config_get_double_value(config, "ESTIMACION_INICIAL");
   TIEMPO_SUSPENSION = config_get_int_value(config, "TIEMPO_SUSPENSION");
   LOG_LEVEL = config_get_string_value(config, "LOG_LEVEL");
-  log_debug(logger, "Datos extraídos del archivo de configuración");
 };
 
 void inicializar_kernel(){
-  logger = iniciar_logger("kernel.log", "Kernel", LOG_LEVEL_DEBUG);
-  log_debug(logger, "Log de Kernel iniciado");
   config = iniciar_config("kernel.config");
   extraer_datos_config();
+  t_log_level nivel_log = parse_log_level(LOG_LEVEL);
+  logger = iniciar_logger("kernel.log", "Kernel", nivel_log);
+  log_debug(logger, "Log de Kernel iniciado");
   inicializar_estructura_cpus();
   lista_pcbs = list_create();
   diccionario_cronometros = dictionary_create();
