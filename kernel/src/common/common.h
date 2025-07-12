@@ -16,10 +16,10 @@ typedef struct {
 } t_contexto_io;
 
 typedef struct {
-  t_queue* cola_bloqueados;
-  bool ocupado;
   int socket;
-} t_dispositivo_io;
+  bool ocupado;
+  t_queue* cola_bloqueados;
+} t_instancia_io;
 
 typedef struct {
   t_temporal* cronometros_estado[CANTIDAD_ESTADOS];

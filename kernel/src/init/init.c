@@ -18,7 +18,6 @@ t_dictionary* diccionario_dispositivos;
 t_dictionary* diccionario_cronometros;
 t_dictionary* diccionario_contextos_io;
 t_dictionary* diccionario_estimaciones;
-t_dictionary* diccionario_tiempo_bloqueado;
 
 pthread_mutex_t mutex_pcbs = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_memoria = PTHREAD_MUTEX_INITIALIZER;
@@ -33,11 +32,8 @@ pthread_t hilo_planificador_mediano_plazo;
 void inicializar_dispositivos_io(){
   diccionario_dispositivos = dictionary_create();
   for(int i = 0; i < 6; i++){
-    t_dispositivo_io* dispositivo = malloc(sizeof(t_dispositivo_io));
-    dispositivo->cola_bloqueados = queue_create();
-    dispositivo->ocupado = false;
-    dispositivo->socket = -1;
-    dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], dispositivo);
+    t_list* lista_instancias = list_create();
+    dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], lista_instancias);
   };
   log_debug(logger, "Dispositivos IO inicializados");
 };
@@ -67,7 +63,6 @@ void inicializar_kernel(){
   diccionario_cronometros = dictionary_create();
   diccionario_contextos_io = dictionary_create();
   diccionario_estimaciones = dictionary_create();
-  diccionario_tiempo_bloqueado = dictionary_create();
   pthread_mutex_init(&mutex_pcbs, NULL);
   pthread_mutex_init(&mutex_memoria, NULL);
   inicializar_dispositivos_io();

@@ -67,40 +67,52 @@ void syscall_io(t_syscall* syscall){
     };
   };
 
-  // Obtener el dispositivo directamente, sin chequeo previo
-  t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, syscall->arg1);
-  if(!dispositivo){
-    log_error(logger, "Dispositivo IO <%s> no encontrado. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
+  t_list* lista_instancias = dictionary_get(diccionario_dispositivos, syscall->arg1);
+  if(!lista_instancias || list_size(lista_instancias) == 0){
+    log_error(logger, "No hay instancias disponibles para el dispositivo <%s>. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
     liberar_cpu_por_pid(pcb->pid);
     finalizar_proceso(pcb);
-    //finalizar_proceso_por_syscall(pcb);
     return;
+  };
+
+  t_instancia_io* instancia_libre = NULL; //Buscar instancia libre
+  for(int i = 0; i < list_size(lista_instancias); i++){
+    t_instancia_io* instancia = list_get(lista_instancias, i);
+    if(!instancia->ocupado){
+      instancia_libre = instancia;
+      break;
+    }
   }
 
   t_contexto_io* contexto = malloc(sizeof(t_contexto_io));
   contexto->dispositivo_actual = strdup(syscall->arg1);
   contexto->duracion_io = atoi(syscall->arg2);
-  //char* clave_pid = string_itoa(pcb->pid);
   dictionary_put(diccionario_contextos_io, clave_pid, contexto);
   free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
 
-
-  if(dispositivo->ocupado){
-    queue_push(dispositivo->cola_bloqueados, pcb);
-    log_debug(logger, "Dispositivo <%s> ocupado. Proceso <%d> encolado", syscall->arg1, pcb->pid);
-  } else {
-    dispositivo->ocupado = true;
-    enviar_peticion_io(dispositivo->socket, contexto->duracion_io, pcb->pid);
+  if(instancia_libre){
+    instancia_libre->ocupado = true;
+    enviar_peticion_io(instancia_libre->socket, contexto->duracion_io, pcb->pid);
     log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
+  } else { //Encolar el proceso en la instancia con menos procesos bloqueados
+    t_instancia_io* menos_cargada = list_get(lista_instancias, 0);
+    for(int i = 1; i < list_size(lista_instancias); i++){
+      t_instancia_io* actual = list_get(lista_instancias, i);
+      if(queue_size(actual->cola_bloqueados) < queue_size(menos_cargada->cola_bloqueados)){
+        menos_cargada = actual;
+      };
+    };
+
+    queue_push(menos_cargada->cola_bloqueados, pcb);
+    log_debug(logger, "Todas las instancias de <%s> están ocupadas. Proceso <%d> encolado en socket <%d>", syscall->arg1, pcb->pid, menos_cargada->socket);
   };
 
   if (contexto->duracion_io >= TIEMPO_SUSPENSION)
     sem_post(&semaforo_revisar_bloqueados);
 
   liberar_cpu_por_pid(pcb->pid);
-  
 };
 
 void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de información de un proceso obtenido por el PID.

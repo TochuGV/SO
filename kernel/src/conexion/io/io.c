@@ -50,13 +50,20 @@ void registrar_socket_io(char* nombre, int socket){
     log_error(logger, "El diccionario de dispositivos IO no está inicializado.");
     return;
   };
-  t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, nombre);
-  if(!dispositivo){
-    log_error(logger, "No existe el dispositivo IO: %s", nombre); //Cambiar texto
+
+  t_list* lista_instancias = dictionary_get(diccionario_dispositivos, nombre);
+  if(!lista_instancias){
+    log_error(logger, "No existe el dispositivo IO: %s", nombre);
     return;
   };
-  dispositivo->socket = socket;
-  //log_info(logger, "Socket IO registrado para <%s>", nombre);
+
+  t_instancia_io* nueva_instancia = malloc(sizeof(t_instancia_io));
+  nueva_instancia->socket = socket;
+  nueva_instancia->ocupado = false;
+  nueva_instancia->cola_bloqueados = queue_create();
+
+  list_add(lista_instancias, nueva_instancia);
+  log_debug(logger, "Nueva instancia IO <%s> registrada con socket <%d>", nombre, socket);
 };
 
 void enviar_peticion_io(int socket_io, uint32_t duracion, uint32_t pid){

@@ -14,12 +14,28 @@ void manejar_respuesta_io(uint32_t pid){
     free(clave_pid_actual);
     return;
   };
-  t_dispositivo_io* dispositivo = dictionary_get(diccionario_dispositivos, contexto->dispositivo_actual);
-  if (!dispositivo){
-    log_error(logger, "Dispositivo IO <%s> no encontrado", contexto->dispositivo_actual);
+
+  t_list* lista_instancias = dictionary_get(diccionario_dispositivos, contexto->dispositivo_actual);
+  if(!lista_instancias || list_size(lista_instancias) == 0){
+    log_error(logger, "No se encontraron instancias para el dispositivo <%s>", contexto->dispositivo_actual);
     free(clave_pid_actual);
     return;
   };
+
+  t_instancia_io* instancia_ocupada = NULL;
+  for(int i = 0; i < list_size(lista_instancias); i++){
+    t_instancia_io* instancia = list_get(lista_instancias, i);
+    if(instancia->ocupado){
+      instancia_ocupada = instancia;
+      break;
+    };
+  };
+
+  if(!instancia_ocupada){
+    log_error(logger, "No se encontró ninguna instancia ocupada para el dispositivo <%s>", contexto->dispositivo_actual);
+    free(clave_pid_actual);
+    return;
+  }
 
   int index_susp = esta_suspendido(pcb);
 
@@ -36,26 +52,24 @@ void manejar_respuesta_io(uint32_t pid){
     log_fin_io(pid);
   }
 
-
-
   dictionary_remove(diccionario_contextos_io, clave_pid_actual);
   free(contexto->dispositivo_actual);
   free(contexto);
   free(clave_pid_actual);
 
-  if(!queue_is_empty(dispositivo->cola_bloqueados)){
-    t_pcb* siguiente = queue_pop(dispositivo->cola_bloqueados);
+  if(!queue_is_empty(instancia_ocupada->cola_bloqueados)){
+    t_pcb* siguiente = queue_pop(instancia_ocupada->cola_bloqueados);
     char* clave_pid_siguiente = string_itoa(siguiente->pid);
     t_contexto_io* contexto_siguiente = dictionary_get(diccionario_contextos_io, clave_pid_siguiente);
     if(contexto_siguiente){
-      enviar_peticion_io(dispositivo->socket, contexto_siguiente->duracion_io, siguiente->pid);
-      dispositivo->ocupado = true;
+      enviar_peticion_io(instancia_ocupada->socket, contexto_siguiente->duracion_io, siguiente->pid);
+      instancia_ocupada->ocupado = true;
     } else {
       log_error(logger, "No se encontró el contexto IO para el proceso <%d>", siguiente->pid);
-      dispositivo->ocupado = false;
+      instancia_ocupada->ocupado = false;
     };
     free(clave_pid_siguiente);
   } else {
-    dispositivo->ocupado = false;
+    instancia_ocupada->ocupado = false;
   };
 };

@@ -21,12 +21,12 @@ void iniciar_planificacion_mediano_plazo(void){
 };
 
 void revisar_bloqueados(void){
-  if (dictionary_is_empty(diccionario_contextos_io))
+  if(dictionary_is_empty(diccionario_contextos_io))
     return;
   
   t_list* lista_bloqueados = dictionary_keys(diccionario_contextos_io);
 
-  if (!lista_bloqueados)
+  if(!lista_bloqueados)
     return;
   
   int32_t tiempo;
