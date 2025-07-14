@@ -20,35 +20,46 @@ void iniciar_planificacion_mediano_plazo(void){
   pthread_mutex_init(&mutex_susp_ready, NULL);
 };
 
-void revisar_bloqueados(void){
-  if(dictionary_is_empty(diccionario_contextos_io))
+void revisar_bloqueados(void) {
+  if (dictionary_is_empty(diccionario_contextos_io))
     return;
-  
+
   t_list* lista_bloqueados = dictionary_keys(diccionario_contextos_io);
-
-  if(!lista_bloqueados)
+  if (!lista_bloqueados)
     return;
-  
-  int32_t tiempo;
 
-  for(int i = 0; i < list_size(lista_bloqueados); i++) {
+  int32_t tiempo_restante_min = INT32_MAX;
+  int32_t tiempo_actual;
+
+  for (int i = 0; i < list_size(lista_bloqueados); i++) {
     char* clave_pid = list_get(lista_bloqueados, i);
     t_temporizadores_estado* cronometros_pid = dictionary_get(diccionario_cronometros, clave_pid);
-    
-    if(cronometros_pid && cronometros_pid->cronometros_estado[ESTADO_BLOCKED]){
-      tiempo = temporal_gettime(cronometros_pid->cronometros_estado[ESTADO_BLOCKED]);
-      if(tiempo > TIEMPO_SUSPENSION){
-        log_warning(logger, "Tiempo: %d > Tiempo suspendido: %d", tiempo, TIEMPO_SUSPENSION);
+
+    if (cronometros_pid && cronometros_pid->cronometros_estado[ESTADO_BLOCKED]) {
+      tiempo_actual = temporal_gettime(cronometros_pid->cronometros_estado[ESTADO_BLOCKED]);
+
+      if (tiempo_actual > TIEMPO_SUSPENSION) {
+        log_warning(logger, "Tiempo: %d > Tiempo suspendido: %d", tiempo_actual, TIEMPO_SUSPENSION);
         uint32_t pid = atoi(clave_pid);
         t_pcb* pcb = obtener_pcb_por_pid(pid);
         suspender_proceso(pcb);
         sem_post(&semaforo_revisar_largo_plazo);
+
+        list_destroy(lista_bloqueados);
         return;
       }
-    }
 
+      int32_t restante = TIEMPO_SUSPENSION - tiempo_actual;
+      if (restante < tiempo_restante_min)
+        tiempo_restante_min = restante;
+    }
   }
-  usleep((TIEMPO_SUSPENSION - tiempo) * 1000);
+
+  list_destroy(lista_bloqueados);
+
+  if (tiempo_restante_min != INT32_MAX && tiempo_restante_min > 0)
+    usleep(tiempo_restante_min * 1000);
+
   sem_post(&semaforo_revisar_bloqueados);
 }
 

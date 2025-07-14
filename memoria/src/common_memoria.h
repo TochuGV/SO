@@ -73,7 +73,7 @@ typedef struct
 
 typedef struct
 {
-  uint32_t marco;
+  int32_t marco;
   t_tabla* siguiente_tabla;
 } t_entrada;
 

@@ -297,32 +297,49 @@ void suspender_proceso(uint32_t pid)
 
   liberar_marcos(proceso->tabla_de_paginas);
   usleep(retardo_swap * 1000);
-  return ;
+  return;
 }
 
 void escribir_en_swap(t_tabla* tabla_de_paginas)
 {
   if (tabla_de_paginas == NULL) return;
 
+  if (tabla_de_paginas->entradas == NULL) return;
+
+  if(list_size(tabla_de_paginas->entradas) > entradas_por_tabla || list_size(tabla_de_paginas->entradas) == 0) return;
+
+  log_warning(logger, "Entre a escribir swap");
+  log_warning(logger, "Tamanio lista: %d", list_size(tabla_de_paginas->entradas));
+
   for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+    log_warning(logger, "El error esta antes de list get");
     t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+    log_warning(logger, "El error no esta antes de list get");
 
     if (entrada->siguiente_tabla != NULL) {
+      log_warning(logger, "El error esta antes de la funcion dentro del primer if");
       escribir_en_swap(entrada->siguiente_tabla);
+      log_warning(logger, "El error no esta antes de la funcion dentro del primer if");
     }
     else if (entrada->marco != -1) {
       uint32_t offset = entrada->marco * tamanio_pagina;
+      log_warning(logger, "El error esta antes de la funcion dentro del else if");
 
       pthread_mutex_lock(&mutex_swapfile);
       fseek(swapfile, swap_offset, SEEK_SET);
       fwrite(memoria + offset, 1, tamanio_pagina, swapfile);
       pthread_mutex_unlock(&mutex_swapfile);
 
+      log_warning(logger, "El error no esta antes de la funcion dentro del else if (FSEEK)");
+
       pthread_mutex_lock(&mutex_swap_offset);
       swap_offset += tamanio_pagina;
       pthread_mutex_unlock(&mutex_swap_offset);
+
+      log_warning(logger, "El error no esta antes de la funcion dentro del else if (OFFSET");
     }
   }
+  log_warning(logger, "Sali del for de escribir swap");
 }
 
 int desuspender_proceso(uint32_t pid)

@@ -52,7 +52,7 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
   };
 };
 
-void esperar_enter_para_planificar(){ //Se podría ver alguna forma de que se loggee el mensaje "Presiona 'Enter' para comenzar la planificación..."
+void esperar_enter_para_planificar(){
   char* leido = readline("");
   if(leido != NULL && strlen(leido) == 0){
     log_debug(logger, "Se presionó 'Enter', comenzando la planificación...");
@@ -95,9 +95,7 @@ t_pcb* obtener_pcb_por_pid(uint32_t pid){
   bool coincide(void* elem){
     return ((t_pcb*)elem)->pid == pid;
   };
-  //log_debug(logger, "%d", list_size(lista_pcbs));
   t_pcb* pcb = list_find(lista_pcbs, coincide);
-  //log_debug(logger, "PCB encontrado PID: %d", pcb->pid);
   pthread_mutex_unlock(&mutex_pcbs);
   return pcb;
 };
