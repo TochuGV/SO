@@ -18,7 +18,6 @@ void* atender_cpu_dispatch(void* arg){
       log_warning(logger, "CPU Dispatch desconectada");
       break;
     };
-    //log_debug(logger, "Código de operación recibido: %d", cod_op);
     switch(cod_op){
       case SYSCALL:
         t_syscall* syscall = recibir_syscall(socket_cpu_dispatch);
@@ -32,7 +31,7 @@ void* atender_cpu_dispatch(void* arg){
       
       case DESALOJO:
         t_list* lista = recibir_paquete(socket_cpu_dispatch);
-        if(!lista || list_size(lista) == 0){
+        if(!lista || list_size(lista) < 2){
           log_error(logger, "Fallo al recibir PCB desalojado");
           break;
         } else {
@@ -45,8 +44,6 @@ void* atender_cpu_dispatch(void* arg){
 
           t_pcb* pcb = obtener_pcb_por_pid(pid);
           pcb->pc = pc;
-
-          //encolar_proceso_en_ready(pcb);
 
           pthread_mutex_lock(&mutex_ready);
           queue_push(cola_ready, pcb);

@@ -22,7 +22,7 @@ int finalizar_proceso(uint32_t pid);
 int atender_dump_memory(uint32_t pid);
 void escribir_dump(t_tabla* tabla_de_paginas, FILE* file);
 void escribir_en_swap(t_tabla* tabla_de_paginas);
-void suspender_proceso(uint32_t);
+int suspender_proceso(uint32_t);
 int desuspender_proceso(uint32_t);
 void leer_swap(t_tabla* tabla_de_paginas, int32_t* offset_swap_actual);
 
