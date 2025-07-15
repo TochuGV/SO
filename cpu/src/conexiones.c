@@ -178,7 +178,7 @@ t_algoritmo_tlb convertir_tlb(char* algoritmo) {
 
 t_algoritmo_cache convertir_cache (char* algoritmo) {
   if (strcmp(algoritmo, "CLOCK") == 0) {return CLOCK;} 
-  if (strcmp(algoritmo, "CLOCK_M") == 0) {return CLOCK_M;}
+  if (strcmp(algoritmo, "CLOCK-M") == 0) {return CLOCK_M;}
   return 0;
   } 
 

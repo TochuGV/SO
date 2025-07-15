@@ -177,7 +177,14 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
 
   direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
-  valor_a_leer = pedir_valor_a_memoria(cpu,pid, direccion_fisica, parametro2);
+  if (cpu->parametros_cache->cantidad_entradas > 0) {
+    direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,0);
+    char* tam_pagina = string_itoa(tamanio_pagina);
+    valor_a_leer = pedir_valor_a_memoria(cpu,pid, direccion_fisica, tam_pagina);
+  } else {
+    direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
+    valor_a_leer = pedir_valor_a_memoria(cpu,pid, direccion_fisica, parametro2);
+  }
 
   if (valor_a_leer == NULL) {
       log_error(logger, "No se pudo leer de memoria");
