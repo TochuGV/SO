@@ -64,6 +64,7 @@ void revisar_bloqueados(void) {
 }
 
 void suspender_proceso(t_pcb* pcb){
+  pthread_mutex_lock(&mutex_memoria);
   int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   if(handshake_kernel(socket_memoria) != 0){
     log_error(logger, "No se pudo conectar a Memoria");
@@ -72,15 +73,20 @@ void suspender_proceso(t_pcb* pcb){
   t_paquete* paquete = crear_paquete(SUSPENDER);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
   enviar_paquete(paquete, socket_memoria);
-  cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_SUSP_BLOCKED);
 
-  pthread_mutex_lock(&mutex_susp_blocked);
-  list_add(lista_susp_blocked, pcb);
-  pthread_mutex_unlock(&mutex_susp_blocked);
-
+  int32_t resultado;
+  
+  recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
   close(socket_memoria);
+  pthread_mutex_unlock(&mutex_memoria);
 
-}
+  if(resultado == 0){
+    cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_SUSP_BLOCKED);
+    pthread_mutex_lock(&mutex_susp_blocked);
+    list_add(lista_susp_blocked, pcb);
+    pthread_mutex_unlock(&mutex_susp_blocked);
+  };
+};
 
 int esta_suspendido(t_pcb* pcb){
   if (list_is_empty(lista_susp_blocked))

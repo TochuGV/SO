@@ -110,6 +110,6 @@ void encolar_proceso_en_ready(t_pcb* pcb){
   pthread_mutex_lock(&mutex_ready);
   queue_push(cola_ready, pcb);
   pthread_mutex_unlock(&mutex_ready);
-  if(es_SRT()) desalojar_cpu();
+  if(es_SRT()) desalojar_cpu(pcb);
   sem_post(&semaforo_ready);
 };

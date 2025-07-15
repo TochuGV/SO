@@ -1,5 +1,5 @@
-#ifndef ALGORITMOS_H_
-#define ALGORITMOS_H_
+#ifndef LP_ALGORITMOS_H_
+#define LP_ALGORITMOS_H_
 
 #include "planificacion/planificadores/largo_plazo/largo_plazo.h"
 #include "planificacion/estados/estados.h"
@@ -7,4 +7,4 @@
 
 bool intentar_enviar_proceso_a_ready(t_pcb* pcb);
 
-#endif /* ALGORITMOS_H */
+#endif /* LP_ALGORITMOS_H */

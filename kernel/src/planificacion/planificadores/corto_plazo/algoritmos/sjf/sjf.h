@@ -8,6 +8,7 @@
 #include <commons/collections/dictionary.h>
 #include "utils/utils.h"
 #include "init/init.h"
+#include "planificacion/planificadores/corto_plazo/algoritmos/algoritmos.h"
 
 // Selección y planificación
 t_pcb* seleccionar_proceso_con_menor_estimacion(t_queue*);
