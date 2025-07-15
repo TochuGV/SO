@@ -188,7 +188,7 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
   log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_leer);
 
   if (cpu->parametros_cache->cantidad_entradas > 0) {
-    actualizar_cache(cpu,pid,nro_pagina,valor_a_leer,es_escritura);
+    actualizar_cache(cpu,pid,nro_pagina,valor_a_leer,es_escritura, desplazamiento);
   }
 }
 
@@ -203,10 +203,10 @@ void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* val
     int ubicacion = consultar_pagina_cache(cpu,pid,nro_pagina);
 
     if (ubicacion != -1) {
-      asignar_lugar_en_cache(cpu,ubicacion,pid,nro_pagina,valor_a_escribir,es_escritura);
+      asignar_lugar_en_cache(cpu,ubicacion,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
     }
     else {
-      actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura);
+      actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
     }
     return;
   }
@@ -220,10 +220,10 @@ void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* val
   //Log 4. Lectura Memoria
   log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_escribir);
 
-  escribir_valor_en_memoria(cpu,pid, direccion_fisica, valor_a_escribir);
+  escribir_valor_en_memoria(cpu,pid, direccion_fisica, valor_a_escribir, ESCRITURA);
   
   if (cpu->parametros_cache->cantidad_entradas > 0) {
-    actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura);
+    actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura, desplazamiento);
   }
 
 }

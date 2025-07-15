@@ -36,13 +36,13 @@ int consultar_pagina_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
 }
 
 //Actualiza la caché con el nuevo valor según el algoritmo
-void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir, bool es_escritura) {
+void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir, bool es_escritura, uint32_t desplazamiento) {
   int cantidad=cpu->parametros_cache->cantidad_entradas;
 
   //busco entrada libre
   for(int i= 0; i < cpu->parametros_cache->cantidad_entradas; i++){
     if(cpu-> cache[i].pid == -1){
-      asignar_lugar_en_cache(cpu,i,pid,nro_pagina,valor_a_escribir,es_escritura);
+      asignar_lugar_en_cache(cpu,i,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
       cpu->parametros_cache->puntero_reemplazo= (i+1) % cantidad;
     return;
     }
@@ -52,7 +52,7 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
     case CLOCK:
       while(true){
         if(cpu->cache[cpu->parametros_cache->puntero_reemplazo].bit_uso == 0) {
-          asignar_lugar_en_cache(cpu,cpu->parametros_cache->puntero_reemplazo,pid,nro_pagina,valor_a_escribir,es_escritura);
+          asignar_lugar_en_cache(cpu,cpu->parametros_cache->puntero_reemplazo,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
           cpu->parametros_cache->puntero_reemplazo = (cpu->parametros_cache->puntero_reemplazo + 1) % cantidad;
           return;
         }
@@ -70,13 +70,13 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
           int index = (cpu->parametros_cache->puntero_reemplazo + i) % cantidad;
 
           if(vueltas==0 && cpu->cache[index].bit_uso == 0 && cpu->cache[index].bit_modificado == 0) {
-          asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura);
+          asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
           cpu->parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
           return;
           }
 
           if(vueltas==1 && cpu->cache[index].bit_uso == 0 && cpu->cache[index].bit_modificado == 1) {
-          asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura);
+          asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
           cpu->parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
           return;
           }
@@ -89,7 +89,7 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
       }
 
       int index = cpu->parametros_cache->puntero_reemplazo;
-      asignar_lugar_en_cache(cpu,index, pid, nro_pagina, valor_a_escribir,es_escritura);
+      asignar_lugar_en_cache(cpu,index, pid, nro_pagina, valor_a_escribir,es_escritura,desplazamiento);
       cpu->parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
     return;
   }
@@ -101,14 +101,15 @@ void finalizar_proceso_en_cache(t_cpu* cpu, uint32_t pid) {
     for (int i = 0; i < cpu->parametros_cache->cantidad_entradas; i++) {
         if (cpu->cache[i].pid == pid) {
             if (cpu->cache[i].bit_modificado == 1) {
-                uint32_t direccion_fisica = traducir_direccion(cpu,pid, cpu->cache[i].pagina, 0);
-                escribir_valor_en_memoria(cpu,pid, direccion_fisica, cpu->cache[i].contenido);
+                uint32_t direccion_fisica = traducir_direccion(cpu,pid, cpu->cache[i].pagina, cpu->cache[i].desplazamiento);
+                escribir_valor_en_memoria(cpu,pid, direccion_fisica, cpu->cache[i].contenido, ACTUALIZAR_PAGINA);
             }
             cpu->cache[i].pid = -1;
             cpu->cache[i].pagina = -1;
             cpu->cache[i].contenido = NULL;
             cpu->cache[i].bit_uso = 0;
             cpu->cache[i].bit_modificado = 0;
+            cpu->cache[i].desplazamiento = 0;
         }
     }
   log_debug(logger,"Actualización de Memoria finalizada");
@@ -218,15 +219,18 @@ void actualizar_TLB (t_cpu* cpu, uint32_t pid, uint32_t pagina, uint32_t marco) 
 } 
 
 //Auxiliar para hacer los reemplazos y asignaciones en caché (y actualizar memoria si corresponde)
-void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pagina,char* valor, bool es_escritura){
+void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pagina,char* valor, bool es_escritura, uint32_t desplazamiento){
   if (cpu->cache[ubicacion].bit_modificado==1) {
     //Log 10. Pagina Actualizada de Cache a Memoria
     //Como actualizo una página completa, no conozco el frame
-    log_info(logger,"PID: <%d> - MEMORY UPDATE - Pagina: <%d>",pid,pagina);
 
-    uint32_t direccion_fisica=traducir_direccion(cpu,pid,cpu->cache[ubicacion].pagina,0);
+    uint32_t direccion_fisica=traducir_direccion(cpu,pid,cpu->cache[ubicacion].pagina, cpu->cache[ubicacion].desplazamiento);
+
+    uint32_t marco = (direccion_fisica - cpu->cache[ubicacion].desplazamiento) / tamanio_pagina;
+
+    log_info(logger,"PID: <%d> - MEMORY UPDATE - Pagina: <%d> - Frame: <%d>",cpu->cache[ubicacion].pid,cpu->cache[ubicacion].pagina, marco);
     
-    escribir_valor_en_memoria(cpu,pid, direccion_fisica,cpu->cache[ubicacion].contenido);
+    escribir_valor_en_memoria(cpu,cpu->cache[ubicacion].pid, direccion_fisica,cpu->cache[ubicacion].contenido, ACTUALIZAR_PAGINA);
   }
 
   //Log 9. Página ingresada en Cache
@@ -237,6 +241,7 @@ void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pa
   cpu->cache[ubicacion].contenido=valor;
   cpu->cache[ubicacion].bit_uso=1;
   cpu->cache[ubicacion].bit_modificado = es_escritura? 1 : 0;
+  cpu->cache[ubicacion].desplazamiento = desplazamiento;
 }
 
 //Auxiliar para hacer los reemplazos y asignaciones en TLB
@@ -275,10 +280,10 @@ char* pedir_valor_a_memoria(t_cpu* cpu, uint32_t pid, uint32_t direccion_fisica,
   return valor;
 }
 
-void escribir_valor_en_memoria(t_cpu* cpu, uint32_t pid, uint32_t direccion_fisica, char* valor){
-  uint32_t longitud_valor = strlen(valor) + 1;
+void escribir_valor_en_memoria(t_cpu* cpu, uint32_t pid, uint32_t direccion_fisica, char* valor, int cod_op){
+  uint32_t longitud_valor = strlen(valor);
   
-  t_paquete* paquete = crear_paquete(ESCRITURA);
+  t_paquete* paquete = crear_paquete(cod_op);
 
   agregar_a_paquete(paquete, &pid, sizeof(uint32_t));
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));

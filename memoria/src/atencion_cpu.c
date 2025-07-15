@@ -29,11 +29,15 @@ void* atender_cpu(void* arg)
         break;
 
       case ESCRITURA:
-        recibir_solicitud_escritura(cliente_cpu);
+        recibir_solicitud_escritura(cliente_cpu, ESCRITURA);
         break;
 
       case LECTURA:
         recibir_solicitud_lectura(cliente_cpu);
+        break;
+
+      case ACTUALIZAR_PAGINA:
+        recibir_solicitud_escritura(cliente_cpu, ACTUALIZAR_PAGINA);
         break;
 
       case -1:
@@ -156,7 +160,7 @@ void recibir_solicitud_marco(int cliente_cpu)
   list_destroy_and_destroy_elements(valores, free);
 }
 
-void recibir_solicitud_escritura(int cliente_cpu)
+void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
 {
   t_list* valores = recibir_paquete(cliente_cpu);
 
@@ -173,8 +177,13 @@ void recibir_solicitud_escritura(int cliente_cpu)
 
   char* destino = (char*)(memoria + direccion_fisica);
 
-  if (strcmp(destino, valor) == 0) {
-    log_info(logger, "## PID: <%d> - <Escritura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, longitud_valor);
+  if (memcmp(destino, valor, longitud_valor) == 0) {
+    if (cod_op == ACTUALIZAR_PAGINA) {
+      uint32_t marco = direccion_fisica / tamanio_pagina;
+      log_info(logger, "## PID: <%d> - <Escritura> - Dir. Física: <%d> - Tamaño: <%d>", pid, marco*tamanio_pagina, tamanio_pagina);
+    } else {
+      log_info(logger, "## PID: <%d> - <Escritura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, longitud_valor);
+    }
     log_debug(logger, "Valor escrito: %s", valor);
     t_proceso* proceso = obtener_proceso(pid);
     if (!proceso) {
@@ -186,6 +195,7 @@ void recibir_solicitud_escritura(int cliente_cpu)
   } else {
     log_error(logger, "Error, fallo la operacion WRITE");
   }
+  free(valor);
   list_destroy_and_destroy_elements(valores, free);
 }
 

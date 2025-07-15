@@ -55,7 +55,11 @@ void* atender_kernel(void* arg)
 
       log_warning(logger, "Proceso %d entro al case suspender", pid);
 
-      suspender_proceso(pid);
+      if (suspender_proceso(pid) == 0) {
+        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
+      }
+      else
+        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
 
       list_destroy_and_destroy_elements(valores, free);
       break;
@@ -277,13 +281,13 @@ void escribir_dump(t_tabla* tabla_de_paginas, FILE* file)
   }
 }
 
-void suspender_proceso(uint32_t pid)
+int suspender_proceso(uint32_t pid)
 {
   t_proceso* proceso = obtener_proceso(pid);
 
   if(!proceso) {
     log_error(logger, "Error al suspender proceso");
-    return;
+    return -1;
   }
 
   proceso->base_swap = swap_offset;
@@ -297,7 +301,7 @@ void suspender_proceso(uint32_t pid)
 
   liberar_marcos(proceso->tabla_de_paginas);
   usleep(retardo_swap * 1000);
-  return;
+  return 0;
 }
 
 void escribir_en_swap(t_tabla* tabla_de_paginas)
@@ -306,40 +310,29 @@ void escribir_en_swap(t_tabla* tabla_de_paginas)
 
   if (tabla_de_paginas->entradas == NULL) return;
 
-  if(list_size(tabla_de_paginas->entradas) > entradas_por_tabla || list_size(tabla_de_paginas->entradas) == 0) return;
-
-  log_warning(logger, "Entre a escribir swap");
-  log_warning(logger, "Tamanio lista: %d", list_size(tabla_de_paginas->entradas));
-
   for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
-    log_warning(logger, "El error esta antes de list get");
     t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
-    log_warning(logger, "El error no esta antes de list get");
 
     if (entrada->siguiente_tabla != NULL) {
-      log_warning(logger, "El error esta antes de la funcion dentro del primer if");
       escribir_en_swap(entrada->siguiente_tabla);
-      log_warning(logger, "El error no esta antes de la funcion dentro del primer if");
     }
     else if (entrada->marco != -1) {
       uint32_t offset = entrada->marco * tamanio_pagina;
-      log_warning(logger, "El error esta antes de la funcion dentro del else if");
 
       pthread_mutex_lock(&mutex_swapfile);
       fseek(swapfile, swap_offset, SEEK_SET);
       fwrite(memoria + offset, 1, tamanio_pagina, swapfile);
-      pthread_mutex_unlock(&mutex_swapfile);
-
-      log_warning(logger, "El error no esta antes de la funcion dentro del else if (FSEEK)");
-
-      pthread_mutex_lock(&mutex_swap_offset);
       swap_offset += tamanio_pagina;
-      pthread_mutex_unlock(&mutex_swap_offset);
-
-      log_warning(logger, "El error no esta antes de la funcion dentro del else if (OFFSET");
+      pthread_mutex_unlock(&mutex_swapfile);
     }
   }
-  log_warning(logger, "Sali del for de escribir swap");
+  pthread_mutex_lock(&mutex_swapfile);
+  fseek(swapfile, swap_offset, SEEK_SET);
+  void* pagina_vacia = calloc(1, tamanio_pagina);
+  fwrite(pagina_vacia, 1, tamanio_pagina, swapfile);
+  swap_offset += tamanio_pagina;
+  free(pagina_vacia);
+  pthread_mutex_unlock(&mutex_swapfile);
 }
 
 int desuspender_proceso(uint32_t pid)

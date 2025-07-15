@@ -27,6 +27,7 @@ int pagina;
 char* contenido;
 bool bit_uso; //Para Clock y Clock M
 bool bit_modificado; //Para Clock M
+uint32_t desplazamiento;
 } entrada_cache;
 
 typedef struct {

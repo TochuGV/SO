@@ -46,6 +46,8 @@ t_cpu* iniciar_cpu(int32_t identificador_cpu) {
     cpu->cache[i].contenido = NULL;
     cpu->cache[i].bit_uso = 0;
     cpu->cache[i].bit_modificado = 0;
+    cpu->cache[i].desplazamiento = 0;
+
   }
 
   cpu->tlb = malloc(sizeof(entrada_tlb) * cpu->parametros_tlb->cantidad_entradas);

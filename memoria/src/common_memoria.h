@@ -34,7 +34,6 @@ extern FILE* swapfile;
 extern uint32_t swap_offset;
 extern pthread_mutex_t mutex_memoria;
 extern pthread_mutex_t mutex_swapfile;
-extern pthread_mutex_t mutex_swap_offset;
 extern pthread_mutex_t mutex_marcos_libres;
 extern pthread_mutex_t mutex_bitmap;
 

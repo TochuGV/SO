@@ -38,7 +38,8 @@ typedef enum {
   DESALOJO,
   SYSCALL,
   SUSPENDER,
-  DESUSPENDER
+  DESUSPENDER,
+  ACTUALIZAR_PAGINA
 } op_code_comunicacion;
 
 typedef enum {

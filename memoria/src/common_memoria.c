@@ -23,7 +23,6 @@ FILE* swapfile;
 uint32_t swap_offset;
 pthread_mutex_t mutex_memoria = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_swapfile = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_swap_offset = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_marcos_libres = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_bitmap = PTHREAD_MUTEX_INITIALIZER;
 
@@ -70,7 +69,6 @@ void inicializar_memoria(void)
 
   pthread_mutex_init(&mutex_memoria, NULL);
   pthread_mutex_init(&mutex_swapfile, NULL);
-  pthread_mutex_init(&mutex_swap_offset, NULL);
   pthread_mutex_init(&mutex_marcos_libres, NULL);
   pthread_mutex_init(&mutex_bitmap, NULL);
 
@@ -78,6 +76,7 @@ void inicializar_memoria(void)
   if (swapfile == NULL)
     log_error(logger, "Error: no se pudo crear el archivo SWAP");
   swap_offset = 0;
+
 
   servidor_memoria = iniciar_servidor(puerto_escucha);
 
@@ -295,7 +294,6 @@ void terminar_memoria(void)
   list_destroy_and_destroy_elements(lista_ids_cpus, free);
   pthread_mutex_destroy(&mutex_memoria);
   pthread_mutex_destroy(&mutex_swapfile);
-  pthread_mutex_destroy(&mutex_swap_offset);
   pthread_mutex_destroy(&mutex_marcos_libres);
   pthread_mutex_destroy(&mutex_bitmap);
 	log_destroy(logger);
