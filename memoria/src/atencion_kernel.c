@@ -131,7 +131,7 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     return 0;
   };
 
-  log_warning(logger,"No hay lugar en memoria para el proceso.");
+  //log_warning(logger,"No hay lugar en memoria para el proceso.");
   list_destroy_and_destroy_elements(valores, free);
   return -1;
 }
@@ -176,7 +176,7 @@ t_list* leer_archivo_instrucciones(char* archivo_pseudocodigo)
     
     t_instruccion* nueva_instruccion = malloc(sizeof(t_instruccion));
     *nueva_instruccion = instruccion;
-
+ 
     list_add(lista_instrucciones, nueva_instruccion);
 
   }
@@ -252,7 +252,6 @@ int atender_dump_memory(uint32_t pid)
 
   uint32_t tamanio_dump = proceso->marcos_en_uso * tamanio_pagina;
 
-  log_warning(logger, "marcos en uso: %d tamaño dump: %d",proceso->marcos_en_uso, tamanio_dump);
 
   if (ftruncate(fileno(file), tamanio_dump) == -1) {
     log_error(logger, "Error: no se pudo truncar el archivo DUMP");

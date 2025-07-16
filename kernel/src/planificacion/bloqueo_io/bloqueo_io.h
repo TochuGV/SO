@@ -10,6 +10,6 @@
 #include <commons/collections/queue.h>
 #include "./conexion/io/io.h"
 
-void manejar_respuesta_io(uint32_t);
+void manejar_respuesta_io(uint32_t,int);
 
 #endif /* BLOQUEO_IO_H_ */

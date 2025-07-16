@@ -28,7 +28,7 @@ void* atender_io(void* arg){
           break;
         } else {
           uint32_t pid = *(uint32_t*) list_get(lista, 0);
-          manejar_respuesta_io(pid);
+          manejar_respuesta_io(pid,socket_io);
           list_destroy_and_destroy_elements(lista, free);
         };
         break;

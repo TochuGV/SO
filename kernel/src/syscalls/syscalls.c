@@ -95,7 +95,7 @@ void syscall_io(t_syscall* syscall){
   if(instancia_libre){
     instancia_libre->ocupado = true;
     enviar_peticion_io(instancia_libre->socket, contexto->duracion_io, pcb->pid);
-    log_debug(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
+    log_warning(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
   } else { //Encolar el proceso en la instancia con menos procesos bloqueados
     t_instancia_io* menos_cargada = list_get(lista_instancias, 0);
     for(int i = 1; i < list_size(lista_instancias); i++){

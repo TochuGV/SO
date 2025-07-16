@@ -1,6 +1,6 @@
 #include "bloqueo_io.h"
 
-void manejar_respuesta_io(uint32_t pid){
+void manejar_respuesta_io(uint32_t pid, int socket_io){
   t_pcb* pcb = obtener_pcb_por_pid(pid);
   if(!pcb){
     log_warning(logger, "PCB no encontrado para el proceso <%d> al finalizar IO", pid);
@@ -25,7 +25,7 @@ void manejar_respuesta_io(uint32_t pid){
   t_instancia_io* instancia_ocupada = NULL;
   for(int i = 0; i < list_size(lista_instancias); i++){
     t_instancia_io* instancia = list_get(lista_instancias, i);
-    if(instancia->ocupado){
+    if(instancia->ocupado && instancia->socket == socket_io){
       instancia_ocupada = instancia;
       break;
     };

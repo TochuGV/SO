@@ -131,6 +131,14 @@ void recibir_solicitud_marco(int cliente_cpu)
   {
     uint32_t entrada_nivel = *(uint32_t*)list_get(valores, nivel);
 
+    if (list_size(tabla_actual->entradas) < entrada_nivel) {
+      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      list_destroy_and_destroy_elements(valores, free);
+      uint32_t error = -1;
+      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      return;
+    } 
+
     entrada = list_get(tabla_actual->entradas, entrada_nivel);
 
     if (!entrada) {
@@ -172,6 +180,12 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
 
   char* valor = malloc(longitud_valor);
   memcpy(valor, list_get(valores, 3), longitud_valor); 
+
+  if (direccion_fisica >= tamanio_memoria) {
+    log_error(logger, "Direccion fisica invalida");
+    list_destroy_and_destroy_elements(valores, free);
+    return;
+  }
 
   pthread_mutex_lock(&mutex_memoria);
   memcpy(memoria + direccion_fisica, valor, longitud_valor);
