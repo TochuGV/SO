@@ -231,6 +231,7 @@ void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pa
     log_info(logger,"PID: <%d> - MEMORY UPDATE - Pagina: <%d> - Frame: <%d>",cpu->cache[ubicacion].pid,cpu->cache[ubicacion].pagina, marco);
     
     escribir_valor_en_memoria(cpu,cpu->cache[ubicacion].pid, direccion_fisica,cpu->cache[ubicacion].contenido, ACTUALIZAR_PAGINA);
+    //free(cpu->cache[ubicacion].contenido);
   }
 
   //Log 9. Página ingresada en Cache
@@ -275,6 +276,7 @@ char* pedir_valor_a_memoria(t_cpu* cpu, uint32_t pid, uint32_t direccion_fisica,
 
     valor = malloc(longitud_valor);
     memcpy(valor, list_get(valores, 1), longitud_valor);
+    list_destroy_and_destroy_elements(valores,free);
   }
 
   return valor;
@@ -289,6 +291,8 @@ void escribir_valor_en_memoria(t_cpu* cpu, uint32_t pid, uint32_t direccion_fisi
   agregar_a_paquete(paquete, &direccion_fisica, sizeof(uint32_t));
   agregar_a_paquete(paquete, &longitud_valor, sizeof(uint32_t));
   agregar_a_paquete(paquete, valor, longitud_valor);
+
+  free(valor);
 
   enviar_paquete(paquete, cpu->conexion_memoria);
 };

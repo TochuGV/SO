@@ -166,6 +166,8 @@ void recibir_datos_memoria(t_cpu* cpu) {
     tamanio_pagina = *(uint32_t*) list_get(datos_memoria, 0);
     cant_entradas_tabla = *(uint32_t*) list_get(datos_memoria, 1);
     cant_niveles = *(uint32_t*) list_get(datos_memoria, 2);
+
+    list_destroy_and_destroy_elements(datos_memoria, free);
   }
 }
 

@@ -100,6 +100,8 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
       log_info (logger, "PID: <%d> - Ejecutando: <NOOP>", pcb->pid);
       sleep(1); //Uso una duración de 1 segundo como default para NOOP
       pcb->pc++;
+      free(instruccion.parametro1);
+      free(instruccion.parametro2);
       return EJECUCION_CONTINUA;
       break;
     
@@ -120,6 +122,8 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     case GOTO: 
       log_info(logger, "PID: <%d> - Ejecutando: <GOTO> - Nuevo PC: <%s>", pcb->pid, instruccion.parametro1);
       pcb->pc = atoi(instruccion.parametro1);
+      free(instruccion.parametro1);
+      free(instruccion.parametro2);
       return EJECUCION_CONTINUA;
       break;
     
@@ -181,6 +185,7 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
     direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,0);
     char* tam_pagina = string_itoa(tamanio_pagina);
     valor_a_leer = pedir_valor_a_memoria(cpu,pid, direccion_fisica, tam_pagina);
+    free(tam_pagina);
   } else {
     direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
     valor_a_leer = pedir_valor_a_memoria(cpu,pid, direccion_fisica, parametro2);
@@ -196,6 +201,8 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
 
   if (cpu->parametros_cache->cantidad_entradas > 0) {
     actualizar_cache(cpu,pid,nro_pagina,valor_a_leer,es_escritura, desplazamiento);
+  } else {
+    free(valor_a_leer);
   }
 }
 
@@ -265,6 +272,8 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
     case EJECUCION_CONTINUA_INIT_PROC:
       paquete = crear_paquete(SYSCALL);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_INIT_PROC, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+      free(instruccion.parametro1);
+      free(instruccion.parametro2);
       break;
     
     case EJECUCION_FINALIZADA:
@@ -275,6 +284,8 @@ void actualizar_kernel(t_instruccion instruccion, t_estado_ejecucion estado, t_p
     case EJECUCION_BLOQUEADA_IO:
       paquete = crear_paquete(SYSCALL);
       agregar_syscall_a_paquete(paquete, pcb->pid, SYSCALL_IO, instruccion.parametro1, instruccion.parametro2, pcb->pc);
+      free(instruccion.parametro1);
+      free(instruccion.parametro2);
       break;
 
     case EJECUCION_BLOQUEADA_DUMP:

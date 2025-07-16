@@ -4,6 +4,8 @@ void* atender_cpu(void* arg)
 {
   int cliente_cpu = *(int*)arg;
 
+  free(arg);
+
     while (1) {
       int cod_op = recibir_operacion(cliente_cpu);
       //log_debug(logger,"CODOP: %d",cod_op);
@@ -184,7 +186,7 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
     } else {
       log_info(logger, "## PID: <%d> - <Escritura> - Dir. Física: <%d> - Tamaño: <%d>", pid, direccion_fisica, longitud_valor);
     }
-    log_debug(logger, "Valor escrito: %s", valor);
+    //log_debug(logger, "Valor escrito: %s", valor);
     t_proceso* proceso = obtener_proceso(pid);
     if (!proceso) {
       log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
@@ -227,6 +229,7 @@ void recibir_solicitud_lectura(int cliente_cpu)
   if (!proceso) {
     log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
     list_destroy_and_destroy_elements(valores, free);
+    free(valor);
     return;
   }
   proceso->metricas[LECTURAS]++;
@@ -237,5 +240,6 @@ void recibir_solicitud_lectura(int cliente_cpu)
   agregar_a_paquete(paquete, valor, longitud_valor);
   enviar_paquete(paquete, cliente_cpu);
   list_destroy_and_destroy_elements(valores, free);
+  free(valor);
 
 }

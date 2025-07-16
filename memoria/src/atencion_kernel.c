@@ -5,6 +5,8 @@ void* atender_kernel(void* arg)
 {
   int cliente_kernel = *(int*)arg;
 
+  free(arg);
+
 
     int cod_op = recibir_operacion(cliente_kernel);
     uint32_t pid;
