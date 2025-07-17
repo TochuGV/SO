@@ -115,6 +115,14 @@ void recibir_solicitud_marco(int cliente_cpu)
 {
   t_list* valores = recibir_paquete(cliente_cpu);
 
+  if(list_is_empty(valores) || !valores) {
+    log_error(logger, "Error ecorriendo la tabla de pagina");
+    list_destroy_and_destroy_elements(valores, free);
+    uint32_t error = -1;
+    send(cliente_cpu, &error, sizeof(uint32_t), 0);
+    return;
+  }
+
   uint32_t pid = *(uint32_t*)list_get(valores, 0);
   t_proceso* proceso = obtener_proceso(pid);
 
@@ -129,9 +137,16 @@ void recibir_solicitud_marco(int cliente_cpu)
 
   for (int nivel = 1; nivel <= cantidad_niveles; nivel++)
   {
+    if (list_size(valores) < nivel) {
+      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      list_destroy_and_destroy_elements(valores, free);
+      uint32_t error = -1;
+      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      return;
+    }
     uint32_t entrada_nivel = *(uint32_t*)list_get(valores, nivel);
 
-    if (list_size(tabla_actual->entradas) < entrada_nivel) {
+    if (list_size(tabla_actual->entradas) < entrada_nivel || list_is_empty(tabla_actual->entradas)) {
       log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
