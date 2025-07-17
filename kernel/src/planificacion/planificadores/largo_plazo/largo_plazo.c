@@ -39,6 +39,7 @@ bool es_PMCP(void){
 };
 
 void mover_proceso_a_ready(void){
+
   pthread_mutex_lock(&mutex_new);
   if(queue_is_empty(cola_new)){
     pthread_mutex_unlock(&mutex_new);
@@ -110,14 +111,15 @@ void finalizar_proceso(t_pcb* pcb){
       return ((t_informacion_largo_plazo*)elem)->pid == pcb->pid;
     };
 
+    pthread_mutex_lock(&mutex_pcbs);
+    list_remove_element(lista_pcbs, pcb);
+    pthread_mutex_unlock(&mutex_pcbs);
+
     t_informacion_largo_plazo* info = list_remove_by_condition(lista_info_procesos, es_pid);
     if(info) free(info);
 
     destruir_pcb(pcb);
-    if (queue_is_empty(cola_susp_ready))
-      sem_post(&semaforo_revisar_largo_plazo); //SOSPECHOSO DE QUE INTENTE INGRESAR A READY CUANDO SE BLOQUEA.
-    else 
-      sem_post(&semaforo_revisar_susp_ready);
+    sem_post(&semaforo_revisar_susp_ready);
       
     return;
   };

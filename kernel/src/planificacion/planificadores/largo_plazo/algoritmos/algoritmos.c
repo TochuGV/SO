@@ -14,8 +14,7 @@ bool intentar_enviar_proceso_a_ready(t_pcb* pcb){
     encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_NEW, ESTADO_READY);
     list_remove_by_condition(lista_info_procesos, tiene_pid_igual);
-    if (!queue_is_empty(cola_susp_ready))
-      sem_post(&semaforo_revisar_susp_ready);
+    sem_post(&semaforo_revisar_susp_ready);
     return true;
   };
   return false;

@@ -57,7 +57,11 @@ void syscall_io(t_syscall* syscall){
   char* clave_pid = string_itoa(pcb->pid);
   
   if(strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0 || strcmp(ALGORITMO_CORTO_PLAZO, "SRT") == 0){
+
+    pthread_mutex_lock(&mutex_diccionario_cronometros);
     t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave_pid);
+    pthread_mutex_unlock(&mutex_diccionario_cronometros);
+
     if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
       double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
       actualizar_estimacion(pcb->pid, rafaga_real);
@@ -66,8 +70,9 @@ void syscall_io(t_syscall* syscall){
       log_warning(logger, "No se pudo medir la ráfaga real del proceso <%d>", pcb->pid);
     };
   };
-
+  pthread_mutex_lock(&mutex_diccionario_dispositivos);
   t_list* lista_instancias = dictionary_get(diccionario_dispositivos, syscall->arg1);
+  pthread_mutex_unlock(&mutex_diccionario_dispositivos);
   if(!lista_instancias || list_size(lista_instancias) == 0){
     log_error(logger, "No hay instancias disponibles para el dispositivo <%s>. Proceso <%d> finalizando...", syscall->arg1, pcb->pid);
     cambiar_estado(pcb, ESTADO_EXEC, ESTADO_EXIT);
@@ -88,7 +93,9 @@ void syscall_io(t_syscall* syscall){
   t_contexto_io* contexto = malloc(sizeof(t_contexto_io));
   contexto->dispositivo_actual = strdup(syscall->arg1);
   contexto->duracion_io = atoi(syscall->arg2);
+  pthread_mutex_lock(&mutex_diccionario_contextos);
   dictionary_put(diccionario_contextos_io, clave_pid, contexto);
+  pthread_mutex_unlock(&mutex_diccionario_contextos);
   free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
 
@@ -109,8 +116,14 @@ void syscall_io(t_syscall* syscall){
     log_debug(logger, "Todas las instancias de <%s> están ocupadas. Proceso <%d> encolado en socket <%d>", syscall->arg1, pcb->pid, menos_cargada->socket);
   };
 
-  if (contexto->duracion_io >= TIEMPO_SUSPENSION)
-    sem_post(&semaforo_revisar_bloqueados);
+  if (contexto->duracion_io >= TIEMPO_SUSPENSION) {
+    uint32_t* pid_arg = malloc(sizeof(uint32_t));
+    *pid_arg = pcb->pid;
+    pthread_t hilo_revisar_bloqueados;
+    pthread_create(&hilo_revisar_bloqueados, NULL, revisar_bloqueados, pid_arg);
+    pthread_detach(hilo_revisar_bloqueados);
+  }
+    //sem_post(&semaforo_revisar_bloqueados);
 
   liberar_cpu_por_pid(pcb->pid);
 };
