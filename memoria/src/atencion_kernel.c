@@ -289,6 +289,11 @@ void suspender_proceso(uint32_t pid)
 
   proceso->base_swap = swap_offset;
 
+  if (proceso->tabla_de_paginas == NULL || proceso->marcos_en_uso == 0) {
+    log_error(logger, "Error antes de intentar escribir swap");
+    return;
+  }
+
   escribir_en_swap(proceso->tabla_de_paginas);
   proceso->metricas[BAJADAS_A_SWAP]++;
 
