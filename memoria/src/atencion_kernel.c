@@ -307,7 +307,17 @@ void escribir_en_swap(t_tabla* tabla_de_paginas)
 
   if (tabla_de_paginas->entradas == NULL) return;
 
+  if (list_is_empty(tabla_de_paginas->entradas)) {
+    log_error(logger, "Error al escribir en swap1");
+    return;
+  }  
+
   for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
+
+    if (list_size(tabla_de_paginas->entradas) < index_entrada) {
+      log_error(logger, "Error al escribir en swap2");
+      return;
+    }
     t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
 
     if (entrada->siguiente_tabla != NULL) {
@@ -315,6 +325,11 @@ void escribir_en_swap(t_tabla* tabla_de_paginas)
     }
     else if (entrada->marco != -1) {
       uint32_t offset = entrada->marco * tamanio_pagina;
+
+      if (offset > tamanio_memoria) {
+        log_error(logger, "Error al escribir en swap3");
+        return;  
+      }
 
       pthread_mutex_lock(&mutex_swapfile);
       fseek(swapfile, swap_offset, SEEK_SET);

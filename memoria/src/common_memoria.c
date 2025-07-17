@@ -105,6 +105,10 @@ void obtener_configs(void)
 
 t_proceso* obtener_proceso(uint32_t pid)
 {
+  if (list_is_empty(lista_procesos)) {
+    log_warning(logger, "Proceso con PID: %d no encontrado", pid);
+    return NULL;
+  }
   for (int i = 0; i < list_size(lista_procesos); i++) 
   {
     t_proceso* proceso = list_get(lista_procesos, i);
