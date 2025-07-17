@@ -63,7 +63,6 @@ void registrar_socket_io(char* nombre, int socket){
   nueva_instancia->cola_bloqueados = queue_create();
 
   list_add(lista_instancias, nueva_instancia);
-  log_debug(logger, "Nueva instancia IO <%s> registrada con socket <%d>", nombre, socket);
 };
 
 void enviar_peticion_io(int socket_io, uint32_t duracion, uint32_t pid){

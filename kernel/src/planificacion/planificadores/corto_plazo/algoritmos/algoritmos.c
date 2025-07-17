@@ -10,7 +10,6 @@ t_pcb* obtener_proximo_proceso_ready(t_queue* cola_ready){
 };
 
 void asignar_y_enviar_a_cpu(t_pcb* pcb, t_cpu* cpu){
-  log_debug(logger, "Asignando proceso %d a CPU %d (%s)", pcb->pid, cpu->id_cpu, ALGORITMO_CORTO_PLAZO);
   asignar_proceso_a_cpu(cpu, pcb);
   enviar_a_cpu(pcb, cpu->socket_dispatch);
   cambiar_estado(pcb, ESTADO_READY, ESTADO_EXEC);

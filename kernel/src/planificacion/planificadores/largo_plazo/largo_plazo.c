@@ -3,13 +3,11 @@
 t_queue* cola_new;
 t_list* lista_info_procesos;
 pthread_mutex_t mutex_new = PTHREAD_MUTEX_INITIALIZER;
-//sem_t hay_procesos_en_new;
 sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo(){
   cola_new = queue_create();
   lista_info_procesos = list_create();
-  //sem_init(&hay_procesos_en_new, 0, 0);
   sem_init(&semaforo_revisar_largo_plazo, 0, 0);
   pthread_mutex_init(&mutex_new, NULL);
 };
@@ -95,14 +93,12 @@ void finalizar_proceso(t_pcb* pcb){
   
   if (resultado == 0) {
     dictionary_remove_and_destroy(diccionario_contextos_io, clave_pid, destruir_contexto_io);
-
-    //eliminamos la estimacion del proceso terminado
     char* clave_estimacion = string_itoa(pcb->pid);
     dictionary_remove_and_destroy(diccionario_estimaciones, clave_estimacion, free);
     free(clave_estimacion);
 
     free(clave_pid);
-    log_fin_proceso(pcb->pid); //Agregar en todos los que se vaya a EXIT
+    log_fin_proceso(pcb->pid);
     char* buffer = crear_cadena_metricas_estado(pcb);
     log_metricas_estado(buffer);
     free(buffer);

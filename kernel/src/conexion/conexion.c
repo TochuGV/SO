@@ -3,7 +3,6 @@
 void aceptar_conexiones(char* puerto, void* (*atender_cliente)(void*), char* nombre_modulo){
   int socket_escucha = iniciar_servidor(puerto);
   if(socket_escucha == -1) pthread_exit(NULL);
-  log_debug(logger, "Esperando conexiones de %s...", nombre_modulo);
   while(1){
     int socket_cliente = esperar_cliente(socket_escucha);
     if(socket_cliente == -1){
@@ -24,6 +23,5 @@ bool validar_handshake_cliente(int socket, int modulo_esperado, char* nombre_mod
     close(socket);
     return false;
   };
-  log_debug(logger, "%s conectado correctamente", nombre_modulo);
   return true;
 };

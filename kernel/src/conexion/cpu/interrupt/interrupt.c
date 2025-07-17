@@ -18,7 +18,6 @@ void* atender_cpu_interrupt(void* arg){
       log_warning(logger, "CPU Interrupt desconectada");
       break;
     };
-    log_debug(logger, "Se recibió la interrupción. Código: %d", cod_op);
   };
   close(socket_cpu_interrupt);
   return NULL;

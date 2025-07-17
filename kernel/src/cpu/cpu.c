@@ -53,7 +53,6 @@ void liberar_cpu_por_pid(uint32_t pid){
     t_cpu* cpu = list_get(lista_cpus, i);
     if(!cpu->disponible && cpu->proceso_en_ejecucion && cpu->proceso_en_ejecucion->pid == pid){
       liberar_cpu(cpu);
-      log_debug(logger, "CPU %d liberada del proceso <%d>", cpu->id_cpu, pid);
       break;
     };
   };

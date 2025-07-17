@@ -14,7 +14,6 @@ void mover_proceso_a_exec(){
   pthread_mutex_lock(&mutex_ready);
 
   if(queue_is_empty(cola_ready)){
-    log_info(logger, "No hay procesos en la cola READY");
     pthread_mutex_unlock(&mutex_ready); 
     return;
   };

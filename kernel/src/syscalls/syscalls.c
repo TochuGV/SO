@@ -102,8 +102,7 @@ void syscall_io(t_syscall* syscall){
   if(instancia_libre){
     instancia_libre->ocupado = true;
     enviar_peticion_io(instancia_libre->socket, contexto->duracion_io, pcb->pid);
-    log_warning(logger, "Proceso <%d> enviado al dispositivo <%s>", pcb->pid, syscall->arg1);
-  } else { //Encolar el proceso en la instancia con menos procesos bloqueados
+  } else {
     t_instancia_io* menos_cargada = list_get(lista_instancias, 0);
     for(int i = 1; i < list_size(lista_instancias); i++){
       t_instancia_io* actual = list_get(lista_instancias, i);
@@ -113,7 +112,6 @@ void syscall_io(t_syscall* syscall){
     };
 
     queue_push(menos_cargada->cola_bloqueados, pcb);
-    log_debug(logger, "Todas las instancias de <%s> están ocupadas. Proceso <%d> encolado en socket <%d>", syscall->arg1, pcb->pid, menos_cargada->socket);
   };
 
   if (contexto->duracion_io >= TIEMPO_SUSPENSION) {
@@ -135,7 +133,6 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
     return;
   };
   pcb->pc = syscall->pc;
-  log_debug(logger, "Solicitando un volcado de información para el proceso <%d>", pcb->pid);
 
   t_paquete* paquete = crear_paquete(SOLICITUD_DUMP_MEMORY);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
@@ -157,7 +154,6 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
   liberar_cpu_por_pid(pcb->pid);
 
   if(respuesta == 0){
-    log_debug(logger, "Volcado de memoria exitoso para proceso <%d>", pcb->pid);
     encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
   } else {

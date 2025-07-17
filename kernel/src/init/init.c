@@ -38,7 +38,6 @@ void inicializar_dispositivos_io(){
     t_list* lista_instancias = list_create();
     dictionary_put(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i], lista_instancias);
   };
-  log_debug(logger, "Dispositivos IO inicializados");
 };
 
 void extraer_datos_config(){
@@ -60,7 +59,6 @@ void inicializar_kernel(){
   extraer_datos_config();
   t_log_level nivel_log = parse_log_level(LOG_LEVEL);
   logger = iniciar_logger("kernel.log", "Kernel", nivel_log);
-  log_debug(logger, "Log de Kernel iniciado");
   inicializar_estructura_cpus();
   lista_pcbs = list_create();
   diccionario_cronometros = dictionary_create();
@@ -80,7 +78,6 @@ void inicializar_kernel(){
 void crear_proceso_inicial(char* archivo_pseudocodigo, uint32_t tamanio){
   t_pcb* pcb_nuevo = crear_pcb();
   inicializar_proceso(pcb_nuevo, archivo_pseudocodigo, tamanio);
-  log_debug(logger, "Proceso <%d> inicializado manualmente desde 'main.c'", pcb_nuevo->pid);
   sem_post(&semaforo_revisar_largo_plazo);
 };
 
@@ -108,12 +105,6 @@ void unir_hilos(){
 void finalizar_kernel(){
   log_destroy(logger);
   config_destroy(config);
-
-  //terminar_programa(conexion_memoria, logger, config); --> 'conexion_memoria' ya no existe más.
+  
   dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);
-
-  //destruimos el diccionario de estimaciones que se usa para sjf
-  //dictionary_destroy_and_destroy_elements(diccionario_estimaciones, free);
-
-  //Se pueden destruir logs, configs, conexiones, listas con elementos, semáforos, diccionarios, etc.
 };

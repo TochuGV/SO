@@ -8,7 +8,7 @@ void* ciclo_de_instruccion(t_cpu* cpu, t_pcb* pcb, int conexion_kernel_dispatch,
 
   while(estado == EJECUCION_CONTINUA || estado == EJECUCION_CONTINUA_INIT_PROC){
     //Log 1. Fetch Instrucción
-    log_info (logger, "PID: <%d> - FETCH - Program Counter: <%d>", pcb->pid, pcb->pc);
+    log_info (logger, "## PID: <%d> - FETCH - Program Counter: <%d>", pcb->pid, pcb->pc);
     
     lista_instruccion = recibir_instruccion(pcb, conexion_memoria);
     if (list_size(lista_instruccion) == 0) {
@@ -34,7 +34,7 @@ void* ciclo_de_instruccion(t_cpu* cpu, t_pcb* pcb, int conexion_kernel_dispatch,
 
     if (estado == EJECUCION_CONTINUA_INIT_PROC || estado == EJECUCION_CONTINUA) {
       if (chequear_interrupcion(conexion_kernel_interrupt, pcb->pid)) {
-        log_warning(logger, "PID %d interrumpido", pcb->pid);
+        //log_warning(logger, "PID %d interrumpido", pcb->pid);
         estado = EJECUCION_DESALOJADO;
       };
     }
@@ -97,7 +97,7 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
   switch (instruccion.tipo) {
   //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
-      log_info (logger, "PID: <%d> - Ejecutando: <NOOP>", pcb->pid);
+      log_info (logger, "## PID: <%d> - Ejecutando: <NOOP>", pcb->pid);
       sleep(1); //Uso una duración de 1 segundo como default para NOOP
       pcb->pc++;
       free(instruccion.parametro1);
@@ -106,21 +106,21 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
       break;
     
     case READ:
-      log_info(logger, "PID: <%d> - Ejecutando: <READ> - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: <%d> - Ejecutando: <READ> - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       ejecutar_read(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case WRITE: 
-      log_info(logger, "PID: <%d> - Ejecutando: <WRITE> - Direccion logica: <%s> - Valor: <%s> ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: <%d> - Ejecutando: <WRITE> - Direccion logica: <%s> - Valor: <%s> ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       ejecutar_write(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
       break;
     
     case GOTO: 
-      log_info(logger, "PID: <%d> - Ejecutando: <GOTO> - Nuevo PC: <%s>", pcb->pid, instruccion.parametro1);
+      log_info(logger, "## PID: <%d> - Ejecutando: <GOTO> - Nuevo PC: <%s>", pcb->pid, instruccion.parametro1);
       pcb->pc = atoi(instruccion.parametro1);
       free(instruccion.parametro1);
       free(instruccion.parametro2);
@@ -128,25 +128,25 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
       break;
     
     case IO: 
-      log_info(logger, "PID: <%d> - Ejecutando: <IO> - Dispositivo: <%s> - Tiempo: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: <%d> - Ejecutando: <IO> - Dispositivo: <%s> - Tiempo: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_IO;
       break;
     
     case INIT_PROC:
-      log_info(logger, "PID: <%d> - Ejecutando: <INIT_PROC> - Archivo: <%s> - Tamaño: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      log_info(logger, "## PID: <%d> - Ejecutando: <INIT_PROC> - Archivo: <%s> - Tamaño: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
     case DUMP_MEMORY:
-      log_info(logger,"PID: <%d> - Ejecutando: <DUMP_MEMORY>", pcb->pid);
+      log_info(logger,"## PID: <%d> - Ejecutando: <DUMP_MEMORY>", pcb->pid);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_DUMP;
       break;
 
     case EXIT:
-      log_info(logger, "PID: <%d> - Ejecutando: <EXIT>", pcb->pid);
+      log_info(logger, "## PID: <%d> - Ejecutando: <EXIT>", pcb->pid);
       pcb->pc++;
       finalizar_proceso_en_cache(cpu,pcb->pid);
       return EJECUCION_FINALIZADA;
@@ -173,13 +173,14 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
     valor_a_leer = consultar_contenido_cache(cpu,pid,nro_pagina);
   }
   
+  direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
+
   if (valor_a_leer != NULL) {
     //Al haber habido Caché Hit, no contamos con la dirección física
-    log_info(logger, "PID: <%d> - Acción: <LEER> - Valor: <%s>", pid, valor_a_leer);
+    log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_leer);
     return; 
   }  
 
-  direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
   if (cpu->parametros_cache->cantidad_entradas > 0) {
     direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,0);
@@ -313,11 +314,9 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
 
   if (bytes > 0) {
     //Log 2. Interrupción recibida
-    log_info(logger, "Llega interrupción al puerto Interrupt %d", pid_interrupcion);
+    log_info(logger, "## Llega interrupción al puerto Interrupt %d", pid_interrupcion);
     if(pid_interrupcion == pid_actual){
       return true;
-    }else{
-      log_info(logger, "PID <%d> no corresponde al proceso en ejecución (PID actual: <%d>)", pid_interrupcion, pid_actual);
     }
   }
   return false;

@@ -87,7 +87,7 @@ void* conectar_dispatch(void* arg) {
       pthread_exit(NULL);
     }
 
-    log_info(logger, "Conexión con Kernel Dispatch exitosa");
+    //log_info(logger, "Conexión con Kernel Dispatch exitosa");
     cpu->conexion_kernel_dispatch = datos->socket;
 
     return NULL;
@@ -117,7 +117,7 @@ void* conectar_interrupt(void* arg) {
       pthread_exit(NULL);
     }
 
-    log_info(logger, "Conexión con Kernel Interrupt exitosa");
+    //log_info(logger, "Conexión con Kernel Interrupt exitosa");
     cpu->conexion_kernel_interrupt = datos->socket;
 
     return NULL;
@@ -145,7 +145,7 @@ void* conectar_memoria(void* arg) {
       pthread_exit(NULL);
     }
 
-    log_info(logger, "Conexión con Memoria exitosa");
+    //log_info(logger, "Conexión con Memoria exitosa");
     cpu->conexion_memoria = datos->socket;
 
     recibir_datos_memoria(cpu);

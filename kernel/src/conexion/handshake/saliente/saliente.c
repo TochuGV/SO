@@ -9,6 +9,5 @@ int32_t handshake_kernel(int conexion_memoria){
     log_error(logger, "Error: La conexión con Memoria falló. Finalizando conexión...");
     return -1;
   };
-  log_info(logger, "Kernel se conectó exitosamente a Memoria");
   return 0;
 };

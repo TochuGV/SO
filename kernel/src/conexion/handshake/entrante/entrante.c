@@ -31,7 +31,7 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_dispatch = cliente_kernel;
-        log_debug(logger, "CPU %d conectó Dispatch", id_cpu);
+        //log_debug(logger, "CPU %d conectó Dispatch", id_cpu);
       } else {
         if(cpu->socket_interrupt != -1){
           log_error(logger, "CPU %d ya tiene una conexión Interrupt", id_cpu);
@@ -39,26 +39,23 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_interrupt = cliente_kernel;
-        log_debug(logger, "CPU %d conectó Interrupt", id_cpu);
+        //log_debug(logger, "CPU %d conectó Interrupt", id_cpu);
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
 
       if(cpu_esta_completa(cpu)){
         sem_post(&semaforo_cpu_libre);
-        log_debug(logger, "CPU %d está completamente conectada. Se habilita para planificación", id_cpu);
+        //log_debug(logger, "CPU %d está completamente conectada. Se habilita para planificación", id_cpu);
       };
 
-      //log_info(logger, "CPU %d conectada.", id_cpu); //Agregar validación para cuando se conecten Dispatch e Interrupt
       return MODULO_CPU;
     case MODULO_IO:
-      //log_debug(logger, "Handshake recibido: IO");
       int32_t token_io;
       if(recv(cliente_kernel, &token_io, sizeof(int32_t), MSG_WAITALL) <= 0){
         log_error(logger, "Handshake IO inválido");
         send(cliente_kernel, &error, sizeof(int32_t), 0);
         return -1;
       };
-      //log_debug(logger, "Token IO recibido: %d", token_io);
       char* nombre_io = token_io_to_string(token_io);
       if(nombre_io == NULL){
         log_warning(logger, "Tipo de IO desconocido");
@@ -67,7 +64,7 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      log_debug(logger, "Dispositivo '%s' conectado", nombre_io);
+      //log_debug(logger, "Dispositivo '%s' conectado", nombre_io);
       return MODULO_IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);
