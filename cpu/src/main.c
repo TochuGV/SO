@@ -14,6 +14,7 @@ int main(int argc, char* argv[])
   snprintf(archivo_log, sizeof(archivo_log), "cpu%d.log", identificador_cpu);
   logger = iniciar_logger(archivo_log, "CPU", nivel_log);
 
+  ip_kernel = config_get_string_value(config,"IP_KERNEL");
   ip_memoria = config_get_string_value(config, "IP_MEMORIA");
 
   puerto_kernel_dispatch = config_get_string_value(config, "PUERTO_KERNEL_DISPATCH");
