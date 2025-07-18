@@ -40,8 +40,8 @@ void* revisar_bloqueados(void* arg) {
       sem_post(&semaforo_revisar_largo_plazo);
       pthread_exit((void*)EXIT_FAILURE);
       return NULL;
-    }
-  }
+    };
+  };
 
   int32_t restante = TIEMPO_SUSPENSION - tiempo_actual;
 

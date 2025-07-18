@@ -109,3 +109,16 @@ void encolar_proceso_en_ready(t_pcb* pcb){
   if(es_SRT()) desalojar_cpu(pcb);
   sem_post(&semaforo_ready);
 };
+
+char* obtener_nombre_estado(t_estado estado){
+  switch(estado){
+    case ESTADO_NEW: return "NEW";
+    case ESTADO_READY: return "READY";
+    case ESTADO_EXEC: return "EXECUTE";
+    case ESTADO_BLOCKED: return "BLOCKED";
+    case ESTADO_SUSP_BLOCKED: return "SUSPENDED BLOCKED";
+    case ESTADO_SUSP_READY: return "SUSPENDED READY";
+    case ESTADO_EXIT: return "EXIT";
+    default: return "UNKNOWN";
+  };
+};

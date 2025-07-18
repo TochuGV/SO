@@ -7,7 +7,6 @@
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 
-
 extern t_list* lista_susp_blocked;
 extern t_queue* cola_susp_ready;
 extern sem_t semaforo_revisar_susp_ready;

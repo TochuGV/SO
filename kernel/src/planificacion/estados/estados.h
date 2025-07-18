@@ -7,7 +7,7 @@
 #include "utils/utils.h" // Revisar después
 #include <commons/collections/queue.h>
 
-void entrar_estado(t_pcb*, int);
+void entrar_estado(t_pcb*, t_estado);
 void cambiar_estado(t_pcb*, t_estado, t_estado);
 
 #endif
