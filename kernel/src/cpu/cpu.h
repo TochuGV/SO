@@ -26,7 +26,7 @@ void liberar_cpu(t_cpu* cpu);
 void liberar_cpu_por_pid(uint32_t pid);
 t_cpu* seleccionar_cpu_disponible(void);
 t_cpu* obtener_cpu_que_ejecuta(uint32_t pid);
-void marcar_cpu_como_disponible(t_cpu* cpu);
+//void marcar_cpu_como_disponible(t_cpu* cpu);
 int obtener_cantidad_cpus();
 
 #endif /* CPU_H */
