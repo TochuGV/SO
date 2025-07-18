@@ -28,7 +28,7 @@ void* atender_io(void* arg){
           break;
         } else {
           uint32_t pid = *(uint32_t*) list_get(lista, 0);
-          manejar_respuesta_io(pid,socket_io);
+          manejar_respuesta_io(pid, socket_io);
           list_destroy_and_destroy_elements(lista, free);
         };
         break;
@@ -61,7 +61,6 @@ void registrar_socket_io(char* nombre, int socket){
   nueva_instancia->socket = socket;
   nueva_instancia->ocupado = false;
   nueva_instancia->cola_bloqueados = queue_create();
-
   list_add(lista_instancias, nueva_instancia);
 };
 

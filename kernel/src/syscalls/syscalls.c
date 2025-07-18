@@ -87,8 +87,8 @@ void syscall_io(t_syscall* syscall){
     if(!instancia->ocupado){
       instancia_libre = instancia;
       break;
-    }
-  }
+    };
+  };
 
   t_contexto_io* contexto = malloc(sizeof(t_contexto_io));
   contexto->dispositivo_actual = strdup(syscall->arg1);
@@ -98,6 +98,7 @@ void syscall_io(t_syscall* syscall){
   pthread_mutex_unlock(&mutex_diccionario_contextos);
   free(clave_pid);
   cambiar_estado(pcb, ESTADO_EXEC, ESTADO_BLOCKED);
+  log_motivo_bloqueo(pcb->pid, contexto->dispositivo_actual);
 
   if(instancia_libre){
     instancia_libre->ocupado = true;

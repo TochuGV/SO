@@ -13,8 +13,9 @@ void iniciar_planificacion_largo_plazo(){
 };
 
 void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamanio){
-
-  inicializar_estimacion_rafaga(pcb->pid);
+  if(strcmp(ALGORITMO_CORTO_PLAZO, "SJF") == 0 || strcmp(ALGORITMO_CORTO_PLAZO, "SRT") == 0){
+    inicializar_estimacion_rafaga(pcb->pid);
+  };
   pthread_mutex_lock(&mutex_new);
   queue_push(cola_new, pcb);
   list_add(lista_pcbs, pcb);
@@ -24,10 +25,9 @@ void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamani
   info->archivo_pseudocodigo = archivo_pseudocodigo;
   info->tamanio = tamanio;
   list_add(lista_info_procesos, info);
+  //free(info) --> 24 bytes, solamente acá??? - SI LO DESCOMENTO, SE CREA EL PROCESO 0 Y NO FUNCIONA NADA DESPUÉS;
   pthread_mutex_unlock(&mutex_new);
-  
   entrar_estado(pcb, ESTADO_NEW);
-  
   log_creacion_proceso(pcb->pid);
   sem_post(&semaforo_revisar_largo_plazo);
 };
@@ -57,7 +57,7 @@ void finalizar_proceso(t_pcb* pcb){
   char* clave_pid = string_itoa(pcb->pid);
   t_temporizadores_estado* cronometros_pid = dictionary_get(diccionario_cronometros, clave_pid);
   if(cronometros_pid){
-    for(int i = 0; i < CANTIDAD_ESTADOS; i++){
+    for(int i = 0; i < CANTIDAD_ESTADOS - 2; i++){
       if(cronometros_pid->cronometros_estado[i]){
         uint32_t tiempo = temporal_gettime(cronometros_pid->cronometros_estado[i]);
         pcb->mt[i] += tiempo;
@@ -116,7 +116,7 @@ void finalizar_proceso(t_pcb* pcb){
 
     destruir_pcb(pcb);
     sem_post(&semaforo_revisar_susp_ready);
-      
+
     return;
   };
   log_error(logger, "Error al eliminar el proceso");

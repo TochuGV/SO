@@ -18,7 +18,7 @@ t_pcb* crear_pcb(){
   if(!pcb) return NULL;
   pcb->pid = generar_pid();
   pcb->pc = 0;
-  for(int i = 0; i < CANTIDAD_ESTADOS; i++){
+  for(int i = 0; i < CANTIDAD_ESTADOS - 1; i++){
     pcb->me[i] = 0;
     pcb->mt[i] = 0;
   };
@@ -49,17 +49,4 @@ void* serializar_pcb(t_pcb* pcb, int* bytes){
   memcpy(magic + desplazamiento, &(pcb->pc), sizeof(uint32_t));
   desplazamiento += sizeof(uint32_t);
   return magic;
-};
-
-char* obtener_nombre_estado(t_estado estado){
-  switch(estado){
-    case ESTADO_NEW: return "NEW";
-    case ESTADO_READY: return "READY";
-    case ESTADO_EXEC: return "EXEC";
-    case ESTADO_BLOCKED: return "BLOCKED";
-    case ESTADO_SUSP_BLOCKED: return "SUSPENDED_BLOCKED";
-    case ESTADO_SUSP_READY: return "SUSPENDED_READY";
-    case ESTADO_EXIT: return "EXIT";
-    default: return "UNKNOWN";
-  };
 };

@@ -21,7 +21,6 @@ void* revisar_bloqueados(void* arg) {
   free(arg);
 
   t_pcb* pcb = obtener_pcb_por_pid(pid);
-
   usleep(TIEMPO_SUSPENSION * 1000);
 
   suspender_proceso(pcb);

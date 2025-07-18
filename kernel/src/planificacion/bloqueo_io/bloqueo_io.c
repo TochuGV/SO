@@ -52,13 +52,11 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
     pthread_mutex_unlock(&mutex_susp_blocked);
     encolar_proceso_en_susp_ready(pcb);
     sem_post(&semaforo_revisar_susp_ready);
-
-    log_fin_io_susp(pid);
-
+    log_fin_io(pid, ESTADO_SUSP_READY);
   } else {
     encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
-    log_fin_io(pid);
+    log_fin_io(pid, ESTADO_READY);
   }
   pthread_mutex_lock(&mutex_diccionario_contextos);
   dictionary_remove(diccionario_contextos_io, clave_pid_actual);

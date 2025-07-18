@@ -273,3 +273,18 @@ void terminar_programa(int conexion, t_log* logger, t_config* config){
 	log_destroy(logger);
 	config_destroy(config);
 };
+
+/*
+nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
+  if (strcasecmp(nombre, "impresora") == 0) return IMPRESORA;
+  else if (strcasecmp(nombre, "teclado") == 0) return TECLADO;
+  else if (strcasecmp(nombre, "mouse") == 0) return MOUSE;
+  else if (strcasecmp(nombre, "auriculares") == 0) return AURICULARES;
+  else if (strcasecmp(nombre, "parlante") == 0) return PARLANTE;
+  else if (strcasecmp(nombre, "disco") == 0) return DISCO;
+  else {
+    log_error(logger, "Nombre de dispositivo IO desconocido: %s", nombre);
+    return -1;
+  };
+};
+*/
