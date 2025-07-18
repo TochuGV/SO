@@ -22,31 +22,7 @@ void* revisar_bloqueados(void* arg) {
 
   t_pcb* pcb = obtener_pcb_por_pid(pid);
 
-  int32_t tiempo_actual;
-
-  char* clave_pid = string_itoa(pid);
-  pthread_mutex_lock(&mutex_diccionario_cronometros);
-  t_temporizadores_estado* cronometros_pid = dictionary_get(diccionario_cronometros, clave_pid);
-  pthread_mutex_unlock(&mutex_diccionario_cronometros);
-
-  free(clave_pid);
-
-  if (cronometros_pid && cronometros_pid->cronometros_estado[ESTADO_BLOCKED]) {
-    tiempo_actual = temporal_gettime(cronometros_pid->cronometros_estado[ESTADO_BLOCKED]);
-
-    if (tiempo_actual > TIEMPO_SUSPENSION) {
-      log_warning(logger, "Tiempo: %d > Tiempo suspendido: %d", tiempo_actual, TIEMPO_SUSPENSION);
-      suspender_proceso(pcb);
-      sem_post(&semaforo_revisar_largo_plazo);
-      pthread_exit((void*)EXIT_FAILURE);
-      return NULL;
-    }
-  }
-
-  int32_t restante = TIEMPO_SUSPENSION - tiempo_actual;
-
-  if (restante > 0)
-    usleep(restante * 1000);
+  usleep(TIEMPO_SUSPENSION * 1000);
 
   suspender_proceso(pcb);
   sem_post(&semaforo_revisar_largo_plazo);
@@ -55,7 +31,7 @@ void* revisar_bloqueados(void* arg) {
 }
 
 void suspender_proceso(t_pcb* pcb){
-
+  int32_t resultado;
   pthread_mutex_lock(&mutex_memoria);
   int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   if(handshake_kernel(socket_memoria) != 0){
@@ -68,13 +44,15 @@ void suspender_proceso(t_pcb* pcb){
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
   enviar_paquete(paquete, socket_memoria);
 
-  close(socket_memoria);
-  pthread_mutex_unlock(&mutex_memoria);
 
   pthread_mutex_lock(&mutex_susp_blocked);
   list_add(lista_susp_blocked, pcb);
   pthread_mutex_unlock(&mutex_susp_blocked);
   cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_SUSP_BLOCKED);
+  recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
+  close(socket_memoria);
+  pthread_mutex_unlock(&mutex_memoria);
+
 };
 
 int esta_suspendido(t_pcb* pcb){

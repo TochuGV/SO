@@ -115,7 +115,15 @@ void recibir_solicitud_marco(int cliente_cpu)
 {
   t_list* valores = recibir_paquete(cliente_cpu);
 
-  if(list_is_empty(valores) || !valores) {
+  if(!valores || list_is_empty(valores)) {
+    log_error(logger, "Error ecorriendo la tabla de pagina");
+    list_destroy_and_destroy_elements(valores, free);
+    uint32_t error = -1;
+    send(cliente_cpu, &error, sizeof(uint32_t), 0);
+    return;
+  }
+
+  if (list_get(valores, 0) == NULL) {
     log_error(logger, "Error ecorriendo la tabla de pagina");
     list_destroy_and_destroy_elements(valores, free);
     uint32_t error = -1;
@@ -137,16 +145,25 @@ void recibir_solicitud_marco(int cliente_cpu)
 
   for (int nivel = 1; nivel <= cantidad_niveles; nivel++)
   {
-    if (list_size(valores) < nivel) {
+    if (list_size(valores) <= nivel) {
       log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     }
+
+    if (list_get(valores, nivel) == NULL) {
+      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      list_destroy_and_destroy_elements(valores, free);
+      uint32_t error = -1;
+      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      return;
+    } 
+
     uint32_t entrada_nivel = *(uint32_t*)list_get(valores, nivel);
 
-    if (list_size(tabla_actual->entradas) < entrada_nivel || list_is_empty(tabla_actual->entradas)) {
+    if (list_size(tabla_actual->entradas) <= entrada_nivel || list_is_empty(tabla_actual->entradas)) {
       log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
@@ -159,6 +176,8 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (!entrada) {
       log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
+      uint32_t error = -1;
+      send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     }
 
@@ -189,16 +208,30 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
 {
   t_list* valores = recibir_paquete(cliente_cpu);
 
+  if (list_size(valores) < 4) {
+    log_error(logger, "Paquete WRITE incompleto");
+    list_destroy_and_destroy_elements(valores, free);
+    return;
+  }
+  
   uint32_t pid = *(uint32_t*) list_get(valores, 0);
   uint32_t direccion_fisica = *(uint32_t*) list_get(valores, 1);
   uint32_t longitud_valor = *(uint32_t*)list_get(valores, 2); 
 
+  if (longitud_valor == 0) {
+    log_error(logger, "Paquete WRITE incompleto");
+    list_destroy_and_destroy_elements(valores, free);
+    return;
+  }
+
+
   char* valor = malloc(longitud_valor);
   memcpy(valor, list_get(valores, 3), longitud_valor); 
 
-  if (direccion_fisica >= tamanio_memoria) {
+  if (direccion_fisica + longitud_valor > tamanio_memoria) {
     log_error(logger, "Direccion fisica invalida");
     list_destroy_and_destroy_elements(valores, free);
+    free(valor);
     return;
   }
 

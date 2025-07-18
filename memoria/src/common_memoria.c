@@ -184,19 +184,41 @@ uint32_t asignar_marco_libre(void)
 
 void liberar_marcos(t_tabla* tabla_de_paginas) 
 {
+  log_warning(logger, "Funcion liberar marcos");
   if (tabla_de_paginas == NULL) return;
+
+  if (tabla_de_paginas->entradas == NULL) return;
+
+  if(list_is_empty(tabla_de_paginas->entradas)) {
+    log_error(logger, "Error al liberar marcos");
+    return;
+  }
     
   for (int index_entrada = 0; index_entrada < list_size(tabla_de_paginas->entradas); index_entrada++) {
     t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
+
+    if (entrada == NULL) {
+      log_error(logger, "Error al liberar marcos");
+      return;
+    }
 
     if (entrada->siguiente_tabla != NULL) {
       liberar_marcos(entrada->siguiente_tabla);
     }
 
     else if (entrada->marco != -1) {
+      if (entrada->marco > cantidad_marcos || entrada->marco < 0) {
+        log_error(logger, "Error al liberar marcos");
+        free(entrada);
+        return;
+      }
+      pthread_mutex_lock(&mutex_bitmap);
       bitmap_marcos[entrada->marco] = 0;
-      marcos_libres++;
+      pthread_mutex_unlock(&mutex_bitmap);
+
+      pthread_mutex_lock(&mutex_memoria);
       memset(memoria + entrada->marco * tamanio_pagina, 0, tamanio_pagina);
+      pthread_mutex_unlock(&mutex_memoria);
     }
 
     free(entrada);
