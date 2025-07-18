@@ -9,6 +9,8 @@
 #include "planificacion/planificadores/largo_plazo/algoritmos/fifo/fifo.h"
 #include "planificacion/planificadores/largo_plazo/algoritmos/pmcp/pmcp.h"
 
+#include "planificacion/planificadores/mediano_plazo/mediano_plazo.h"
+
 #include <commons/collections/queue.h>
 #include <semaphore.h>
 
@@ -25,6 +27,7 @@ extern sem_t semaforo_revisar_largo_plazo;
 
 void iniciar_planificacion_largo_plazo();
 void inicializar_proceso(t_pcb*, char*, uint32_t);
+bool es_PMCP(void);
 void mover_proceso_a_ready(void);
 void finalizar_proceso(t_pcb*);
 

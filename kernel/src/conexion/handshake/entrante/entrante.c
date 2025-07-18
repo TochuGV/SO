@@ -48,15 +48,15 @@ int recibir_handshake_kernel(int cliente_kernel){
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
 
       if(cpu_esta_completa(cpu)){
-        int valor_antes;
-        sem_getvalue(&semaforo_cpu_libre, &valor_antes);
-        log_debug(logger, "[entrante.c - Antes de sem_post] Semáforo CPU libre: %d", valor_antes);
+        //int valor_antes;
+        //sem_getvalue(&semaforo_cpu_libre, &valor_antes);
+        //log_debug(logger, "[entrante.c - Antes de sem_post] Semáforo CPU libre: %d", valor_antes);
         
         sem_post(&semaforo_cpu_libre);
 
-        int valor_despues;
-        sem_getvalue(&semaforo_cpu_libre, &valor_despues);
-        log_debug(logger, "[entrante.c - Después de sem_post] Semáforo CPU libre: %d", valor_despues);
+        //int valor_despues;
+        //sem_getvalue(&semaforo_cpu_libre, &valor_despues);
+        //log_debug(logger, "[entrante.c - Después de sem_post] Semáforo CPU libre: %d", valor_despues);
         //log_debug(logger, "CPU %d está completamente conectada. Se habilita para planificación", id_cpu);
       };
 

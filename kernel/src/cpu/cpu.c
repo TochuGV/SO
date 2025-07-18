@@ -57,15 +57,15 @@ void liberar_cpu_por_pid(uint32_t pid){
     };
   };
   pthread_mutex_unlock(&mutex_cpus);
-  int valor_antes;
-  sem_getvalue(&semaforo_cpu_libre, &valor_antes);
-  log_debug(logger, "[liberar_cpu_por_pid - Antes de sem_post] Semáforo CPU libre: %d", valor_antes);
+  //int valor_antes;
+  //sem_getvalue(&semaforo_cpu_libre, &valor_antes);
+  //log_debug(logger, "[liberar_cpu_por_pid - Antes de sem_post] Semáforo CPU libre: %d", valor_antes);
   
   sem_post(&semaforo_cpu_libre);
 
-  int valor_despues;
-  sem_getvalue(&semaforo_cpu_libre, &valor_despues);
-  log_debug(logger, "[liberar_cpu_por_pid - Después de sem_post] Semáforo CPU libre: %d", valor_despues);
+  //int valor_despues;
+  //sem_getvalue(&semaforo_cpu_libre, &valor_despues);
+  //log_debug(logger, "[liberar_cpu_por_pid - Después de sem_post] Semáforo CPU libre: %d", valor_despues);
 };
 
 t_cpu* seleccionar_cpu_disponible(void){
