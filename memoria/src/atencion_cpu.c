@@ -138,7 +138,7 @@ void recibir_solicitud_marco(int cliente_cpu)
   t_entrada* entrada = NULL;
 
   if (list_size(valores) - 1 != cantidad_niveles) {
-    log_error(logger, "Error al recibir las entradas de nivel del proceso con PID: %d", pid);
+    log_error(logger, "1Error al recibir las entradas de nivel del proceso con PID: %d", pid);
     list_destroy_and_destroy_elements(valores, free);
     return;
   }
@@ -146,7 +146,7 @@ void recibir_solicitud_marco(int cliente_cpu)
   for (int nivel = 1; nivel <= cantidad_niveles; nivel++)
   {
     if (list_size(valores) <= nivel) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      log_error(logger, "2Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
@@ -154,7 +154,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     }
 
     if (list_get(valores, nivel) == NULL) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      log_error(logger, "3Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
@@ -164,7 +164,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     uint32_t entrada_nivel = *(uint32_t*)list_get(valores, nivel);
 
     if (list_size(tabla_actual->entradas) <= entrada_nivel || list_is_empty(tabla_actual->entradas)) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      log_error(logger, "4Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
@@ -174,7 +174,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     entrada = list_get(tabla_actual->entradas, entrada_nivel);
 
     if (!entrada) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+      log_error(logger, "5Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
@@ -187,7 +187,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (nivel != cantidad_niveles){
       tabla_actual = entrada->siguiente_tabla;
       if (!tabla_actual) {
-        log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
+        log_error(logger, "6Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
         list_destroy_and_destroy_elements(valores, free);
         return;
       }
