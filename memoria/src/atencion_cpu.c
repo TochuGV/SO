@@ -140,6 +140,7 @@ void recibir_solicitud_marco(int cliente_cpu)
   if (list_size(valores) - 1 != cantidad_niveles) {
     log_error(logger, "1Error al recibir las entradas de nivel del proceso con PID: %d", pid);
     list_destroy_and_destroy_elements(valores, free);
+    log_error(logger, "1Error luego de list destroy");
     return;
   }
 
@@ -148,6 +149,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (list_size(valores) <= nivel) {
       log_error(logger, "2Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
+      log_error(logger, "2Error luego de list destroy");
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
@@ -156,6 +158,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (list_get(valores, nivel) == NULL) {
       log_error(logger, "3Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
+      log_error(logger, "3Error luego de list destroy");
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
@@ -166,6 +169,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (list_size(tabla_actual->entradas) <= entrada_nivel || list_is_empty(tabla_actual->entradas)) {
       log_error(logger, "4Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
+      log_error(logger, "4Error luego de list destroy");
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
@@ -176,6 +180,7 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (!entrada) {
       log_error(logger, "5Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
+      log_error(logger, "5Error luego de list destroy");
       uint32_t error = -1;
       send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
@@ -189,6 +194,7 @@ void recibir_solicitud_marco(int cliente_cpu)
       if (!tabla_actual) {
         log_error(logger, "6Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
         list_destroy_and_destroy_elements(valores, free);
+        log_error(logger, "6Error luego de list destroy");
         return;
       }
     } 
