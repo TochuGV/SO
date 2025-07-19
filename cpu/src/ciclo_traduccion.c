@@ -37,6 +37,7 @@ int consultar_pagina_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
 
 //Actualiza la caché con el nuevo valor según el algoritmo
 void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir, bool es_escritura, uint32_t desplazamiento) {
+
   int cantidad=cpu->parametros_cache->cantidad_entradas;
 
   //busco entrada libre
@@ -64,6 +65,7 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
     break;
 
     case CLOCK_M:
+      log_info(logger,"Estoy en clock-m");
       int vueltas = 0;
       while (vueltas < 2) {
         for (int i = 0; i < cantidad; i++) {
