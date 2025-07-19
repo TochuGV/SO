@@ -29,13 +29,11 @@ uint32_t enviar_proceso_a_memoria(char* archivo_pseudocodigo, uint32_t tamanio_p
     if(resultado == 0){
       return 0;
     } else {
-      //log_warning(logger, "Memoria rechazó el proceso <%d> debido a falta de espacio u otro motivo", pid);
       return -1;
     }
   } else {
     uint32_t longitud_archivo_pseudocodigo = 0;
     agregar_a_paquete(paquete, &longitud_archivo_pseudocodigo, sizeof(uint32_t));
-    //log_warning(logger, "Archivo pseudocodigo es NULL, temporalmente. Se envía como longitud '0'");
     pthread_mutex_lock(&mutex_memoria);
     int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
     if(handshake_kernel(socket_memoria) != 0){

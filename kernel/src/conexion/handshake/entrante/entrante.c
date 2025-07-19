@@ -35,7 +35,6 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_dispatch = cliente_kernel;
-        //log_debug(logger, "CPU %d conectó Dispatch", id_cpu);
       } else {
         if(cpu->socket_interrupt != -1){
           log_error(logger, "CPU %d ya tiene una conexión Interrupt", id_cpu);
@@ -43,7 +42,6 @@ int recibir_handshake_kernel(int cliente_kernel){
           return -1;
         };
         cpu->socket_interrupt = cliente_kernel;
-        //log_debug(logger, "CPU %d conectó Interrupt", id_cpu);
       };
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
 
@@ -51,9 +49,7 @@ int recibir_handshake_kernel(int cliente_kernel){
         //int valor_antes;
         //sem_getvalue(&semaforo_cpu_libre, &valor_antes);
         //log_debug(logger, "[entrante.c - Antes de sem_post] Semáforo CPU libre: %d", valor_antes);
-        
         sem_post(&semaforo_cpu_libre);
-
         //int valor_despues;
         //sem_getvalue(&semaforo_cpu_libre, &valor_despues);
         //log_debug(logger, "[entrante.c - Después de sem_post] Semáforo CPU libre: %d", valor_despues);
@@ -77,7 +73,6 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
-      //log_debug(logger, "Dispositivo '%s' conectado", nombre_io);
       return MODULO_IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);

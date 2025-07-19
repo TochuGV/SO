@@ -106,7 +106,6 @@ void obtener_configs(void)
 t_proceso* obtener_proceso(uint32_t pid)
 {
   if (list_is_empty(lista_procesos)) {
-    log_warning(logger, "Proceso con PID: %d no encontrado", pid);
     return NULL;
   }
   for (int i = 0; i < list_size(lista_procesos); i++) 
@@ -117,7 +116,6 @@ t_proceso* obtener_proceso(uint32_t pid)
       return proceso;
     }
   }
-  log_warning(logger, "Proceso con PID: %d no encontrado", pid);
   return NULL;
 }
 
@@ -145,7 +143,7 @@ t_tabla* crear_tablas_multinivel(uint32_t nivel_actual, uint32_t* marcos_restant
         entrada->marco = asignar_marco_libre(); 
         log_debug(logger, "Tabla nivel: %d; Entrada: %d; Marco asignado: %d",nivel_actual, index_entrada, entrada->marco);
         if (entrada->marco == -1) {
-          log_warning(logger,"No se encontro ningun marco libre");
+          log_debug(logger,"No se encontro ningun marco libre");
         } 
         entrada->siguiente_tabla = NULL;
         (*marcos_restantes)--;  
@@ -184,13 +182,11 @@ uint32_t asignar_marco_libre(void)
 
 void liberar_marcos(t_tabla* tabla_de_paginas) 
 {
-  log_warning(logger, "Funcion liberar marcos");
   if (tabla_de_paginas == NULL) return;
 
   if (tabla_de_paginas->entradas == NULL) return;
 
   if(list_is_empty(tabla_de_paginas->entradas)) {
-    log_error(logger, "Error al liberar marcos");
     return;
   }
     
@@ -198,7 +194,6 @@ void liberar_marcos(t_tabla* tabla_de_paginas)
     t_entrada* entrada = list_get(tabla_de_paginas->entradas, index_entrada);
 
     if (entrada == NULL) {
-      log_error(logger, "Error al liberar marcos");
       return;
     }
 
@@ -208,7 +203,6 @@ void liberar_marcos(t_tabla* tabla_de_paginas)
 
     else if (entrada->marco != -1) {
       if (entrada->marco > cantidad_marcos || entrada->marco < 0) {
-        log_error(logger, "Error al liberar marcos");
         free(entrada);
         return;
       }

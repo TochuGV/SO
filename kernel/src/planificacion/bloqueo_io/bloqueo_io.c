@@ -3,7 +3,6 @@
 void manejar_respuesta_io(uint32_t pid, int socket_io){
   t_pcb* pcb = obtener_pcb_por_pid(pid);
   if(!pcb){
-    log_warning(logger, "PCB no encontrado para el proceso <%d> al finalizar IO", pid);
     return;
   };
   
@@ -39,7 +38,6 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
   };
 
   if(!instancia_ocupada){
-    log_error(logger, "No se encontró ninguna instancia ocupada para el dispositivo <%s>", contexto->dispositivo_actual);
     free(clave_pid_actual);
     return;
   }
@@ -75,7 +73,6 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
       enviar_peticion_io(instancia_ocupada->socket, contexto_siguiente->duracion_io, siguiente->pid);
       instancia_ocupada->ocupado = true;
     } else {
-      log_error(logger, "No se encontró el contexto IO para el proceso <%d>", siguiente->pid);
       instancia_ocupada->ocupado = false;
     };
     free(clave_pid_siguiente);

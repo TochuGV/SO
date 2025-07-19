@@ -76,41 +76,6 @@ void encolar_proceso_en_susp_ready(t_pcb* pcb){
   pthread_mutex_unlock(&mutex_susp_ready);
   cambiar_estado(pcb, ESTADO_SUSP_BLOCKED, ESTADO_SUSP_READY);
 }
-/*
-t_pcb* elegir_proceso_mas_chico_susp(){
-  if(queue_is_empty(cola_susp_ready) || list_is_empty(lista_info_procesos_susp)) return NULL;
-  t_informacion_mediano_plazo* candidato = NULL;
-  log_warning(logger, "ENTRE");
-  log_warning(logger, "%d", lista_info_procesos_susp->elements_count);
-  for(int i = 0; i < list_size(lista_info_procesos_susp); i++){
-    t_informacion_mediano_plazo* info_susp = list_get(lista_info_procesos_susp, i);
-    if((candidato == NULL || info_susp->tamanio < candidato->tamanio) && info_susp->tamanio > 0){
-      candidato = info_susp;
-    };
-  };
-  log_warning(logger, "%d", candidato->pid);
-  if(candidato == NULL) return NULL;
-
-  t_pcb* pcb_seleccionado = NULL;
-  t_queue* nueva_cola_susp_ready = queue_create();
-
-  while(!queue_is_empty(cola_susp_ready)){
-    log_warning(logger, "ELEMENTOS EN COLA SUSP READY: %d", cola_susp_ready->elements->elements_count);
-    t_pcb* pcb = queue_pop(cola_susp_ready);
-    if(pcb->pid == candidato->pid){
-      pcb_seleccionado = pcb;
-    } else {
-      queue_push(nueva_cola_susp_ready, pcb);
-    };
-  };
-
-  while(!queue_is_empty(nueva_cola_susp_ready)){
-    queue_push(cola_susp_ready, queue_pop(nueva_cola_susp_ready));
-  };
-  queue_destroy(nueva_cola_susp_ready);
-
-  return pcb_seleccionado;
-};*/
 
 void desuspender_proceso(void){
   pthread_mutex_lock(&mutex_susp_ready);
@@ -184,6 +149,5 @@ uint32_t obtener_tamanio(uint32_t pid) {
   };
 
   t_informacion_mediano_plazo* info = list_find(lista_info_procesos_susp, tiene_pid_igual);
-
   return info->tamanio;
 }

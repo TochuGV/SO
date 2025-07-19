@@ -5,20 +5,18 @@ bool es_SRT() {
 }
 
 double tiempo_restante_exec(t_pcb* pcb) {
+  char* clave = string_itoa(pcb->pid);
+  t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave);
+  free(clave);
 
-    char* clave = string_itoa(pcb->pid);
-    t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave);
-    free(clave);
+  if (!tiempos || !tiempos->cronometros_estado[ESTADO_EXEC]) {
+    return obtener_estimacion(pcb->pid);
+  };
 
-    if (!tiempos || !tiempos->cronometros_estado[ESTADO_EXEC]) {
-        log_warning(logger, "No se pudo calcular el tiempo restante del proceso <%d>", pcb->pid);
-        return obtener_estimacion(pcb->pid);
-    }
-
-    double estimacion_total = obtener_estimacion(pcb->pid);
-    double ejecutado = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0;
-    double restante = estimacion_total - ejecutado;
-    return restante > 0 ? restante : 0.0;
+  double estimacion_total = obtener_estimacion(pcb->pid);
+  double ejecutado = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0;
+  double restante = estimacion_total - ejecutado;
+  return restante > 0 ? restante : 0.0;
 }
 
 t_pcb* obtener_proceso_en_exec_con_mayor_estimacion(int cantidad_cpus) {

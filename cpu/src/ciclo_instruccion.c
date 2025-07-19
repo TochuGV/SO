@@ -193,7 +193,7 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
   }
 
   if (valor_a_leer == NULL) {
-      log_error(logger, "No se pudo leer de memoria");
+      log_debug(logger, "No se pudo leer de memoria");
       return;
   }
     
@@ -230,7 +230,7 @@ void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* val
   uint32_t direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
   if (direccion_fisica==-1){
-    log_error(logger,"No se pudo obtener la dirección física, pid: %d",pid);
+    log_debug(logger,"No se pudo obtener la dirección física, pid: %d",pid);
   }
     
   //Log 4. Lectura Memoria

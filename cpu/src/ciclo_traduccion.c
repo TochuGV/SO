@@ -128,7 +128,7 @@ uint32_t traducir_direccion(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina,uint32
     marco = consultar_memoria(cpu, pid, nro_pagina);
 
     if(marco == -1){
-      log_error(logger, "No se pudo obtener el marco para la página <%d> del PID <%d>", nro_pagina, pid);
+      log_debug(logger, "No se pudo obtener el marco para la página <%d> del PID <%d>", nro_pagina, pid);
       return -1;
     };
     
