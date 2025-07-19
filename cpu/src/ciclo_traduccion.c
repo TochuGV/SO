@@ -81,7 +81,7 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
           return;
           }
 
-          else if(vueltas==1){
+          if(vueltas==1){
           cpu->cache[index].bit_uso=0;
           }
         }
