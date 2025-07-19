@@ -244,7 +244,7 @@ void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pa
   cpu->cache[ubicacion].bit_uso=1;
   cpu->cache[ubicacion].bit_modificado==0;
   if(es_escritura) {
-    cpu->cache[ubicacion].bit_modificado==1
+    cpu->cache[ubicacion].bit_modificado==1;
   }
 }
 //Auxiliar para hacer los reemplazos y asignaciones en TLB
