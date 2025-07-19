@@ -23,7 +23,7 @@ int recibir_handshake_kernel(int cliente_kernel){
         return -1;
       };
       
-      //pthread_mutex_lock(&mutex_conexion_cpu);
+      pthread_mutex_lock(&mutex_conexion_cpu);
 
       registrar_cpu_si_no_existe(id_cpu);
       t_cpu* cpu = obtener_cpu_por_id(id_cpu);
@@ -60,7 +60,7 @@ int recibir_handshake_kernel(int cliente_kernel){
         //log_debug(logger, "CPU %d está completamente conectada. Se habilita para planificación", id_cpu);
       };
 
-      //pthread_mutex_unlock(&mutex_conexion_cpu);
+      pthread_mutex_unlock(&mutex_conexion_cpu);
       return MODULO_CPU;
     case MODULO_IO:
       int32_t token_io;

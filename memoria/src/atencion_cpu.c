@@ -202,8 +202,12 @@ void recibir_solicitud_marco(int cliente_cpu)
 
   uint32_t marco = entrada->marco;
 
-  if (marco == -1)
-    log_warning(logger, "El marco solicitado del proceso con PID: %d, no existe. Se envia el valor -1", pid);
+  if (marco == -1) {
+    log_warning(logger, "El marco solicitado del proceso con PID: %d, no existe. No se envia ningun valor", pid);
+    list_destroy_and_destroy_elements(valores, free);
+    return;
+  }
+    
 
   send(cliente_cpu, &marco, sizeof(uint32_t), 0);
 

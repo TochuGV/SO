@@ -31,7 +31,6 @@ void* revisar_bloqueados(void* arg) {
 }
 
 void suspender_proceso(t_pcb* pcb){
-  int32_t resultado;
   pthread_mutex_lock(&mutex_memoria);
   int socket_memoria = crear_conexion(IP_MEMORIA, PUERTO_MEMORIA, MODULO_KERNEL);
   if(handshake_kernel(socket_memoria) != 0){
@@ -43,14 +42,13 @@ void suspender_proceso(t_pcb* pcb){
   t_paquete* paquete = crear_paquete(SUSPENDER);
   agregar_a_paquete(paquete, &(pcb->pid), sizeof(uint32_t));
   enviar_paquete(paquete, socket_memoria);
+  close(socket_memoria);
+  pthread_mutex_unlock(&mutex_memoria);
 
   pthread_mutex_lock(&mutex_susp_blocked);
   list_add(lista_susp_blocked, pcb);
   pthread_mutex_unlock(&mutex_susp_blocked);
   cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_SUSP_BLOCKED);
-  recv(socket_memoria, &resultado, sizeof(int32_t), MSG_WAITALL);
-  close(socket_memoria);
-  pthread_mutex_unlock(&mutex_memoria);
 };
 
 int esta_suspendido(t_pcb* pcb){

@@ -148,7 +148,6 @@ uint32_t consultar_TLB (t_cpu* cpu,uint32_t pid, uint32_t nro_pagina) {
     log_debug(logger, "PID: <%d> - PAGINA: <%d> - MARCO: <%d> - TIEMPO: <%d>",cpu->tlb[i].pid,cpu->tlb[i].pagina,cpu->tlb[i].marco,cpu->tlb[i].tiempo_transcurrido);
     cpu->tlb[i].tiempo_transcurrido++;
     if (cpu->tlb[i].pid==pid && cpu->tlb[i].pagina==nro_pagina) {
-        cpu->tlb[i].nro_orden = i;
         cpu->tlb[i].tiempo_transcurrido = 0;
         //Log 6. TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, nro_pagina);
