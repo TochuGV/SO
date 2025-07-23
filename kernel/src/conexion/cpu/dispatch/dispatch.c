@@ -15,7 +15,7 @@ void* atender_cpu_dispatch(void* arg){
   while(1){
     int cod_op = recibir_operacion(socket_cpu_dispatch);
     if(cod_op == -1){
-      log_warning(logger, "CPU Dispatch desconectada");
+      manejar_desconexion_cpu(socket_cpu_dispatch, CPU_DISPATCH);
       break;
     };
     switch(cod_op){

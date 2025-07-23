@@ -87,14 +87,6 @@ t_cpu* obtener_cpu_que_ejecuta(uint32_t pid){
   return NULL;
 };
 
-/*
-void marcar_cpu_como_disponible(t_cpu* cpu){
-  cpu->disponible = true;
-  cpu->proceso_en_ejecucion = NULL;
-  sem_post(&semaforo_cpu_libre);
-};
-*/
-
 int obtener_cantidad_cpus(){
   pthread_mutex_lock(&mutex_cpus);
   int cantidad = list_size(lista_cpus);

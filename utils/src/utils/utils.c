@@ -36,14 +36,13 @@ void leer_consola(t_log* logger){
 }
 
 t_log_level parse_log_level(const char* level_str) {
-    if (strcmp(level_str, "TRACE") == 0) return LOG_LEVEL_TRACE;
-    if (strcmp(level_str, "INFO") == 0) return LOG_LEVEL_INFO;
-    if (strcmp(level_str, "WARNING") == 0) return LOG_LEVEL_WARNING;
-    if (strcmp(level_str, "ERROR") == 0) return LOG_LEVEL_ERROR;
-    if (strcmp(level_str, "DEBUG") == 0) return LOG_LEVEL_DEBUG;
-
-    return LOG_LEVEL_INFO;
-}
+  if (strcmp(level_str, "TRACE") == 0) return LOG_LEVEL_TRACE;
+  if (strcmp(level_str, "INFO") == 0) return LOG_LEVEL_INFO;
+  if (strcmp(level_str, "WARNING") == 0) return LOG_LEVEL_WARNING;
+  if (strcmp(level_str, "ERROR") == 0) return LOG_LEVEL_ERROR;
+  if (strcmp(level_str, "DEBUG") == 0) return LOG_LEVEL_DEBUG;
+  return LOG_LEVEL_INFO;
+};
 
 
 //// CONFIG
@@ -252,7 +251,7 @@ int crear_conexion(char *ip, char* puerto, int header_cliente){
 
   //log_debug(logger, "Esperando servidor...");
   while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-  	sleep(1);
+		sleep(1);
   };
 
 	freeaddrinfo(server_info);

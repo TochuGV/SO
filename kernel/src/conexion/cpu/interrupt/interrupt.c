@@ -15,7 +15,7 @@ void* atender_cpu_interrupt(void* arg){
   while(1){
     int cod_op = recibir_operacion(socket_cpu_interrupt);
     if(cod_op == -1){
-      log_warning(logger, "CPU Interrupt desconectada");
+      manejar_desconexion_cpu(socket_cpu_interrupt, CPU_INTERRUPT);
       break;
     };
   };

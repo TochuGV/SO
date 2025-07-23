@@ -3,10 +3,9 @@
 int main(int argc, char* argv[]){
   inicializar_io();
 
-  char* nombre_io = argv[1];
   int conexion_kernel = crear_conexion(IP_KERNEL, PUERTO_KERNEL, IO);
 
-  if (handshake_io(nombre_io, conexion_kernel) == 0) {
+  if(handshake_io(argv[1], conexion_kernel) == 0){
     while(1){
       int cod_op = recibir_operacion(conexion_kernel);
       if (cod_op == PETICION_IO) {
@@ -20,6 +19,6 @@ int main(int argc, char* argv[]){
     };
   };
 
-  terminar_programa(conexion_kernel, logger, config);
+  terminar_programa(conexion_kernel, logger, config); //Tiene sentido esto???
   return EXIT_SUCCESS;
 };

@@ -7,6 +7,5 @@ int main(int argc, char* argv[]){
   crear_proceso_inicial(argv[1], atoi(argv[2]));
   iniciar_planificadores();
   unir_hilos();
-  //finalizar_kernel();
   return EXIT_SUCCESS;
 };
