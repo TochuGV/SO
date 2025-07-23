@@ -71,13 +71,11 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
   t_proceso* proceso = obtener_proceso(pid);
 
   if (!proceso) {
-    log_warning(logger,"Error al encontrar el proceso que CPU solicita.");
     list_destroy_and_destroy_elements(solicitud, free);
     return NULL;
   }
 
   if (pc >= list_size(proceso->lista_instrucciones)) {
-    log_error(logger, "El PC %d excede la cantidad de instrucciones del proceso %d.", pc, pid);
     list_destroy_and_destroy_elements(solicitud, free);
     return NULL;
   }
@@ -116,18 +114,16 @@ void recibir_solicitud_marco(int cliente_cpu)
   t_list* valores = recibir_paquete(cliente_cpu);
 
   if(!valores || list_is_empty(valores)) {
-    log_error(logger, "Error ecorriendo la tabla de pagina");
     list_destroy_and_destroy_elements(valores, free);
-    uint32_t error = -1;
-    send(cliente_cpu, &error, sizeof(uint32_t), 0);
+    //uint32_t error = -1;
+    //send(cliente_cpu, &error, sizeof(uint32_t), 0);
     return;
   }
 
   if (list_get(valores, 0) == NULL) {
-    log_error(logger, "Error ecorriendo la tabla de pagina");
     list_destroy_and_destroy_elements(valores, free);
-    uint32_t error = -1;
-    send(cliente_cpu, &error, sizeof(uint32_t), 0);
+    //uint32_t error = -1;
+    //send(cliente_cpu, &error, sizeof(uint32_t), 0);
     return;
   }
 
@@ -138,7 +134,6 @@ void recibir_solicitud_marco(int cliente_cpu)
   t_entrada* entrada = NULL;
 
   if (list_size(valores) - 1 != cantidad_niveles) {
-    log_error(logger, "Error al recibir las entradas de nivel del proceso con PID: %d", pid);
     list_destroy_and_destroy_elements(valores, free);
     return;
   }
@@ -146,38 +141,34 @@ void recibir_solicitud_marco(int cliente_cpu)
   for (int nivel = 1; nivel <= cantidad_niveles; nivel++)
   {
     if (list_size(valores) <= nivel) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
-      uint32_t error = -1;
-      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      //uint32_t error = -1;
+      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     }
 
     if (list_get(valores, nivel) == NULL) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
-      uint32_t error = -1;
-      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      //uint32_t error = -1;
+      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     } 
 
     uint32_t entrada_nivel = *(uint32_t*)list_get(valores, nivel);
 
     if (list_size(tabla_actual->entradas) <= entrada_nivel || list_is_empty(tabla_actual->entradas)) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
-      uint32_t error = -1;
-      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      //uint32_t error = -1;
+      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     } 
 
     entrada = list_get(tabla_actual->entradas, entrada_nivel);
 
     if (!entrada) {
-      log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
-      uint32_t error = -1;
-      send(cliente_cpu, &error, sizeof(uint32_t), 0);
+      //uint32_t error = -1;
+      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     }
 
@@ -187,7 +178,6 @@ void recibir_solicitud_marco(int cliente_cpu)
     if (nivel != cantidad_niveles){
       tabla_actual = entrada->siguiente_tabla;
       if (!tabla_actual) {
-        log_error(logger, "Error ecorriendo la tabla de paginas del proceso con PID: %d", pid);
         list_destroy_and_destroy_elements(valores, free);
         return;
       }
@@ -196,8 +186,11 @@ void recibir_solicitud_marco(int cliente_cpu)
 
   uint32_t marco = entrada->marco;
 
-  if (marco == -1)
-    log_warning(logger, "El marco solicitado del proceso con PID: %d, no existe. Se envia el valor -1", pid);
+  if (marco == -1) {
+    list_destroy_and_destroy_elements(valores, free);
+    return;
+  }
+    
 
   send(cliente_cpu, &marco, sizeof(uint32_t), 0);
 
@@ -209,7 +202,6 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
   t_list* valores = recibir_paquete(cliente_cpu);
 
   if (list_size(valores) < 4) {
-    log_error(logger, "Paquete WRITE incompleto");
     list_destroy_and_destroy_elements(valores, free);
     return;
   }
@@ -219,7 +211,6 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
   uint32_t longitud_valor = *(uint32_t*)list_get(valores, 2); 
 
   if (longitud_valor == 0) {
-    log_error(logger, "Paquete WRITE incompleto");
     list_destroy_and_destroy_elements(valores, free);
     return;
   }
@@ -229,7 +220,6 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
   memcpy(valor, list_get(valores, 3), longitud_valor); 
 
   if (direccion_fisica + longitud_valor > tamanio_memoria) {
-    log_error(logger, "Direccion fisica invalida");
     list_destroy_and_destroy_elements(valores, free);
     free(valor);
     return;
@@ -251,13 +241,10 @@ void recibir_solicitud_escritura(int cliente_cpu, int cod_op)
     //log_debug(logger, "Valor escrito: %s", valor);
     t_proceso* proceso = obtener_proceso(pid);
     if (!proceso) {
-      log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
       list_destroy_and_destroy_elements(valores, free);
       return;
     }
     proceso->metricas[ESCRITURAS]++;
-  } else {
-    log_error(logger, "Error, fallo la operacion WRITE");
   }
   free(valor);
   list_destroy_and_destroy_elements(valores, free);
@@ -272,7 +259,6 @@ void recibir_solicitud_lectura(int cliente_cpu)
   uint32_t tamanio = *(uint32_t*)list_get(valores, 2); 
 
   if (direccion_fisica + tamanio > tamanio_memoria) {
-    log_error(logger, "Lectura fuera de los límites de memoria. PID: %d", pid);
     list_destroy_and_destroy_elements(valores, free);
     return;
   }
@@ -289,7 +275,6 @@ void recibir_solicitud_lectura(int cliente_cpu)
   t_proceso* proceso = obtener_proceso(pid);
 
   if (!proceso) {
-    log_error(logger, "Error, proceso no encontrado durante READ. PID: %d", pid);
     list_destroy_and_destroy_elements(valores, free);
     free(valor);
     return;

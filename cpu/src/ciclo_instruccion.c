@@ -107,6 +107,7 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case READ:
       log_info(logger, "## PID: <%d> - Ejecutando: <READ> - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      sleep(1);
       ejecutar_read(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
@@ -114,6 +115,7 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case WRITE: 
       log_info(logger, "## PID: <%d> - Ejecutando: <WRITE> - Direccion logica: <%s> - Valor: <%s> ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      sleep(1);
       ejecutar_write(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
@@ -121,6 +123,7 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case GOTO: 
       log_info(logger, "## PID: <%d> - Ejecutando: <GOTO> - Nuevo PC: <%s>", pcb->pid, instruccion.parametro1);
+      sleep(1);
       pcb->pc = atoi(instruccion.parametro1);
       free(instruccion.parametro1);
       free(instruccion.parametro2);
@@ -129,24 +132,28 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case IO: 
       log_info(logger, "## PID: <%d> - Ejecutando: <IO> - Dispositivo: <%s> - Tiempo: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      sleep(1);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_IO;
       break;
     
     case INIT_PROC:
       log_info(logger, "## PID: <%d> - Ejecutando: <INIT_PROC> - Archivo: <%s> - Tamaño: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
+      sleep(1);
       pcb->pc++;
       return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
     case DUMP_MEMORY:
       log_info(logger,"## PID: <%d> - Ejecutando: <DUMP_MEMORY>", pcb->pid);
+      sleep(1);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_DUMP;
       break;
 
     case EXIT:
       log_info(logger, "## PID: <%d> - Ejecutando: <EXIT>", pcb->pid);
+      sleep(1);
       pcb->pc++;
       finalizar_proceso_en_cache(cpu,pcb->pid);
       return EJECUCION_FINALIZADA;
@@ -173,11 +180,11 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
     valor_a_leer = consultar_contenido_cache(cpu,pid,nro_pagina);
   }
   
-  direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
+  //direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
   if (valor_a_leer != NULL) {
     //Al haber habido Caché Hit, no contamos con la dirección física
-    log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", pid, direccion_fisica, valor_a_leer);
+    log_info(logger, "PID: <%d> - Acción: <LEER> - Valor: <%s>", pid, valor_a_leer);
     return; 
   }  
 
@@ -193,7 +200,7 @@ void ejecutar_read (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* para
   }
 
   if (valor_a_leer == NULL) {
-      log_error(logger, "No se pudo leer de memoria");
+      log_debug(logger, "No se pudo leer de memoria");
       return;
   }
     
@@ -223,13 +230,14 @@ void ejecutar_write (t_cpu* cpu, uint32_t pid, char* direccion_logica, char* val
     else {
       actualizar_cache(cpu,pid, nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
     }
+    log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Valor: <%s>", pid, valor_a_escribir);
     return;
   }
   
   uint32_t direccion_fisica = traducir_direccion(cpu,pid,nro_pagina,desplazamiento);
 
   if (direccion_fisica==-1){
-    log_error(logger,"No se pudo obtener la dirección física, pid: %d",pid);
+    log_debug(logger,"No se pudo obtener la dirección física, pid: %d",pid);
   }
     
   //Log 4. Lectura Memoria
@@ -314,7 +322,7 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
 
   if (bytes > 0) {
     //Log 2. Interrupción recibida
-    log_info(logger, "## Llega interrupción al puerto Interrupt %d", pid_interrupcion);
+    log_info(logger, "## Llega interrupción al puerto Interrupt");
     if(pid_interrupcion == pid_actual){
       return true;
     }

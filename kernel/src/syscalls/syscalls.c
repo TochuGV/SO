@@ -66,8 +66,6 @@ void syscall_io(t_syscall* syscall){
       double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
       actualizar_estimacion(pcb->pid, rafaga_real);
       log_debug(logger, "PID <%d> - Ráfaga real: %.2f - Estimación actualizada", pcb->pid, rafaga_real);
-    } else {
-      log_warning(logger, "No se pudo medir la ráfaga real del proceso <%d>", pcb->pid);
     };
   };
   pthread_mutex_lock(&mutex_diccionario_dispositivos);
@@ -158,7 +156,7 @@ void syscall_dump_memory(t_syscall* syscall){ // Se pide un volcado de informaci
     encolar_proceso_en_ready(pcb);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_READY);
   } else {
-    log_error(logger, "Error al realizar volcado de memoria para proceso <%d>", pcb->pid);
+    log_debug(logger, "Error al realizar volcado de memoria para proceso <%d>", pcb->pid);
     cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
     finalizar_proceso(pcb);
   };

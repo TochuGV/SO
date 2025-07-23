@@ -25,8 +25,13 @@ void inicializar_proceso(t_pcb* pcb, char* archivo_pseudocodigo, uint32_t tamani
   info->archivo_pseudocodigo = archivo_pseudocodigo;
   info->tamanio = tamanio;
   list_add(lista_info_procesos, info);
-  //free(info) --> 24 bytes, solamente acá??? - SI LO DESCOMENTO, SE CREA EL PROCESO 0 Y NO FUNCIONA NADA DESPUÉS;
   pthread_mutex_unlock(&mutex_new);
+  pthread_mutex_lock(&mutex_info_mediano_plazo);
+  t_informacion_mediano_plazo* info_susp = malloc(sizeof(t_informacion_mediano_plazo));
+  info_susp->pid = pcb->pid;
+  info_susp->tamanio = tamanio;
+  list_add(lista_info_procesos_susp, info_susp);
+  pthread_mutex_unlock(&mutex_info_mediano_plazo);
   entrar_estado(pcb, ESTADO_NEW);
   log_creacion_proceso(pcb->pid);
   sem_post(&semaforo_revisar_largo_plazo);

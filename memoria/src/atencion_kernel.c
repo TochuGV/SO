@@ -55,13 +55,7 @@ void* atender_kernel(void* arg)
       valores = recibir_paquete(cliente_kernel);
       pid = *(uint32_t*) list_get(valores, 0);
 
-      log_warning(logger, "Proceso %d entro al case suspender", pid);
-
-      if (suspender_proceso(pid) == 0) {
-        send(cliente_kernel,&resultado_ok,sizeof(int32_t),0);
-      }
-      else
-        send(cliente_kernel,&resultado_error,sizeof(int32_t),0);
+      suspender_proceso(pid);
 
       list_destroy_and_destroy_elements(valores, free);
       break;
@@ -87,7 +81,7 @@ void* atender_kernel(void* arg)
       break;
     }
 
-  log_info(logger, "Kernel Desconectado - FD del socket: <%d>", cliente_kernel);
+  log_debug(logger, "Kernel Desconectado - FD del socket: <%d>", cliente_kernel);
   pthread_exit((void*)EXIT_FAILURE);
   
   return NULL;
@@ -131,7 +125,6 @@ int recibir_y_ubicar_proceso(int cliente_kernel)
     return 0;
   };
 
-  //log_warning(logger,"No hay lugar en memoria para el proceso.");
   list_destroy_and_destroy_elements(valores, free);
   return -1;
 }
@@ -199,7 +192,6 @@ bool verificar_espacio_memoria(uint32_t cantidad_marcos_proceso)
 
 int finalizar_proceso(uint32_t pid) 
 {
-  log_warning(logger, "Funcion finalizar proceso");
 
   for (int i = 0; i < list_size(lista_procesos); i++) 
   {
@@ -224,7 +216,6 @@ int finalizar_proceso(uint32_t pid)
       pthread_mutex_unlock(&mutex_marcos_libres);
 
       if(proceso->metricas[BAJADAS_A_SWAP] != proceso->metricas[SUBIDAS_A_MP] || proceso->tamanio_swap != 0) {
-        log_error(logger, "Error al finalizar un proceso por seguir en swap");
         return 0;
       }
 
@@ -240,7 +231,6 @@ int finalizar_proceso(uint32_t pid)
 
 int atender_dump_memory(uint32_t pid)
 {
-  log_warning(logger, "Funcion dump");
   t_proceso* proceso = obtener_proceso(pid);
 
   if(!proceso)
@@ -264,7 +254,6 @@ int atender_dump_memory(uint32_t pid)
   uint32_t tamanio_dump = proceso->marcos_en_uso * tamanio_pagina;
 
   if (tamanio_dump == 0) {
-    log_error(logger, "Error al hacer dump");
     return -1;
   }
 
@@ -298,7 +287,6 @@ void escribir_dump(t_tabla* tabla_de_paginas, FILE* file)
     else if (entrada->marco != -1) {
       uint32_t offset = entrada->marco * tamanio_pagina;
       if (offset + tamanio_pagina > tamanio_memoria) {
-        log_error(logger, "Error al hacer dump");
         return;
       }
       fwrite(memoria + offset, 1, tamanio_pagina, file);
@@ -306,20 +294,18 @@ void escribir_dump(t_tabla* tabla_de_paginas, FILE* file)
   }
 }
 
-int suspender_proceso(uint32_t pid)
+void suspender_proceso(uint32_t pid)
 {
   t_proceso* proceso = obtener_proceso(pid);
 
   if(!proceso) {
-    log_error(logger, "Error al suspender proceso");
-    return -1;
+    return;
   }
 
   proceso->base_swap = swap_offset;
 
   if (proceso->tabla_de_paginas == NULL || proceso->marcos_en_uso == 0) {
-    log_error(logger, "Error antes de intentar escribir swap");
-    return -1;
+    return ;
   }
 
   pthread_mutex_lock(&mutex_marcos_libres);
@@ -330,23 +316,20 @@ int suspender_proceso(uint32_t pid)
   proceso->metricas[BAJADAS_A_SWAP]++;
 
   proceso->tamanio_swap = proceso->marcos_en_uso * tamanio_pagina;
-  log_warning(logger, "Proceso %d suspendido, con tamaño: %d", pid, proceso->tamanio_swap);
   proceso->marcos_en_uso = 0;
 
   liberar_marcos(proceso->tabla_de_paginas);
   usleep(retardo_swap * 1000);
-  return 0;
+  return;
 }
 
 void escribir_en_swap(t_tabla* tabla_de_paginas)
 {
-  log_warning(logger, "Funcion escribir en swap");
   if (tabla_de_paginas == NULL) return;
 
   if (tabla_de_paginas->entradas == NULL) return;
 
   if (list_is_empty(tabla_de_paginas->entradas)) {
-    log_error(logger, "Error al escribir en swap");
     return;
   }  
 
@@ -360,7 +343,6 @@ void escribir_en_swap(t_tabla* tabla_de_paginas)
       uint32_t offset = entrada->marco * tamanio_pagina;
 
       if (offset > tamanio_memoria) {
-        log_error(logger, "Error al escribir en swap3");
         return;  
       }
 

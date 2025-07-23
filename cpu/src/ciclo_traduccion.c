@@ -3,9 +3,9 @@
 //Caché de páginas
 //verificar si tengo el valor que necesito leer
 char* consultar_contenido_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
-  //log_debug(logger,"Consultando Caché en busca del contenido a leer");
+  log_debug(logger,"Consultando Caché en busca del contenido a leer");
   for (int i=0;i<cpu->parametros_cache->cantidad_entradas ;i++) {
-    log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);
+    //log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);
     if (cpu->cache[i].pid==pid && cpu->cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
         log_info(logger, "PID: <%d> - CACHE HIT - Pagina: <%d>", pid, nro_pagina);
@@ -20,9 +20,9 @@ char* consultar_contenido_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) 
 
 //Verificar si tengo la página que estoy buscando escribir
 int consultar_pagina_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
-  //log_debug(logger,"Consultando Caché en busca de la página a escribir");
+  log_debug(logger,"Consultando Caché en busca de la página a escribir");
   for (int i=0;i<cpu->parametros_cache->cantidad_entradas ;i++) {
-    log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);
+    //log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);
     if (cpu->cache[i].pid == pid && cpu->cache[i].pagina==nro_pagina) {
         //Log 8. Página encontrada en Caché
         log_info(logger, "PID: <%d> - CACHE HIT - Pagina: <%d>", pid, nro_pagina);
@@ -37,6 +37,7 @@ int consultar_pagina_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
 
 //Actualiza la caché con el nuevo valor según el algoritmo
 void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a_escribir, bool es_escritura, uint32_t desplazamiento) {
+
   int cantidad=cpu->parametros_cache->cantidad_entradas;
 
   //busco entrada libre
@@ -65,33 +66,51 @@ void actualizar_cache(t_cpu* cpu, uint32_t pid,uint32_t nro_pagina,char* valor_a
 
     case CLOCK_M:
       int vueltas = 0;
-      while (vueltas < 2) {
+      int inicio = cpu->parametros_cache->puntero_reemplazo;
+      while (vueltas < 4) {
+        log_debug(logger,"Vuelta %d",vueltas);
         for (int i = 0; i < cantidad; i++) {
-          int index = (cpu->parametros_cache->puntero_reemplazo + i) % cantidad;
-
+          int index = (inicio +i) % cantidad;
+          log_debug(logger,"PID: <%d> - PAGINA: <%d> - USO: <%d> - MODIFICADO: <%d>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].bit_uso,cpu->cache[i].bit_modificado);
           if(vueltas==0 && cpu->cache[index].bit_uso == 0 && cpu->cache[index].bit_modificado == 0) {
+          log_debug(logger,"Voy a reemplazar PAGINA: <%d> - USO: <%d> - MODIFICADO: <%d>",cpu->cache[i].pagina,cpu->cache[i].bit_uso,cpu->cache[i].bit_modificado);
+          log_debug(logger,"i:%d - puntero:%d ",i,cpu->parametros_cache->puntero_reemplazo);
           asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
           cpu->parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
           return;
           }
 
           if(vueltas==1 && cpu->cache[index].bit_uso == 0 && cpu->cache[index].bit_modificado == 1) {
+          log_debug(logger,"Voy a reemplazar PAGINA: <%d> - USO: <%d> - MODIFICADO: <%d>",cpu->cache[i].pagina,cpu->cache[i].bit_uso,cpu->cache[i].bit_modificado);
+          log_debug(logger,"i:%d - puntero:%d ",i,cpu->parametros_cache->puntero_reemplazo);
+          asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
+          cpu->parametros_cache->puntero_reemplazo = (index+ 1) % cantidad;
+          return;
+          }
+
+          if(vueltas==1){
+          cpu->cache[index].bit_uso=0;
+          }
+
+          if(vueltas==2 && cpu->cache[index].bit_uso == 0 && cpu->cache[index].bit_modificado == 0) {
+          log_debug(logger,"Voy a reemplazar PAGINA: <%d> - USO: <%d> - MODIFICADO: <%d>",cpu->cache[i].pagina,cpu->cache[i].bit_uso,cpu->cache[i].bit_modificado);
+          log_debug(logger,"i:%d - puntero:%d ",i,cpu->parametros_cache->puntero_reemplazo);
           asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
           cpu->parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
           return;
           }
 
-          else {
-          cpu->cache[index].bit_uso=0;
+          if(vueltas==3 && cpu->cache[index].bit_uso == 0 && cpu->cache[index].bit_modificado == 1) {
+          log_debug(logger,"Voy a reemplazar PAGINA: <%d> - USO: <%d> - MODIFICADO: <%d>",cpu->cache[i].pagina,cpu->cache[i].bit_uso,cpu->cache[i].bit_modificado);
+          log_debug(logger,"i:%d - puntero:%d ",i,cpu->parametros_cache->puntero_reemplazo);
+          asignar_lugar_en_cache(cpu,index,pid,nro_pagina,valor_a_escribir,es_escritura,desplazamiento);
+          cpu->parametros_cache->puntero_reemplazo = (index+ 1) % cantidad;
+          return;
           }
         }
         vueltas++;
       }
-
-      int index = cpu->parametros_cache->puntero_reemplazo;
-      asignar_lugar_en_cache(cpu,index, pid, nro_pagina, valor_a_escribir,es_escritura,desplazamiento);
-      cpu->parametros_cache->puntero_reemplazo = (index + 1) % cantidad;
-    return;
+      log_warning(logger,"estoy afuera del While");
   }
 }
 
@@ -128,7 +147,7 @@ uint32_t traducir_direccion(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina,uint32
     marco = consultar_memoria(cpu, pid, nro_pagina);
 
     if(marco == -1){
-      log_error(logger, "No se pudo obtener el marco para la página <%d> del PID <%d>", nro_pagina, pid);
+      log_debug(logger, "No se pudo obtener el marco para la página <%d> del PID <%d>", nro_pagina, pid);
       return -1;
     };
     
@@ -148,7 +167,6 @@ uint32_t consultar_TLB (t_cpu* cpu,uint32_t pid, uint32_t nro_pagina) {
     log_debug(logger, "PID: <%d> - PAGINA: <%d> - MARCO: <%d> - TIEMPO: <%d>",cpu->tlb[i].pid,cpu->tlb[i].pagina,cpu->tlb[i].marco,cpu->tlb[i].tiempo_transcurrido);
     cpu->tlb[i].tiempo_transcurrido++;
     if (cpu->tlb[i].pid==pid && cpu->tlb[i].pagina==nro_pagina) {
-        cpu->tlb[i].nro_orden = i;
         cpu->tlb[i].tiempo_transcurrido = 0;
         //Log 6. TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, nro_pagina);
@@ -221,8 +239,7 @@ void actualizar_TLB (t_cpu* cpu, uint32_t pid, uint32_t pagina, uint32_t marco) 
 //Auxiliar para hacer los reemplazos y asignaciones en caché (y actualizar memoria si corresponde)
 void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pagina,char* valor, bool es_escritura, uint32_t desplazamiento){
   if (cpu->cache[ubicacion].bit_modificado==1) {
-    //Log 10. Pagina Actualizada de Cache a Memoria
-    //Como actualizo una página completa, no conozco el frame
+    log_debug(logger,"La página estaba modificada, iniciando actualización en memoria");
 
     uint32_t direccion_fisica=traducir_direccion(cpu,pid,cpu->cache[ubicacion].pagina, cpu->cache[ubicacion].desplazamiento);
 
@@ -236,15 +253,16 @@ void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pa
 
   //Log 9. Página ingresada en Cache
   log_info(logger,"PID: <%d> - CACHE ADD - Pagina: <%d>",pid,pagina);
-
+  log_debug(logger,"Estoy reemplazando la pagina: %d", cpu->cache[ubicacion].pagina);
   cpu->cache[ubicacion].pid=pid;
   cpu->cache[ubicacion].pagina=pagina;
   cpu->cache[ubicacion].contenido=valor;
   cpu->cache[ubicacion].bit_uso=1;
-  cpu->cache[ubicacion].bit_modificado = es_escritura? 1 : 0;
-  cpu->cache[ubicacion].desplazamiento = desplazamiento;
+  cpu->cache[ubicacion].bit_modificado=0;
+  if(es_escritura) {
+    cpu->cache[ubicacion].bit_modificado=1;
+  }
 }
-
 //Auxiliar para hacer los reemplazos y asignaciones en TLB
 void asignar_lugar_en_TLB(t_cpu* cpu,int ubicacion, uint32_t pid, uint32_t marco, uint32_t pagina, int ultimo_agregado) {
   cpu->tlb[ubicacion].pid = pid;
