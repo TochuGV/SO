@@ -57,8 +57,7 @@ void extraer_datos_config(){
 void inicializar_kernel(){
   config = iniciar_config("kernel.config");
   extraer_datos_config();
-  t_log_level nivel_log = parse_log_level(LOG_LEVEL);
-  logger = iniciar_logger("kernel.log", "Kernel", nivel_log);
+  logger = iniciar_logger("kernel.log", "Kernel", parse_log_level(LOG_LEVEL));
   inicializar_estructura_cpus();
   lista_pcbs = list_create();
   diccionario_cronometros = dictionary_create();
@@ -100,11 +99,4 @@ void unir_hilos(){
   pthread_join(hilo_planificador_largo_plazo, NULL);
   pthread_join(hilo_planificador_corto_plazo, NULL);
   pthread_join(hilo_planificador_mediano_plazo, NULL);
-};
-
-void finalizar_kernel(){
-  log_destroy(logger);
-  config_destroy(config);
-  
-  dictionary_destroy_and_destroy_elements(diccionario_contextos_io, destruir_contexto_io);
 };

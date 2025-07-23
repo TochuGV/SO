@@ -77,7 +77,6 @@ void encolar_proceso_en_susp_ready(t_pcb* pcb){
     pthread_mutex_lock(&mutex_susp_ready);
     queue_push(cola_susp_ready, pcb);
     pthread_mutex_unlock(&mutex_susp_ready);
-
     cambiar_estado(pcb, ESTADO_SUSP_BLOCKED, ESTADO_SUSP_READY);
 }
 

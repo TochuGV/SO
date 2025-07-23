@@ -46,6 +46,5 @@ void crear_proceso_inicial(char*, uint32_t);
 void iniciar_conexiones_constantes_entre_modulos();
 void iniciar_planificadores();
 void unir_hilos();
-void finalizar_kernel();
 
 #endif /* INIT_H_ */

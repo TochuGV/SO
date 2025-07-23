@@ -36,14 +36,13 @@ void leer_consola(t_log* logger){
 }
 
 t_log_level parse_log_level(const char* level_str) {
-    if (strcmp(level_str, "TRACE") == 0) return LOG_LEVEL_TRACE;
-    if (strcmp(level_str, "INFO") == 0) return LOG_LEVEL_INFO;
-    if (strcmp(level_str, "WARNING") == 0) return LOG_LEVEL_WARNING;
-    if (strcmp(level_str, "ERROR") == 0) return LOG_LEVEL_ERROR;
-    if (strcmp(level_str, "DEBUG") == 0) return LOG_LEVEL_DEBUG;
-
-    return LOG_LEVEL_INFO;
-}
+  if (strcmp(level_str, "TRACE") == 0) return LOG_LEVEL_TRACE;
+  if (strcmp(level_str, "INFO") == 0) return LOG_LEVEL_INFO;
+  if (strcmp(level_str, "WARNING") == 0) return LOG_LEVEL_WARNING;
+  if (strcmp(level_str, "ERROR") == 0) return LOG_LEVEL_ERROR;
+  if (strcmp(level_str, "DEBUG") == 0) return LOG_LEVEL_DEBUG;
+  return LOG_LEVEL_INFO;
+};
 
 
 //// CONFIG
@@ -252,7 +251,7 @@ int crear_conexion(char *ip, char* puerto, int header_cliente){
 
   //log_debug(logger, "Esperando servidor...");
   while (connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen) == -1) {
-  	sleep(1);
+		sleep(1);
   };
 
 	freeaddrinfo(server_info);
@@ -273,18 +272,3 @@ void terminar_programa(int conexion, t_log* logger, t_config* config){
 	log_destroy(logger);
 	config_destroy(config);
 };
-
-/*
-nombre_dispositivo_io obtener_dispositivo_io(char* nombre){
-  if (strcasecmp(nombre, "impresora") == 0) return IMPRESORA;
-  else if (strcasecmp(nombre, "teclado") == 0) return TECLADO;
-  else if (strcasecmp(nombre, "mouse") == 0) return MOUSE;
-  else if (strcasecmp(nombre, "auriculares") == 0) return AURICULARES;
-  else if (strcasecmp(nombre, "parlante") == 0) return PARLANTE;
-  else if (strcasecmp(nombre, "disco") == 0) return DISCO;
-  else {
-    log_error(logger, "Nombre de dispositivo IO desconocido: %s", nombre);
-    return -1;
-  };
-};
-*/

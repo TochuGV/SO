@@ -7,8 +7,7 @@ char* LOG_LEVEL;
 void inicializar_io(){
   config = iniciar_config("io.config");
   extraer_datos_config();
-  t_log_level nivel_log = parse_log_level(LOG_LEVEL);
-  logger = iniciar_logger("io.log", "Kernel", nivel_log);
+  logger = iniciar_logger("io.log", "Kernel", parse_log_level(LOG_LEVEL));
   log_debug(logger, "Log de IO iniciado");
 };
 
