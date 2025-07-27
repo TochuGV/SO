@@ -90,6 +90,8 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
 
   proceso->metricas[INSTRUCCIONES_SOLICITADAS]++;
 
+  usleep(retardo_memoria * 1000);
+
   t_paquete* paquete = crear_paquete(INSTRUCCION);
 
   uint32_t longitud_parametro1 = strlen(parametro1) + 1;
@@ -104,7 +106,6 @@ void* recibir_solicitud_instruccion(int cliente_cpu)
   enviar_paquete(paquete, cliente_cpu);
   list_destroy_and_destroy_elements(solicitud, free);
 
-  //log_debug(logger,"Proceso: %d; Instruccion numero: %d enviada a CPU.",pid,pc);
 
   return NULL;
 }
@@ -115,15 +116,11 @@ void recibir_solicitud_marco(int cliente_cpu)
 
   if(!valores || list_is_empty(valores)) {
     list_destroy_and_destroy_elements(valores, free);
-    //uint32_t error = -1;
-    //send(cliente_cpu, &error, sizeof(uint32_t), 0);
     return;
   }
 
   if (list_get(valores, 0) == NULL) {
     list_destroy_and_destroy_elements(valores, free);
-    //uint32_t error = -1;
-    //send(cliente_cpu, &error, sizeof(uint32_t), 0);
     return;
   }
 
@@ -142,15 +139,11 @@ void recibir_solicitud_marco(int cliente_cpu)
   {
     if (list_size(valores) <= nivel) {
       list_destroy_and_destroy_elements(valores, free);
-      //uint32_t error = -1;
-      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     }
 
     if (list_get(valores, nivel) == NULL) {
       list_destroy_and_destroy_elements(valores, free);
-      //uint32_t error = -1;
-      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     } 
 
@@ -158,8 +151,6 @@ void recibir_solicitud_marco(int cliente_cpu)
 
     if (list_size(tabla_actual->entradas) <= entrada_nivel || list_is_empty(tabla_actual->entradas)) {
       list_destroy_and_destroy_elements(valores, free);
-      //uint32_t error = -1;
-      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     } 
 
@@ -167,8 +158,6 @@ void recibir_solicitud_marco(int cliente_cpu)
 
     if (!entrada) {
       list_destroy_and_destroy_elements(valores, free);
-      //uint32_t error = -1;
-      //send(cliente_cpu, &error, sizeof(uint32_t), 0);
       return;
     }
 
