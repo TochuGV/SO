@@ -314,8 +314,8 @@ bool chequear_interrupcion(int socket_interrupt, uint32_t pid_actual) {
 
   if (bytes > 0) {
     //Log 2. Interrupción recibida
-    log_info(logger, "## Llega interrupción al puerto Interrupt");
     if(pid_interrupcion == pid_actual){
+      log_info(logger, "## Llega interrupción al puerto Interrupt");
       return true;
     }
   }
