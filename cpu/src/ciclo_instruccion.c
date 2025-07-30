@@ -98,7 +98,6 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
   //El log_info en cada Case corresponde a Log 3. Instrucción Ejecutada
     case NOOP:
       log_info (logger, "## PID: <%d> - Ejecutando: <NOOP>", pcb->pid);
-      sleep(1); //Uso una duración de 1 segundo como default para NOOP
       pcb->pc++;
       free(instruccion.parametro1);
       free(instruccion.parametro2);
@@ -107,7 +106,6 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case READ:
       log_info(logger, "## PID: <%d> - Ejecutando: <READ> - Direccion logica: %s - tamaño: %s", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      sleep(1);
       ejecutar_read(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
@@ -115,7 +113,6 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case WRITE: 
       log_info(logger, "## PID: <%d> - Ejecutando: <WRITE> - Direccion logica: <%s> - Valor: <%s> ", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      sleep(1);
       ejecutar_write(cpu,pcb->pid,instruccion.parametro1, instruccion.parametro2);
       pcb->pc++;
       return EJECUCION_CONTINUA;
@@ -123,7 +120,6 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case GOTO: 
       log_info(logger, "## PID: <%d> - Ejecutando: <GOTO> - Nuevo PC: <%s>", pcb->pid, instruccion.parametro1);
-      sleep(1);
       pcb->pc = atoi(instruccion.parametro1);
       free(instruccion.parametro1);
       free(instruccion.parametro2);
@@ -132,28 +128,24 @@ t_estado_ejecucion trabajar_instruccion(t_cpu* cpu, t_instruccion instruccion, t
     
     case IO: 
       log_info(logger, "## PID: <%d> - Ejecutando: <IO> - Dispositivo: <%s> - Tiempo: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      sleep(1);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_IO;
       break;
     
     case INIT_PROC:
       log_info(logger, "## PID: <%d> - Ejecutando: <INIT_PROC> - Archivo: <%s> - Tamaño: <%s>", pcb->pid, instruccion.parametro1, instruccion.parametro2);
-      sleep(1);
       pcb->pc++;
       return EJECUCION_CONTINUA_INIT_PROC;
       break;
 
     case DUMP_MEMORY:
       log_info(logger,"## PID: <%d> - Ejecutando: <DUMP_MEMORY>", pcb->pid);
-      sleep(1);
       pcb->pc++;
       return EJECUCION_BLOQUEADA_DUMP;
       break;
 
     case EXIT:
       log_info(logger, "## PID: <%d> - Ejecutando: <EXIT>", pcb->pid);
-      sleep(1);
       pcb->pc++;
       finalizar_proceso_en_cache(cpu,pcb->pid);
       return EJECUCION_FINALIZADA;

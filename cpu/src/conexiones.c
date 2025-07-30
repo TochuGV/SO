@@ -33,6 +33,7 @@ t_cpu* iniciar_cpu(int32_t identificador_cpu) {
   cpu->parametros_cache->cantidad_entradas = config_get_int_value(config,"ENTRADAS_CACHE");
   char* algoritmo_cache = config_get_string_value(config,"REEMPLAZO_CACHE");
   cpu->parametros_cache->algoritmo_reemplazo = convertir_cache (algoritmo_cache);
+  cpu->retardo_cache = config_get_int_value(config,"RETARDO_CACHE");
 
   cpu->parametros_tlb = malloc(sizeof(tlb_t));
   cpu->parametros_tlb->cantidad_entradas = config_get_int_value(config, "ENTRADAS_TLB");
