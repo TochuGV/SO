@@ -262,6 +262,7 @@ void asignar_lugar_en_cache(t_cpu* cpu, int ubicacion, uint32_t pid, uint32_t pa
   if(es_escritura) {
     cpu->cache[ubicacion].bit_modificado=1;
   }
+  cpu->cache[ubicacion].desplazamiento = desplazamiento;
 }
 //Auxiliar para hacer los reemplazos y asignaciones en TLB
 void asignar_lugar_en_TLB(t_cpu* cpu,int ubicacion, uint32_t pid, uint32_t marco, uint32_t pagina, int ultimo_agregado) {
