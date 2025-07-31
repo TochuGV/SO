@@ -40,7 +40,7 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
   if(!instancia_ocupada){
     free(clave_pid_actual);
     return;
-  }
+  };
 
   int index_susp = esta_suspendido(pcb);
 

@@ -63,7 +63,7 @@ void syscall_io(t_syscall* syscall){
     pthread_mutex_unlock(&mutex_diccionario_cronometros);
 
     if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
-      double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
+      double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]);
       actualizar_estimacion(pcb->pid, rafaga_real);
       log_debug(logger, "PID <%d> - Ráfaga real: %.2f - Estimación actualizada", pcb->pid, rafaga_real);
     };

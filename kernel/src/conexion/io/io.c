@@ -34,6 +34,46 @@ void* atender_io(void* arg){
         break;
       case -1:
         log_warning(logger, "Dispositivo IO desconectado");
+
+        for(int i = 0; i < 6; i++){
+          pthread_mutex_lock(&mutex_diccionario_dispositivos);
+          t_list* lista_instancias = dictionary_get(diccionario_dispositivos, NOMBRES_DISPOSITIVOS_IO[i]);
+          pthread_mutex_unlock(&mutex_diccionario_dispositivos);
+    
+          for(int j = list_size(lista_instancias) -1 ; j >= 0; j--){
+            t_instancia_io* instancia = list_get(lista_instancias, j);
+            if(instancia->socket == socket_io){
+              if(instancia->ocupado) {
+                t_pcb* pcb = queue_pop(instancia->cola_bloqueados);
+                cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
+                finalizar_proceso(pcb);
+
+                if(!queue_is_empty(instancia->cola_bloqueados)) {
+                  if(list_size(lista_instancias) == 1) {
+                    while(!queue_is_empty(instancia->cola_bloqueados)) {
+                      t_pcb* pcb = queue_pop(instancia->cola_bloqueados);
+                      log_error(logger, "No hay instancias disponibles para el dispositivo <%s>. Proceso <%d> finalizando...", NOMBRES_DISPOSITIVOS_IO[i], pcb->pid);
+                      cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
+                      finalizar_proceso(pcb);
+                    }
+                  } else {
+                    for(int k = 0; k < list_size(lista_instancias); k++) {
+                      t_instancia_io* instancia_secundaria = list_get(lista_instancias, k);
+                      if(instancia_secundaria->socket != socket_io){ 
+                        while(!queue_is_empty(instancia->cola_bloqueados)) {
+                          t_pcb* pcb = queue_pop(instancia->cola_bloqueados);
+                          queue_push(instancia_secundaria->cola_bloqueados, pcb);
+                        };
+                      };
+                    };
+                  };
+                }
+              };
+              list_remove_and_destroy_element(lista_instancias, j, free);
+            };
+          };
+        };
+
         close(socket_io);
         pthread_exit(NULL);
       default:

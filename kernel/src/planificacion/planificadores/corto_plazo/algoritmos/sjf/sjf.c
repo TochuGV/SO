@@ -45,7 +45,7 @@ void actualizar_estimacion(uint32_t pid, double estimacion_real) {
 };
 
 void destruir_diccionario_estimaciones() {
-    dictionary_destroy_and_destroy_elements(diccionario_estimaciones, free);
+  dictionary_destroy_and_destroy_elements(diccionario_estimaciones, free);
 };
 
 void mover_proceso_a_exec_sjf(void){
@@ -61,8 +61,7 @@ void mover_proceso_a_exec_sjf(void){
     return;
   };
 
-  reordenar_cola_ready_por_estimacion(cola_ready);
-  t_pcb* pcb = queue_pop(cola_ready);
+  t_pcb* pcb = obtener_proximo_proceso_ready(cola_ready);
   pthread_mutex_unlock(&mutex_ready);
   asignar_y_enviar_a_cpu(pcb, cpu);
 };
