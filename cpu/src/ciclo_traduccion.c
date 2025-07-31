@@ -165,9 +165,13 @@ uint32_t traducir_direccion(t_cpu* cpu, uint32_t pid, uint32_t nro_pagina,uint32
 //Consultar TLB si falló en Caché
 uint32_t consultar_TLB (t_cpu* cpu,uint32_t pid, uint32_t nro_pagina) {
   log_debug(logger,"Iniciando consulta a TLB");
+  
+  for (int i=0;i<cpu->parametros_tlb->cantidad_entradas ;i++) {
+      cpu->tlb[i].tiempo_transcurrido++;
+  }
+  
   for (int i=0;i<cpu->parametros_tlb->cantidad_entradas ;i++) {
     log_debug(logger, "PID: <%d> - PAGINA: <%d> - MARCO: <%d> - TIEMPO: <%d>",cpu->tlb[i].pid,cpu->tlb[i].pagina,cpu->tlb[i].marco,cpu->tlb[i].tiempo_transcurrido);
-    cpu->tlb[i].tiempo_transcurrido++;
     if (cpu->tlb[i].pid==pid && cpu->tlb[i].pagina==nro_pagina) {
         cpu->tlb[i].tiempo_transcurrido = 0;
         //Log 6. TLB Hit
