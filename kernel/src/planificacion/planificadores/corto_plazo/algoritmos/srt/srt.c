@@ -63,6 +63,8 @@ void desalojar_cpu(t_pcb* pcb) {
   if(estimacion_nuevo < tiempo_restante){
     t_cpu* cpu = obtener_cpu_que_ejecuta(proceso_en_exec->pid);
     if(!cpu) return;
+    actualizar_estimacion(proceso_en_exec->pid, tiempo_restante);
+    log_debug(logger, "PID <%d> - Ráfaga real (desalojo): %.2f - Estimación actualizada", proceso_en_exec->pid, tiempo_restante);
     send(cpu->socket_interrupt, &(proceso_en_exec->pid), sizeof(uint32_t), 0);
   } else {
     log_debug(logger, "SRT - No se desaloja: %.2f >= %.2f", estimacion_nuevo, tiempo_restante);
@@ -77,17 +79,13 @@ void mover_proceso_a_exec_srt(void){
     return;
   };
 
-  reordenar_cola_ready_por_estimacion(cola_ready);
-  t_pcb* pcb = queue_peek(cola_ready);
-  pthread_mutex_unlock(&mutex_ready);
-
   t_cpu* cpu = seleccionar_cpu_disponible();
-  if(cpu != NULL){
-    pthread_mutex_lock(&mutex_ready);
-    pcb = queue_pop(cola_ready);
+  if(!cpu){
     pthread_mutex_unlock(&mutex_ready);
-    asignar_y_enviar_a_cpu(pcb, cpu);
     return;
   };
-  return;
+
+  t_pcb* pcb = obtener_proximo_proceso_ready(cola_ready);
+  pthread_mutex_unlock(&mutex_ready);
+  asignar_y_enviar_a_cpu(pcb, cpu);
 };

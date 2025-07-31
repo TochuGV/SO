@@ -62,10 +62,11 @@ void* atender_cpu_dispatch(void* arg){
 
           free(clave_pid);
           */
-
+          /*
           double rafaga_real = tiempo_restante_exec(pcb);
           actualizar_estimacion(pcb->pid, rafaga_real);
           log_debug(logger, "PID <%d> - Ráfaga real (desalojo): %.2f - Estimación actualizada", pcb->pid, rafaga_real);
+          */
 
           cambiar_estado(pcb, ESTADO_EXEC, ESTADO_READY);
           liberar_cpu_por_pid(pcb->pid);
