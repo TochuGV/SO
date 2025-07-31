@@ -44,9 +44,10 @@ void* atender_io(void* arg){
             t_instancia_io* instancia = list_get(lista_instancias, j);
             if(instancia->socket == socket_io){
               if(instancia->ocupado) {
-                t_pcb* pcb = queue_pop(instancia->cola_bloqueados);
-                cambiar_estado(pcb, ESTADO_BLOCKED, ESTADO_EXIT);
-                finalizar_proceso(pcb);
+                if (instancia->pcb_bloqueado) {
+                  cambiar_estado(instancia->pcb_bloqueado, ESTADO_BLOCKED, ESTADO_EXIT);
+                  finalizar_proceso(instancia->pcb_bloqueado);
+                }
 
                 if(!queue_is_empty(instancia->cola_bloqueados)) {
                   if(list_size(lista_instancias) == 1) {
@@ -102,6 +103,7 @@ void registrar_socket_io(char* nombre, int socket){
   nueva_instancia->ocupado = false;
   nueva_instancia->cola_bloqueados = queue_create();
   list_add(lista_instancias, nueva_instancia);
+  nueva_instancia->pcb_bloqueado = NULL;
 };
 
 void enviar_peticion_io(int socket_io, uint32_t duracion, uint32_t pid){

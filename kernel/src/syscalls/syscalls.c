@@ -100,6 +100,7 @@ void syscall_io(t_syscall* syscall){
 
   if(instancia_libre){
     instancia_libre->ocupado = true;
+    instancia_libre->pcb_bloqueado = pcb;
     enviar_peticion_io(instancia_libre->socket, contexto->duracion_io, pcb->pid);
   } else {
     t_instancia_io* menos_cargada = list_get(lista_instancias, 0);
