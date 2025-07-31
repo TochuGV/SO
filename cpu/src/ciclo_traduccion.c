@@ -3,6 +3,7 @@
 //Caché de páginas
 //verificar si tengo el valor que necesito leer
 char* consultar_contenido_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
+  usleep((cpu->retardo_cache)*1000);
   log_debug(logger,"Consultando Caché en busca del contenido a leer");
   for (int i=0;i<cpu->parametros_cache->cantidad_entradas ;i++) {
     //log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);
@@ -20,6 +21,7 @@ char* consultar_contenido_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) 
 
 //Verificar si tengo la página que estoy buscando escribir
 int consultar_pagina_cache (t_cpu* cpu, uint32_t pid, uint32_t nro_pagina) {
+  usleep((cpu->retardo_cache)*1000);
   log_debug(logger,"Consultando Caché en busca de la página a escribir");
   for (int i=0;i<cpu->parametros_cache->cantidad_entradas ;i++) {
     //log_debug(logger,"PID: <%d> - PAGINA: <%d> - CONTENIDO: <%s>",cpu->cache[i].pid,cpu->cache[i].pagina,cpu->cache[i].contenido);

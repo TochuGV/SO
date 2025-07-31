@@ -68,6 +68,7 @@ typedef struct {
   //Caché y TLB
   entrada_cache* cache;
   cache_paginas_t* parametros_cache;
+  uint32_t retardo_cache;
   entrada_tlb* tlb;
   tlb_t* parametros_tlb;
   uint32_t orden_actual_tlb;
