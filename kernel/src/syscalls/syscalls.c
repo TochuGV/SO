@@ -63,7 +63,7 @@ void syscall_io(t_syscall* syscall){
     pthread_mutex_unlock(&mutex_diccionario_cronometros);
 
     if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
-      double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0; //Obtiene los segundos
+      double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]);
       actualizar_estimacion(pcb->pid, rafaga_real);
       log_debug(logger, "PID <%d> - Ráfaga real: %.2f - Estimación actualizada", pcb->pid, rafaga_real);
     };
@@ -100,6 +100,7 @@ void syscall_io(t_syscall* syscall){
 
   if(instancia_libre){
     instancia_libre->ocupado = true;
+    instancia_libre->pcb_bloqueado = pcb;
     enviar_peticion_io(instancia_libre->socket, contexto->duracion_io, pcb->pid);
   } else {
     t_instancia_io* menos_cargada = list_get(lista_instancias, 0);

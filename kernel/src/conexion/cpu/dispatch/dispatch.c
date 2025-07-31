@@ -37,11 +37,9 @@ void* atender_cpu_dispatch(void* arg){
         } else {
           uint32_t pid = *(uint32_t*) list_get(lista, 0);
           uint32_t pc = *(uint32_t*) list_get(lista, 1);
-
           list_destroy_and_destroy_elements(lista, free);
           
           log_desalojo_sjf_srt(pid);
-
           t_pcb* pcb = obtener_pcb_por_pid(pid);
           pcb->pc = pc;
 
@@ -50,8 +48,27 @@ void* atender_cpu_dispatch(void* arg){
           pthread_mutex_unlock(&mutex_ready);
           sem_post(&semaforo_ready);
 
-          cambiar_estado(pcb, ESTADO_EXEC, ESTADO_READY);
+          /*
+          char* clave_pid = string_itoa(pcb->pid);
+          pthread_mutex_lock(&mutex_diccionario_cronometros);
+          t_temporizadores_estado* tiempos = dictionary_get(diccionario_cronometros, clave_pid);
+          pthread_mutex_unlock(&mutex_diccionario_cronometros);
 
+          if(tiempos && tiempos->cronometros_estado[ESTADO_EXEC]){
+            double rafaga_real = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]);
+            actualizar_estimacion(pcb->pid, rafaga_real);
+            log_debug(logger, "PID <%d> - Ráfaga real (desalojo): %.2f - Estimación actualizada", pcb->pid, rafaga_real);
+          };
+
+          free(clave_pid);
+          */
+          /*
+          double rafaga_real = tiempo_restante_exec(pcb);
+          actualizar_estimacion(pcb->pid, rafaga_real);
+          log_debug(logger, "PID <%d> - Ráfaga real (desalojo): %.2f - Estimación actualizada", pcb->pid, rafaga_real);
+          */
+
+          cambiar_estado(pcb, ESTADO_EXEC, ESTADO_READY);
           liberar_cpu_por_pid(pcb->pid);
         };
           break;

@@ -19,6 +19,7 @@ typedef struct {
   int socket;
   bool ocupado;
   t_queue* cola_bloqueados;
+  t_pcb* pcb_bloqueado;
 } t_instancia_io;
 
 typedef struct {

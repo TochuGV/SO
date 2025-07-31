@@ -5,8 +5,6 @@ void entrar_estado(t_pcb* pcb, t_estado estado){
     pcb->me[estado]++;
   
   char* clave_pid = string_itoa(pcb->pid);
-
-  //pthread_mutex_lock(&mutex_diccionario_cronometros);
   t_temporizadores_estado* cronometros_pid = dictionary_get(diccionario_cronometros, clave_pid);
   if(!cronometros_pid){
     cronometros_pid = malloc(sizeof(t_temporizadores_estado));
@@ -21,8 +19,6 @@ void entrar_estado(t_pcb* pcb, t_estado estado){
     
     cronometros_pid->cronometros_estado[estado] = temporal_create();
   };
-
-  //pthread_mutex_unlock(&mutex_diccionario_cronometros);
   free(clave_pid);
 };
 

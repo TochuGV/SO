@@ -14,8 +14,10 @@ double tiempo_restante_exec(t_pcb* pcb) {
   };
 
   double estimacion_total = obtener_estimacion(pcb->pid);
-  double ejecutado = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]) / 1000.0;
+  double ejecutado = temporal_gettime(tiempos->cronometros_estado[ESTADO_EXEC]);
+  //log_debug(logger, "EJECUTADO: %.2f", ejecutado);
   double restante = estimacion_total - ejecutado;
+  //log_debug(logger, "RESTANTE: %.2f", restante);
   return restante > 0 ? restante : 0.0;
 }
 
@@ -54,13 +56,20 @@ void desalojar_cpu(t_pcb* pcb) {
   if (proceso_en_exec == NULL) return;
 
   double tiempo_restante = tiempo_restante_exec(proceso_en_exec);
+  log_debug(logger, "SRT - Evaluando desalojo: PID nuevo %d (%.2f) vs PID en EXEC %d (%.2f)", pcb->pid, estimacion_nuevo, proceso_en_exec->pid, tiempo_restante);
+  //double estimacion_exec = obtener_estimacion(proceso_en_exec->pid);
+  //log_debug(logger, "SRT - Evaluando desalojo: PID nuevo %d (%.2f) vs PID en EXEC %d (%.2f)", pcb->pid, estimacion_nuevo, proceso_en_exec->pid, estimacion_exec);
 
   if(estimacion_nuevo < tiempo_restante){
     t_cpu* cpu = obtener_cpu_que_ejecuta(proceso_en_exec->pid);
     if(!cpu) return;
+    actualizar_estimacion(proceso_en_exec->pid, tiempo_restante);
+    log_debug(logger, "PID <%d> - Ráfaga real (desalojo): %.2f - Estimación actualizada", proceso_en_exec->pid, tiempo_restante);
     send(cpu->socket_interrupt, &(proceso_en_exec->pid), sizeof(uint32_t), 0);
+  } else {
+    log_debug(logger, "SRT - No se desaloja: %.2f >= %.2f", estimacion_nuevo, tiempo_restante);
+    //log_debug(logger, "SRT - No se desaloja: %.2f >= %.2f", estimacion_nuevo, estimacion_exec);
   };
-
 };
 
 void mover_proceso_a_exec_srt(void){
@@ -70,17 +79,13 @@ void mover_proceso_a_exec_srt(void){
     return;
   };
 
-  reordenar_cola_ready_por_estimacion(cola_ready);
-  t_pcb* pcb = queue_peek(cola_ready);
-  pthread_mutex_unlock(&mutex_ready);
-
   t_cpu* cpu = seleccionar_cpu_disponible();
-  if(cpu != NULL){
-    pthread_mutex_lock(&mutex_ready);
-    pcb = obtener_proximo_proceso_ready(cola_ready); 
+  if(!cpu){
     pthread_mutex_unlock(&mutex_ready);
-    asignar_y_enviar_a_cpu(pcb, cpu);
     return;
   };
-  return;
+
+  t_pcb* pcb = obtener_proximo_proceso_ready(cola_ready);
+  pthread_mutex_unlock(&mutex_ready);
+  asignar_y_enviar_a_cpu(pcb, cpu);
 };

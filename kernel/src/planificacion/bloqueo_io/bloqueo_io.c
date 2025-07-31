@@ -40,7 +40,7 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
   if(!instancia_ocupada){
     free(clave_pid_actual);
     return;
-  }
+  };
 
   int index_susp = esta_suspendido(pcb);
 
@@ -72,11 +72,14 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
     if(contexto_siguiente){
       enviar_peticion_io(instancia_ocupada->socket, contexto_siguiente->duracion_io, siguiente->pid);
       instancia_ocupada->ocupado = true;
+      instancia_ocupada->pcb_bloqueado = siguiente;
     } else {
       instancia_ocupada->ocupado = false;
+      instancia_ocupada->pcb_bloqueado = NULL;
     };
     free(clave_pid_siguiente);
   } else {
     instancia_ocupada->ocupado = false;
+    instancia_ocupada->pcb_bloqueado = NULL;
   };
 };
