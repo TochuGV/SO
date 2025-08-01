@@ -9,6 +9,7 @@
 void* conectar_io(void*);
 void* atender_io(void*);
 void registrar_socket_io(char*, int);
+void iniciar_instancia_io_si_corresponde(char*, int);
 void enviar_peticion_io(int, uint32_t, uint32_t);
 
 #endif /* IO_H_ */

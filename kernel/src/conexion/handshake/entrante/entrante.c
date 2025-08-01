@@ -73,6 +73,7 @@ int recibir_handshake_kernel(int cliente_kernel){
       };
       registrar_socket_io(nombre_io, cliente_kernel);
       send(cliente_kernel, &ok, sizeof(int32_t), 0);
+      iniciar_instancia_io_si_corresponde(nombre_io, cliente_kernel);
       return MODULO_IO;
     default:
       send(cliente_kernel, &error, sizeof(int32_t), 0);

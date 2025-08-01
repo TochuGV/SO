@@ -82,7 +82,7 @@ void syscall_io(t_syscall* syscall){
   t_instancia_io* instancia_libre = NULL; //Buscar instancia libre
   for(int i = 0; i < list_size(lista_instancias); i++){
     t_instancia_io* instancia = list_get(lista_instancias, i);
-    if(!instancia->ocupado){
+    if(!instancia->pcb_bloqueado){
       instancia_libre = instancia;
       break;
     };
@@ -99,7 +99,6 @@ void syscall_io(t_syscall* syscall){
   log_motivo_bloqueo(pcb->pid, contexto->dispositivo_actual);
 
   if(instancia_libre){
-    instancia_libre->ocupado = true;
     instancia_libre->pcb_bloqueado = pcb;
     enviar_peticion_io(instancia_libre->socket, contexto->duracion_io, pcb->pid);
   } else {

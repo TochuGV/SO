@@ -31,7 +31,7 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
   t_instancia_io* instancia_ocupada = NULL;
   for(int i = 0; i < list_size(lista_instancias); i++){
     t_instancia_io* instancia = list_get(lista_instancias, i);
-    if(instancia->ocupado && instancia->socket == socket_io){
+    if(instancia->pcb_bloqueado && instancia->socket == socket_io){
       instancia_ocupada = instancia;
       break;
     };
@@ -71,15 +71,12 @@ void manejar_respuesta_io(uint32_t pid, int socket_io){
     pthread_mutex_unlock(&mutex_diccionario_contextos);
     if(contexto_siguiente){
       enviar_peticion_io(instancia_ocupada->socket, contexto_siguiente->duracion_io, siguiente->pid);
-      instancia_ocupada->ocupado = true;
       instancia_ocupada->pcb_bloqueado = siguiente;
     } else {
-      instancia_ocupada->ocupado = false;
       instancia_ocupada->pcb_bloqueado = NULL;
     };
     free(clave_pid_siguiente);
   } else {
-    instancia_ocupada->ocupado = false;
     instancia_ocupada->pcb_bloqueado = NULL;
   };
 };

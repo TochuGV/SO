@@ -41,7 +41,6 @@ int32_t handshake_io(char* nombre, int conexion_kernel){
 };
 
 void atender_interrupcion(int conexion_kernel) {
-
   t_list* lista = recibir_paquete(conexion_kernel);
   uint32_t pid = *(uint32_t*)list_get(lista, 0);
   uint32_t tiempo_io = *(uint32_t*)list_get(lista, 1);
