@@ -1,92 +1,41 @@
-# tp-scaffold
+# Trabajo Práctico - Sistemas Operativos (1C2025)
 
-Esta es una plantilla de proyecto diseñada para generar un TP de Sistemas
-Operativos de la UTN FRBA.
+Este repositorio contiene el desarrollo del trabajo práctico cuatrimestral de la materia **Sistemas Operativos**, correspondiente al primer cuatrimestre del año 2025 en la UTN FRBA.
 
-## Dependencias
+La consigna original del trabajo puede encontrarse en el archivo [`Episodio III - Revenge of the Cth.pdf`](./Episodio%20III%20-%20Revenge%20of%20the%20Cth.pdf), incluido en este mismo repositorio.
 
-Para poder compilar y ejecutar el proyecto, es necesario tener instalada la
-biblioteca [so-commons-library] de la cátedra:
+---
 
-```bash
-git clone https://github.com/sisoputnfrba/so-commons-library
-cd so-commons-library
-make debug
-make install
-```
+## Descripción general
 
-## Compilación y ejecución
+El trabajo consiste en el desarrollo de una simulación de un sistema operativo distribuido, conformado por los siguientes módulos:
 
-Cada módulo del proyecto se compila de forma independiente a través de un
-archivo `makefile`. Para compilar un módulo, es necesario ejecutar el comando
-`make` desde la carpeta correspondiente.
+- **Kernel**: Planificación de procesos y gestión de I/O.
+- **CPU**: Interpretación y ejecución de instrucciones.
+- **Memoria + SWAP**: Administración de memoria con paginación jerárquica y swap.
+- **I/O**: Simulación de dispositivos de entrada/salida.
 
-El ejecutable resultante de la compilación se guardará en la carpeta `bin` del
-módulo. Ejemplo:
+Todos los módulos se comunican a través de sockets y trabajan de forma concurrente. El proyecto incluye también los archivos de configuración y scripts necesarios para las pruebas.
 
-```sh
-cd kernel
-make
-./bin/kernel
-```
+---
 
-## Importar desde Visual Studio Code
+## Sobre este repositorio
 
-Para importar el workspace, debemos abrir el archivo `tp.code-workspace` desde
-la interfaz o ejecutando el siguiente comando desde la carpeta raíz del
-repositorio:
+Este proyecto fue realizado como parte de la cursada y entregado según los requerimientos definidos por la cátedra en el cuatrimestre correspondiente. El objetivo fue aplicar conceptos teóricos y prácticos relacionados con la implementación de un sistema operativo desde cero, abordando planificación de procesos, administración de memoria, sincronización y comunicación entre procesos, entre otros temas.
 
-```bash
-code tp.code-workspace
-```
+---
 
-## Checkpoint
+## Nota personal
 
-Para cada checkpoint de control obligatorio, se debe crear un tag en el
-repositorio con el siguiente formato:
+Aunque este trabajo refleja la implementación tal como fue planteada en la consigna, **es posible que en el futuro realice algunos cambios o mejoras a nivel de código**, especialmente en la estructura interna, nombres de funciones o implementación de ciertos comportamientos, con el fin de seguir explorando y aprendiendo.
 
-```
-checkpoint-{número}
-```
+---
 
-Donde `{número}` es el número del checkpoint, ejemplo: `checkpoint-1`.
+## Archivos relevantes
 
-Para crear un tag y subirlo al repositorio, podemos utilizar los siguientes
-comandos:
+- 📄 [`Episodio III - Revenge of the Cth.pdf`](./Episodio%20III%20-%20Revenge%20of%20the%20Cth.pdf): Enunciado original del trabajo práctico.
+- 📄 [`Documento de pruebas finales.pdf`](./Documento%20de%20pruebas%20finales.pdf): Documento con las pruebas utilizadas durante la etapa de desarrollo y la fase de pruebas.
 
-```bash
-git tag -a checkpoint-{número} -m "Checkpoint {número}"
-git push origin checkpoint-{número}
-```
+---
 
-> [!WARNING]
-> Asegúrense de que el código compila y cumple con los requisitos del checkpoint
-> antes de subir el tag.
-
-## Entrega
-
-Para desplegar el proyecto en una máquina Ubuntu Server, podemos utilizar el
-script [so-deploy] de la cátedra:
-
-```bash
-git clone https://github.com/sisoputnfrba/so-deploy.git
-cd so-deploy
-./deploy.sh -r=release -p=utils -p=kernel -p=cpu -p=memoria -p=io "tp-{año}-{cuatri}-{grupo}"
-```
-
-El mismo se encargará de instalar las Commons, clonar el repositorio del grupo
-y compilar el proyecto en la máquina remota.
-
-> [!NOTE]
-> Ante cualquier duda, pueden consultar la documentación en el repositorio de
-> [so-deploy], o utilizar el comando `./deploy.sh --help`.
-
-## Guías útiles
-
-- [Cómo interpretar errores de compilación](https://docs.utnso.com.ar/primeros-pasos/primer-proyecto-c#errores-de-compilacion)
-- [Cómo utilizar el debugger](https://docs.utnso.com.ar/guias/herramientas/debugger)
-- [Cómo configuramos Visual Studio Code](https://docs.utnso.com.ar/guias/herramientas/code)
-- **[Guía de despliegue de TP](https://docs.utnso.com.ar/guías/herramientas/deploy)**
-
-[so-commons-library]: https://github.com/sisoputnfrba/so-commons-library
-[so-deploy]: https://github.com/sisoputnfrba/so-deploy
+> Si estás buscando el README original del proyecto base, podés verlo [aquí](./README-original.md).
